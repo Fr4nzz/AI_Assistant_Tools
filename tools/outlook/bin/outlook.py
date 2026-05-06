@@ -337,6 +337,24 @@ def _release_browser_lock(fd: int) -> None:
             pass
 
 
+def _browser_open_visible() -> None:
+    """Open the shared Outlook browser profile for manual Microsoft sign-in."""
+    import subprocess
+
+    BROWSER_DATA_DIR.mkdir(parents=True, exist_ok=True)
+    args = [
+        _find_chromium(),
+        "--new-window",
+        "--ozone-platform-hint=auto",
+        f"--user-data-dir={BROWSER_DATA_DIR}",
+        OWA_URL,
+    ]
+    if sys.platform.startswith("win"):
+        subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=subprocess.DETACHED_PROCESS)
+    else:
+        subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+
+
 async def _fetch_token_from_browser() -> dict:
     from playwright.async_api import async_playwright
 
@@ -989,6 +1007,14 @@ def cmd_profile(args):
     return api_get("/")  # /me root returns user profile
 
 
+def cmd_login(args):
+    _browser_open_visible()
+    print("Sign in to Outlook/Microsoft in the opened Chromium window.")
+    print("If prompted, check 'Mantener mi sesion iniciada' / 'Stay signed in'.")
+    print("Wait for Outlook to load, then close that browser before using headless outlook/onedrive commands.")
+    return None
+
+
 # ---------------------------------------------------------------------------
 # Output formatters
 # ---------------------------------------------------------------------------
@@ -1244,6 +1270,8 @@ def build_parser():
     sub = p.add_subparsers(dest="command", required=True)
 
     # --- Mail ---
+    sub.add_parser("login", help="Open visible helper browser for manual Microsoft sign-in")
+
     i = sub.add_parser("inbox", help="List inbox messages (most recent first)")
     _add_msg_filters(i)
     i.add_argument("--folder", default="inbox", help="Folder name or id (default: inbox)")
@@ -1351,6 +1379,7 @@ def main():
         return print_event_full(r, trim=trim)
 
     handlers = {
+        "login": (cmd_login, lambda _: None),
         "inbox": (cmd_inbox, _msg_list),
         "search": (cmd_search, _msg_list),
         "read": (cmd_read, _msg_full),
@@ -1385,4 +1414,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

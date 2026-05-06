@@ -10,17 +10,32 @@ This is separated from Outlook mail/calendar because Graph file scopes were avai
 - `bin/onedrive.cmd` - Windows launcher.
 - `skill/` - global Codex skill files.
 
-## Install
+## Install - Windows
 
 ```powershell
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool onedrive
 ```
 
-Set up Outlook first so the shared Microsoft browser profile is signed in. Then test:
+## Install - Linux / CachyOS
 
-```powershell
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) onedrive
+```
+
+Set up either D2L or Outlook first so the shared Microsoft browser profile is
+signed in. If Microsoft asks, choose "Mantener mi sesion iniciada" / "Stay
+signed in"; OneDrive uses that same browser-backed Microsoft session to obtain
+Graph file tokens.
+
+If D2L was the first login and OneDrive does not work immediately, open Outlook
+once with `outlook login` before testing OneDrive again. This gives the shared
+Microsoft profile a chance to finish the Office / Outlook token bootstrap path.
+Close visible Chromium windows before running headless `onedrive` commands.
+
+Then test with safe read-only commands:
+
+```bash
 onedrive profile
 onedrive ls
 onedrive shared -n 10
 ```
-
