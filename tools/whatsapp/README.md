@@ -28,13 +28,28 @@ It also runs the upstream Whasapo installer unless `-SkipDependencies` is passed
 whasapo pair
 ```
 
+When an AI agent is guiding setup from Codex Desktop, run this command in an
+external visible PowerShell window. The QR code is printed in the terminal; if
+the command runs inside the agent's hidden/internal console, the user will not
+be able to scan it.
+
+One way to open a visible pairing window from PowerShell is:
+
+```powershell
+Start-Process powershell.exe -ArgumentList '-NoExit', '-Command', 'whasapo pair; Read-Host "Press Enter to close"'
+```
+
 Scan the QR code from:
 
 ```text
 WhatsApp phone app > Settings > Linked Devices > Link a Device
 ```
 
-Let Whasapo run for several minutes after pairing so `%LOCALAPPDATA%\whasapo\session.db` can populate.
+Let Whasapo run for several minutes after pairing so
+`%LOCALAPPDATA%\whasapo\session.db` can populate. Immediately after pairing,
+`wha doctor` may report a valid paired connection while the local cache still
+shows `0` messages or contacts. That is expected; wait for sync before relying
+on search results.
 
 ## Test
 

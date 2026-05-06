@@ -32,6 +32,26 @@ once with `outlook login` before testing OneDrive again. This gives the shared
 Microsoft profile a chance to finish the Office / Outlook token bootstrap path.
 Close visible Chromium windows before running headless `onedrive` commands.
 
+If OneDrive still fails with:
+
+```text
+Could not extract Microsoft Graph token from browser MSAL cache
+```
+
+open OneDrive itself in the same shared profile, let it load fully with the
+institutional account, then close the visible browser and retry:
+
+```powershell
+$profile = Join-Path $env:LOCALAPPDATA 'outlook-cli\browser-data'
+Start-Process msedge.exe -ArgumentList @('--new-window', "--user-data-dir=$profile", 'https://www.office.com/launch/onedrive')
+```
+
+If the error persists after Outlook, D2L, and OneDrive have all loaded in that
+profile, the tenant or Office web session may not be issuing a reusable Graph
+token to localStorage. In that case the CLI is installed correctly, but OneDrive
+access remains blocked until the token bootstrap path is adjusted or the tenant
+allows the needed Graph file flow.
+
 Then test with safe read-only commands:
 
 ```bash

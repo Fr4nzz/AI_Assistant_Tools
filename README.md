@@ -19,8 +19,14 @@ Expected agent flow:
 1. Read this README and the relevant `tools/<name>/README.md` files.
 2. Ask which tools to install: `gogcli`, `outlook`, `onedrive`, `d2l`, `whatsapp`, or `all`.
 3. Detect the OS and use the Windows or Linux install path below.
-4. Run the installer for the selected tools.
-5. Guide browser logins, OAuth consent, QR pairing, or institutional sign-in one tool at a time.
+4. On Windows, check prerequisites before running the installer:
+   `python --version`, `py --version`, and whether `~\.local\bin` is on the
+   user PATH. The Outlook, OneDrive, and D2L tools need Python + pip for
+   Playwright. If `python` is missing, install Python first or make the existing
+   Python available on PATH, then rerun the installer.
+5. Run the installer for the selected tools. The installer is safe to rerun if
+   a prerequisite fails partway through.
+6. Guide browser logins, OAuth consent, QR pairing, or institutional sign-in one tool at a time.
    For Microsoft/USFQ logins, explicitly remind the user to choose
    "Mantener mi sesion iniciada" / "Stay signed in" when prompted.
    This is what makes later headless commands reuse the same session.
@@ -29,8 +35,16 @@ Expected agent flow:
    open both D2L and Outlook in headed browser windows during initial setup. They
    share a Chromium profile, but each service may still need its own first-time
    web load, cookies, or token bootstrap.
-6. Restart Codex Desktop when skills are installed.
-7. Test each installed tool with a safe read-only command.
+7. Close visible Chromium, Chrome, or Edge windows that were opened with the
+   shared tool profile before running headless commands. A visible browser can
+   lock the profile and make headless Outlook, OneDrive, or D2L tests fail.
+8. If pairing WhatsApp from Codex Desktop, open `whasapo pair` in an external
+   visible terminal window. The QR code is printed to the terminal; if it runs
+   inside an agent-only console, the user cannot scan it.
+9. Restart Codex Desktop when skills are installed.
+10. Test each installed tool with a safe read-only command. For CLIs with a
+    global JSON flag, put `--json` before the subcommand, for example
+    `outlook --json profile` and `d2l --json classes`.
 
 ## Tools
 
@@ -43,6 +57,15 @@ Expected agent flow:
 | `whatsapp` | WhatsApp / Whasapo + wha CLI | WhatsApp chats, search, groups, media discovery/download, explicit sending | Uses Whasapo pairing plus a local `wha` CLI. We moved away from the previous MCP-first approach because historical message sync/tool visibility was inconsistent; `wha` reads Whasapo's SQLite cache directly. |
 
 ## Quick Install - Windows
+
+Requirements:
+
+- Python 3.10+ with `pip` available as `python` on PATH for `outlook`,
+  `onedrive`, and `d2l`.
+- Internet access for GitHub downloads, pip packages, and Playwright Chromium.
+- `~\.local\bin` on the user PATH after installation. The installer creates
+  shims there, but a running terminal or Codex session may need PATH refreshed
+  or Codex Desktop restarted before commands are found.
 
 Install everything:
 
@@ -84,7 +107,25 @@ Codex skills are placed under:
 %USERPROFILE%\.codex\skills
 ```
 
+If the installer stops with `python : The term 'python' is not recognized`,
+install Python for the current user with pip enabled and rerun the same
+installer command. The already installed tools do not need to be cleaned up.
+
 Restart Codex Desktop after installing skills or MCP servers.
+
+Windows login notes:
+
+- Outlook, OneDrive, and D2L share the browser profile at
+  `%LOCALAPPDATA%\outlook-cli\browser-data`.
+- Run `outlook login` and `d2l login` in visible browser windows the first time.
+  Choose "Mantener mi sesion iniciada" / "Stay signed in" if Microsoft asks.
+- Close those visible browser windows before testing commands such as
+  `outlook inbox -n 5`, `onedrive profile`, or `d2l classes`.
+- If an agent needs to close only the tool browser, target processes whose
+  command line contains `outlook-cli\browser-data`, not the user's normal
+  browser sessions.
+- For WhatsApp, run `whasapo pair` in a terminal window the user can see, scan
+  the QR code, then allow several minutes for Whasapo's cache to populate.
 
 ## Quick Install - Linux / CachyOS
 
