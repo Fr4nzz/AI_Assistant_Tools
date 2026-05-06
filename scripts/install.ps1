@@ -91,6 +91,15 @@ function Install-WhaCli {
 function Install-GoogleWorkspace {
   Install-Skill 'google-workspace' 'google-workspace'
 
+  $skillInstaller = Join-Path $HOME '.codex\skills\.system\skill-installer\scripts\install-skill-from-github.py'
+  if (Test-Path -LiteralPath $skillInstaller) {
+    foreach ($skill in @('gws-shared', 'gws-gmail', 'gws-drive', 'gws-docs')) {
+      python $skillInstaller --repo googleworkspace/cli --path "skills/$skill"
+    }
+  } else {
+    Write-Warning 'Codex skill-installer was not found. Install upstream gws-shared, gws-gmail, gws-drive, and gws-docs skills manually if needed.'
+  }
+
   $localBin = Join-Path $HOME '.local\bin'
   New-Item -ItemType Directory -Force -Path $localBin | Out-Null
   $shim = Join-Path $localBin 'gws.cmd'

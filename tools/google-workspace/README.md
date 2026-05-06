@@ -7,6 +7,7 @@ Unlike the Microsoft tools, Gmail does not expose a convenient reusable browser 
 ## Files
 
 - `skill/` - custom global Codex routing skill that prefers the personal `gws` account and avoids the Codex Google Drive/Gmail plugins unless explicitly requested.
+- The installer also installs the essential upstream `gws` skills: `gws-shared`, `gws-gmail`, `gws-drive`, and `gws-docs`.
 
 ## Install
 

@@ -15,6 +15,7 @@ For general `gws` syntax, flags, schema discovery, and safety rules, read the in
 - `../gws-shared/SKILL.md`
 - `../gws-gmail/SKILL.md`
 - `../gws-drive/SKILL.md`
+- `../gws-docs/SKILL.md`
 
 Do not use the Codex Google Drive or Gmail plugins unless the user explicitly asks for those connectors; they may be authenticated to a different/shared account.
 
@@ -51,14 +52,13 @@ gws.cmd auth status
 
 ## Optional Upstream Skills
 
-This custom skill is the account-routing skill and should stay installed. The minimal upstream `gws` skills to keep installed are `gws-shared`, `gws-gmail`, and `gws-drive`.
+This custom skill is the account-routing skill and should stay installed. The essential upstream `gws` skills to keep installed are `gws-shared`, `gws-gmail`, `gws-drive`, and `gws-docs`.
 
 Some upstream skills mention helper skills such as `gws-gmail-read`, `gws-gmail-triage`, or `gws-drive-upload`. Those are not installed by default to avoid clutter. Use the base API commands directly, or install only the helper needed for the task:
 
 ```powershell
 python "$HOME\.codex\skills\.system\skill-installer\scripts\install-skill-from-github.py" --repo googleworkspace/cli --path skills/gws-gmail-read
 python "$HOME\.codex\skills\.system\skill-installer\scripts\install-skill-from-github.py" --repo googleworkspace/cli --path skills/gws-drive-upload
-python "$HOME\.codex\skills\.system\skill-installer\scripts\install-skill-from-github.py" --repo googleworkspace/cli --path skills/gws-docs
 python "$HOME\.codex\skills\.system\skill-installer\scripts\install-skill-from-github.py" --repo googleworkspace/cli --path skills/gws-sheets
 python "$HOME\.codex\skills\.system\skill-installer\scripts\install-skill-from-github.py" --repo googleworkspace/cli --path skills/gws-forms
 ```
