@@ -1,0 +1,22 @@
+# Secrets and local auth material
+client_secret*.json
+credentials*.json
+credentials.enc
+token*.json
+*.sqlite
+*.db
+*.db-*
+browser-data/
+session/
+cookies*
+
+# Local downloads / generated outputs
+downloads/
+attachments/
+*.eml
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+
