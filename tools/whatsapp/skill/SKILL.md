@@ -24,7 +24,7 @@ Use first-class `wha` commands, not Codex MCP tools. `wha download`, `wha send-m
 
 ```powershell
 wha doctor
-wha sync --wait 20
+wha sync --wait 0
 wha search intillacta -n 20
 wha search "field report" -n 20
 wha chats --query "Global Environ" -n 10
@@ -50,13 +50,27 @@ wha media --chat 120363405350719367@g.us --query .m4a --json
 
 For context/search requests:
 
-1. Run `wha sync --wait 20` before search-heavy tasks so Whasapo is running and the SQLite cache has a chance to refresh.
-2. Run broad `wha search` terms.
-3. Identify relevant chat JIDs.
-4. If `wha chats --query "Name"` misses a known chat/group, do not stop. Search distinctive message text, participant names, filenames, or screenshots anchors with `wha search`, then map the discovered chat JID back to the requested name.
-5. If Whasapo lacks a contact/display name, run `wha alias import-recent-groups -n 25` for recent groups, `wha alias import-recent-directs -n 50` for recent direct chats, `wha alias import-live` for broad live chat names, or add a local alias with `wha alias set CHAT_JID "Name"` so future searches can find it by name.
-6. Use `wha chat CHAT_JID --asc` to inspect surrounding context.
-7. Summarize concise findings with dates, chat names/JIDs when useful, and any media/document names.
+1. Start sync without blocking the chat. On Windows, prefer:
+
+```powershell
+Start-Process -WindowStyle Hidden -FilePath wha -ArgumentList 'sync','--wait','0'
+```
+
+On Linux/macOS, prefer:
+
+```bash
+nohup wha sync --wait 0 >/dev/null 2>&1 &
+```
+
+This starts `whasapo serve` if needed and returns immediately. Use `wha sync --wait 10` or longer only during first-time setup or when the user explicitly needs the newest messages and accepts waiting.
+
+2. Run `wha doctor` if you need to inspect current cache counts or database modified time.
+3. Run broad `wha search` terms.
+4. Identify relevant chat JIDs.
+5. If `wha chats --query "Name"` misses a known chat/group, do not stop. Search distinctive message text, participant names, filenames, or screenshots anchors with `wha search`, then map the discovered chat JID back to the requested name.
+6. If Whasapo lacks a contact/display name, run `wha alias import-recent-groups -n 25` for recent groups, `wha alias import-recent-directs -n 50` for recent direct chats, `wha alias import-live` for broad live chat names, or add a local alias with `wha alias set CHAT_JID "Name"` so future searches can find it by name.
+7. Use `wha chat CHAT_JID --asc` to inspect surrounding context.
+8. Summarize concise findings with dates, chat names/JIDs when useful, and any media/document names.
 
 For media:
 
@@ -73,7 +87,7 @@ For sending:
 
 Whasapo's SQLite cache improves as Whasapo runs and syncs messages. If a search returns no results, the message may not be cached yet.
 
-The cache can be stale if Whasapo has not been running recently. `wha sync --wait 20` starts `whasapo serve` in the background if needed and reports current cache counts. Use it at the start of a WhatsApp task when recency matters.
+The cache can be stale if Whasapo has not been running recently. Start `wha sync --wait 0` in a background process at the start of WhatsApp tasks so Whasapo can refresh the cache while searches run. If results look stale or the user needs messages from the last few minutes, run `wha doctor` and consider a foreground `wha sync --wait 10`.
 
 SQLite-backed commands are fast and parallel-safe. Live commands (`wha download`, `wha send-message`, `wha send-file`, and alias imports that explicitly need live data) use a local lock so parallel calls from different assistants queue instead of opening multiple WhatsApp Web streams at once.
 

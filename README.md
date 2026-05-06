@@ -127,7 +127,10 @@ Windows login notes:
 - For WhatsApp, run `whasapo pair` in a terminal window the user can see, scan
   the QR code, then run `wha sync --wait 60` immediately so sync begins. Check
   `wha doctor` and wait until `messages` and `whatsmeow_contacts` are non-zero
-  before searching chats or media.
+  before searching chats or media. For later day-to-day WhatsApp tasks, start
+  nonblocking sync with
+  `Start-Process -WindowStyle Hidden -FilePath wha -ArgumentList 'sync','--wait','0'`
+  before searching.
 
 ## Quick Install - Linux / CachyOS
 

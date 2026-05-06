@@ -69,17 +69,24 @@ Do this before running `wha search`, `wha chats`, `wha contacts`, or `wha media`
 If the cache is still at `0` messages, searches can return no results even
 though WhatsApp is correctly paired.
 
-For normal future use, run `wha sync --wait 20` before search-heavy tasks. The
-local database is a cache, so it can be stale if Whasapo has not been running
-since the phone received new messages. `wha sync` starts `whasapo serve` in the
-background if it is not already running and then reports the current cache
-counts.
+For normal future use, start sync without blocking the AI chat before
+search-heavy tasks:
+
+```powershell
+Start-Process -WindowStyle Hidden -FilePath wha -ArgumentList 'sync','--wait','0'
+```
+
+The local database is a cache, so it can be stale if Whasapo has not been
+running since the phone received new messages. The background sync starts
+`whasapo serve` if needed while cached searches continue. If results look stale
+or the user needs messages from the last few minutes, run `wha doctor` and
+consider a foreground `wha sync --wait 10`.
 
 ## Test
 
 ```powershell
 wha doctor
-wha sync --wait 20
+wha sync --wait 0
 wha search intillacta -n 20
 wha chats --query "Global Environ" -n 20
 wha media --query .pdf -n 20
