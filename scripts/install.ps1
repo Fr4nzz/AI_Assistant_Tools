@@ -16,7 +16,21 @@ $ErrorActionPreference = 'Stop'
 function Get-UrlFile {
   param([string] $Url, [string] $Path)
   New-Item -ItemType Directory -Force -Path (Split-Path -Parent $Path) | Out-Null
-  Invoke-WebRequest -Uri $Url -OutFile $Path
+  try {
+    Invoke-WebRequest -Uri $Url -OutFile $Path
+  } catch {
+    if ($Url -notmatch '^https://raw\.githubusercontent\.com/([^/]+)/([^/]+)/([^/]+)/(.*)$') {
+      throw
+    }
+    $owner = $Matches[1]
+    $repo = $Matches[2]
+    $ref = $Matches[3]
+    $repoPath = $Matches[4]
+    $api = "https://api.github.com/repos/$owner/$repo/contents/$repoPath`?ref=$ref"
+    $item = Invoke-RestMethod -Uri $api -Headers @{ 'User-Agent' = 'AI_Assistant_Tools installer' }
+    $bytes = [Convert]::FromBase64String(($item.content -replace '\s', ''))
+    [IO.File]::WriteAllBytes($Path, $bytes)
+  }
 }
 
 function Install-Skill {
