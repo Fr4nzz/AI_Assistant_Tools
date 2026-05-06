@@ -1,14 +1,17 @@
 ---
 name: google-workspace
-description: Use this skill whenever the user asks to search, read, summarize, triage, draft, or manage Gmail; list, search, inspect, download, or upload Google Drive files; inspect Google Calendar; work with Google Docs, Sheets, or Slides; or create/edit Google Forms and quizzes through the local `gws` Google Workspace CLI.
+description: Use this skill whenever the user asks to search, read, summarize, triage, draft, or manage Gmail through the local `gog` CLI; or list, search, inspect, download, upload, create, or edit Google Drive, Calendar, Docs, Sheets, Slides, and Forms through the local `gws` Google Workspace CLI.
 metadata:
   requires:
-    bins: ["gws"]
+    bins: ["gws", "gog"]
 ---
 
 # Google Workspace CLI
 
-Use the local `gws` command for Google Workspace work. This is the account-routing skill: it exists to prefer the user's personal `gws` OAuth account over the Codex Google Drive/Gmail plugin account.
+Use local CLIs for Google Workspace work. This is the account-routing skill: it exists to prefer the user's personal Google OAuth accounts over the Codex Google Drive/Gmail plugin account.
+
+- Prefer `gog` for Gmail search, message reads, thread reads, and summaries.
+- Prefer `gws` for Drive, Docs, Sheets, Slides, Forms, Calendar, uploads, and editing.
 
 For general `gws` syntax, flags, schema discovery, and safety rules, read the installed upstream skills first:
 
@@ -19,7 +22,21 @@ For general `gws` syntax, flags, schema discovery, and safety rules, read the in
 
 Do not use the Codex Google Drive or Gmail plugins unless the user explicitly asks for those connectors; they may be authenticated to a different/shared account.
 
+## Gmail With gog
+
+Use `--gmail-no-send` by default for read/search tasks:
+
+```powershell
+gog --account user@gmail.com --gmail-no-send gmail search "newer_than:2d" --max 20 --json
+gog --account user@gmail.com --gmail-no-send gmail thread get THREAD_ID --sanitize-content --json
+gog --account user@gmail.com --gmail-no-send gmail get MESSAGE_ID --sanitize-content --json
+```
+
+Use `gog auth list` or `gog auth status` to find configured accounts. For normal summaries, search first, then fetch only the relevant threads with `--sanitize-content --json`.
+
 ## Windows Reliability Notes
+
+`gog.exe` should be placed directly in `%USERPROFILE%\.local\bin` and called as `gog`.
 
 `gws` is normally on PATH through npm. On Windows, interactive shells may resolve `gws` to `gws.ps1`, while subprocesses and Python scripts often need the command shim explicitly as `gws.cmd`. If a script says it cannot find `gws`, call `gws.cmd`.
 

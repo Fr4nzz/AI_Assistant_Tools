@@ -1,5 +1,5 @@
 param(
-  [ValidateSet('all', 'google-workspace', 'outlook', 'onedrive', 'd2l', 'whatsapp')]
+  [ValidateSet('all', 'google-workspace', 'gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp')]
   [string] $Tool = 'all',
 
   [string] $InstallRoot = (Join-Path $HOME '.ai-assistant-tools'),
@@ -117,6 +117,36 @@ function Install-GoogleWorkspace {
   Write-Host 'Follow tools/google-workspace/README.md for Google Cloud OAuth setup.'
 }
 
+function Install-GogCli {
+  $localBin = Join-Path $HOME '.local\bin'
+  New-Item -ItemType Directory -Force -Path $localBin | Out-Null
+
+  $release = Invoke-RestMethod -Uri 'https://api.github.com/repos/openclaw/gogcli/releases/latest' -Headers @{ 'User-Agent' = 'AI_Assistant_Tools installer' }
+  $asset = $release.assets | Where-Object { $_.name -match '^gogcli_.*_windows_amd64\.zip$' } | Select-Object -First 1
+  if (-not $asset) {
+    throw 'Could not find a Windows amd64 gogcli release asset.'
+  }
+
+  $toolDir = Join-Path $InstallRoot 'gogcli'
+  New-Item -ItemType Directory -Force -Path $toolDir | Out-Null
+  $zip = Join-Path $env:TEMP $asset.name
+  Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $zip
+  Expand-Archive -LiteralPath $zip -DestinationPath $toolDir -Force
+
+  $exe = Get-ChildItem -LiteralPath $toolDir -Recurse -Filter 'gog.exe' | Select-Object -First 1
+  if (-not $exe) {
+    throw 'gog.exe was not found after extracting gogcli.'
+  }
+
+  Copy-Item -LiteralPath $exe.FullName -Destination (Join-Path $localBin 'gog.exe') -Force
+  Remove-Item -LiteralPath (Join-Path $localBin 'gog.cmd') -Force -ErrorAction SilentlyContinue
+  Install-Skill 'gogcli' 'gogcli'
+
+  Write-Host "Installed gog.exe to $localBin"
+  Write-Host 'Run: gog --version'
+  Write-Host 'Then authenticate Gmail with: gog auth credentials set <client_secret.json>; gog auth add you@gmail.com --services gmail --readonly --gmail-scope readonly'
+}
+
 function Install-WhatsApp {
   if (-not $SkipDependencies) {
     Invoke-Expression (Invoke-RestMethod 'https://raw.githubusercontent.com/toloco/whasapo/main/install.ps1')
@@ -138,7 +168,7 @@ function Install-WhatsApp {
 }
 
 $selected = if ($Tool -eq 'all') {
-  @('google-workspace', 'outlook', 'onedrive', 'd2l', 'whatsapp')
+  @('google-workspace', 'gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp')
 } else {
   @($Tool)
 }
@@ -149,6 +179,7 @@ foreach ($item in $selected) {
     'onedrive' { Install-CliTool 'onedrive' @('onedrive.py', 'onedrive.cmd') @('playwright') }
     'd2l' { Install-CliTool 'd2l' @('d2l.py', 'd2l.cmd') @('playwright', 'websockets') }
     'google-workspace' { Install-GoogleWorkspace }
+    'gogcli' { Install-GogCli }
     'whatsapp' { Install-WhatsApp }
   }
 }
