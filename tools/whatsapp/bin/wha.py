@@ -230,8 +230,10 @@ def cache_counts():
     if not info["exists"]:
         return info
     st = os.stat(path)
+    now = time.time()
     info["size_bytes"] = st.st_size
     info["modified"] = dt.datetime.fromtimestamp(st.st_mtime).isoformat(timespec="seconds")
+    info["modified_age_seconds"] = int(max(0, now - st.st_mtime))
     con = connect()
     for table in ("messages", "whatsmeow_contacts"):
         try:
@@ -253,6 +255,11 @@ def cmd_sync(args):
     info["serve_started"] = started
     info["serve_running"] = whasapo_running()
     info["waited_seconds"] = args.wait
+    info["status"] = "background sync launched" if started else "background sync already running"
+    info["progress_note"] = (
+        "Whasapo does not expose a total remaining message count here. "
+        "Monitor messages, whatsmeow_contacts, size_bytes, and modified_age_seconds with `wha doctor` or repeated `wha sync`."
+    )
     print(json.dumps(info, ensure_ascii=False, indent=2))
 
 
@@ -621,8 +628,8 @@ def main():
 
     sub.add_parser("doctor").set_defaults(func=cmd_doctor)
 
-    s = sub.add_parser("sync", help="Start Whasapo serve and wait briefly for the SQLite cache to populate")
-    s.add_argument("--wait", type=int, default=20, help="Seconds to wait for non-empty messages/contacts (default: 20)")
+    s = sub.add_parser("sync", help="Start Whasapo serve in the background and report SQLite cache status")
+    s.add_argument("--wait", type=int, default=0, help="Seconds to wait for non-empty messages/contacts (default: 0)")
     s.set_defaults(func=cmd_sync)
 
     a = sub.add_parser("alias", help="Manage local chat aliases")

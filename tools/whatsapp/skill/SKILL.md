@@ -24,7 +24,7 @@ Use first-class `wha` commands, not Codex MCP tools. `wha download`, `wha send-m
 
 ```powershell
 wha doctor
-wha sync --wait 0
+wha sync
 wha search intillacta -n 20
 wha search "field report" -n 20
 wha chats --query "Global Environ" -n 10
@@ -50,19 +50,27 @@ wha media --chat 120363405350719367@g.us --query .m4a --json
 
 For context/search requests:
 
-1. Start sync without blocking the chat. On Windows, prefer:
+1. Start sync without blocking the chat:
 
 ```powershell
-Start-Process -WindowStyle Hidden -FilePath wha -ArgumentList 'sync','--wait','0'
+wha sync
 ```
 
-On Linux/macOS, prefer:
+This starts `whasapo serve` in the background if needed, reports current cache counts, and returns immediately.
+
+If the AI needs to explicitly launch it as a detached process and continue without even reading sync status, use this on Windows:
+
+```powershell
+Start-Process -WindowStyle Hidden -FilePath wha -ArgumentList 'sync'
+```
+
+Or this on Linux/macOS:
 
 ```bash
-nohup wha sync --wait 0 >/dev/null 2>&1 &
+nohup wha sync >/dev/null 2>&1 &
 ```
 
-This starts `whasapo serve` if needed and returns immediately. Use `wha sync --wait 10` or longer only during first-time setup or when the user explicitly needs the newest messages and accepts waiting.
+Use `wha sync --wait 10` or longer only during first-time setup or when the user explicitly needs the newest messages and accepts waiting.
 
 2. Run `wha doctor` if you need to inspect current cache counts or database modified time.
 3. Run broad `wha search` terms.
@@ -87,7 +95,9 @@ For sending:
 
 Whasapo's SQLite cache improves as Whasapo runs and syncs messages. If a search returns no results, the message may not be cached yet.
 
-The cache can be stale if Whasapo has not been running recently. Start `wha sync --wait 0` in a background process at the start of WhatsApp tasks so Whasapo can refresh the cache while searches run. If results look stale or the user needs messages from the last few minutes, run `wha doctor` and consider a foreground `wha sync --wait 10`.
+The cache can be stale if Whasapo has not been running recently. Run `wha sync` at the start of WhatsApp tasks so Whasapo can refresh the cache while searches run. If results look stale or the user needs messages from the last few minutes, run `wha doctor`, sleep briefly, rerun `wha sync`, or consider a foreground `wha sync --wait 10`.
+
+Whasapo does not expose an exact "messages left to sync" total through this cache. Use `messages`, `whatsmeow_contacts`, `size_bytes`, and `modified_age_seconds` from `wha sync` or `wha doctor` as practical progress indicators.
 
 SQLite-backed commands are fast and parallel-safe. Live commands (`wha download`, `wha send-message`, `wha send-file`, and alias imports that explicitly need live data) use a local lock so parallel calls from different assistants queue instead of opening multiple WhatsApp Web streams at once.
 

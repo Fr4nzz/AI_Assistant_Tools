@@ -73,20 +73,25 @@ For normal future use, start sync without blocking the AI chat before
 search-heavy tasks:
 
 ```powershell
-Start-Process -WindowStyle Hidden -FilePath wha -ArgumentList 'sync','--wait','0'
+wha sync
 ```
 
 The local database is a cache, so it can be stale if Whasapo has not been
-running since the phone received new messages. The background sync starts
-`whasapo serve` if needed while cached searches continue. If results look stale
-or the user needs messages from the last few minutes, run `wha doctor` and
-consider a foreground `wha sync --wait 10`.
+running since the phone received new messages. `wha sync` starts `whasapo serve`
+in the background if needed, reports current cache counts, and returns
+immediately. If results look stale or the user needs messages from the last few
+minutes, run `wha doctor` or repeat `wha sync` after a short sleep. Use a
+foreground wait such as `wha sync --wait 10` only when waiting is acceptable.
+
+Whasapo does not expose an exact "messages left to sync" total through this
+cache. The practical progress indicators are `messages`, `whatsmeow_contacts`,
+`size_bytes`, and `modified_age_seconds` from `wha sync` or `wha doctor`.
 
 ## Test
 
 ```powershell
 wha doctor
-wha sync --wait 0
+wha sync
 wha search intillacta -n 20
 wha chats --query "Global Environ" -n 20
 wha media --query .pdf -n 20
