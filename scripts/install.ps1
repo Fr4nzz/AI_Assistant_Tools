@@ -56,6 +56,24 @@ function Install-CliTool {
   Write-Host "Installed PATH shim to $shim"
 }
 
+function Install-WhaCli {
+  $toolDir = Join-Path $InstallRoot 'whatsapp'
+  New-Item -ItemType Directory -Force -Path $toolDir | Out-Null
+
+  Get-UrlFile "$RepoRawBase/tools/whatsapp/bin/wha.py" (Join-Path $toolDir 'wha.py')
+  Get-UrlFile "$RepoRawBase/tools/whatsapp/bin/wha.cmd" (Join-Path $toolDir 'wha.cmd')
+
+  $localBin = Join-Path $HOME '.local\bin'
+  New-Item -ItemType Directory -Force -Path $localBin | Out-Null
+  $shim = Join-Path $localBin 'wha.cmd'
+  "@echo off`r`ncall `"$toolDir\wha.cmd`" %*`r`n" | Set-Content -LiteralPath $shim -Encoding ASCII
+
+  Install-Skill 'whatsapp' 'whatsapp'
+
+  Write-Host "Installed wha CLI to $toolDir"
+  Write-Host "Installed PATH shim to $shim"
+}
+
 function Install-GoogleWorkspace {
   Install-Skill 'google-workspace' 'google-workspace'
 
@@ -81,19 +99,19 @@ function Install-WhatsApp {
     Invoke-Expression (Invoke-RestMethod 'https://raw.githubusercontent.com/toloco/whasapo/main/install.ps1')
   }
 
-  $exe = Join-Path $env:LOCALAPPDATA 'whasapo\whasapo.exe'
-  if ((Test-Path $exe) -and -not $SkipWhasapoMcp) {
-    codex mcp add whatsapp-whasapo -- $exe serve
-    $agents = Join-Path $HOME '.codex\AGENTS.md'
-    $line = 'For WhatsApp requests, use the `whatsapp-whasapo` MCP server/tools; never send unless I explicitly provide the exact recipient and message/file.'
-    if (-not (Test-Path $agents) -or -not (Select-String -LiteralPath $agents -SimpleMatch $line -Quiet)) {
-      Add-Content -LiteralPath $agents -Value $line
-    }
-  } else {
-    Write-Warning 'Whasapo executable was not found or MCP registration was skipped.'
+  Install-WhaCli
+
+  $agents = Join-Path $HOME '.codex\AGENTS.md'
+  $line = 'For WhatsApp requests, use the global `whatsapp` skill and local `wha` CLI backed by Whasapo; never send unless I explicitly provide the exact recipient and message/file.'
+  if (-not (Test-Path $agents) -or -not (Select-String -LiteralPath $agents -SimpleMatch $line -Quiet)) {
+    Add-Content -LiteralPath $agents -Value $line
   }
 
-  Write-Host 'Restart Codex Desktop after installing or changing Whasapo MCP.'
+  if (-not $SkipWhasapoMcp) {
+    Write-Host 'MCP registration is no longer required for normal WhatsApp use. Use wha CLI commands.'
+  }
+  Write-Host 'Run: whasapo pair'
+  Write-Host 'Then test: wha doctor'
 }
 
 $selected = if ($Tool -eq 'all') {

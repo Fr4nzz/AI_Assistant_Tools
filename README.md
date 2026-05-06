@@ -12,7 +12,7 @@ This repo is organized as one folder per tool. Each folder contains the actual s
 | Outlook / Microsoft 365 | Institutional Outlook mail and calendar | Built for an institutional Microsoft account where third-party Graph app/API permissions were restricted. Uses a headed/headless Outlook Web browser profile and the Outlook Web token path that works for mail/calendar. |
 | OneDrive / Microsoft 365 files | OneDrive and shared Microsoft files | Uses Microsoft Graph file APIs from the signed-in Microsoft web session. Graph file access worked, while Graph mail/calendar scopes did not. |
 | D2L / Brightspace | Course, assignment, deadline, grade, announcement, and LMS file context | Uses browser-backed institutional login because simple API-token setup was not reliable for this environment. |
-| WhatsApp / Whasapo MCP | WhatsApp chats, search, groups, media download, explicit sending | Uses Whasapo MCP. We moved away from the previous WhatsApp approach because historical message sync was poor; Whasapo uses a local SQLite database and works better after it has populated. |
+| WhatsApp / Whasapo + wha CLI | WhatsApp chats, search, groups, media discovery/download, explicit sending | Uses Whasapo pairing plus a local `wha` CLI. We moved away from the previous MCP-first approach because historical message sync/tool visibility was inconsistent; `wha` reads Whasapo's SQLite cache directly. |
 
 ## Quick Install
 
@@ -78,6 +78,8 @@ tools/
     skill/
     README.md
   whatsapp/
+    bin/
+    skill/
     README.md
 scripts/
   install.ps1
