@@ -1,0 +1,7 @@
+interface:
+  display_name: "Outlook"
+  short_description: "Read and summarize Outlook mail"
+  default_prompt: "Use $outlook to summarize my Outlook inbox and identify pending items."
+
+policy:
+  allow_implicit_invocation: true

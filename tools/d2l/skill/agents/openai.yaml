@@ -1,0 +1,7 @@
+interface:
+  display_name: "D2L"
+  short_description: "Read D2L courses and deadlines"
+  default_prompt: "Use $d2l to summarize my D2L deadlines and assignments."
+
+policy:
+  allow_implicit_invocation: true

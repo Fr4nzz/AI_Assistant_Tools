@@ -1,0 +1,7 @@
+interface:
+  display_name: "OneDrive"
+  short_description: "Search and download OneDrive files"
+  default_prompt: "Use $onedrive to find files in my OneDrive."
+
+policy:
+  allow_implicit_invocation: true
