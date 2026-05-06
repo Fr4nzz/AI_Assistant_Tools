@@ -34,35 +34,71 @@ the current architecture and installs `gog` to:
 ## Google Cloud Setup
 
 `gog` needs a Google Cloud project with Workspace APIs enabled and a Desktop app
-OAuth client. An agent can automate the project and API setup with `gcloud`, but
-the Google Auth Platform consent screen and Desktop OAuth client usually still
-need to be completed in the browser.
+OAuth client. The recommended setup path is to install Google Cloud CLI and let
+the agent use `gcloud` for the project and API setup. The Google Auth Platform
+consent screen and Desktop OAuth client still need to be completed in the
+browser.
+
+On Windows, install Google Cloud CLI first if `gcloud` is not already available:
+
+```powershell
+$installer = Join-Path $env:TEMP 'GoogleCloudSDKInstaller.exe'
+Invoke-WebRequest -Uri 'https://dl.google.com/dl/cloudsdk/channels/rapid/GoogleCloudSDKInstaller.exe' -OutFile $installer
+Start-Process -FilePath $installer -ArgumentList @('/S', '/allusers') -Wait
+```
+
+After install, `gcloud.cmd` may be available before `gcloud` is on PATH, and
+PowerShell may block `gcloud.ps1` depending on ExecutionPolicy. Prefer calling
+the `.cmd` wrapper from automation:
+
+```powershell
+$gcloud = Join-Path ${env:ProgramFiles(x86)} 'Google\Cloud SDK\google-cloud-sdk\bin\gcloud.cmd'
+& $gcloud --version
+```
 
 First authenticate `gcloud` as the Google account that should own the project:
 
-```bash
-gcloud auth login you@gmail.com --no-launch-browser
+```powershell
+& $gcloud auth login
 ```
 
+If a terminal is hidden from the user, open this command in a visible external
+PowerShell window so the user can complete the browser login and any prompts.
+
 Then create the project and enable APIs:
+
+```powershell
+$PROJECT_ID = "ai-assistant-$(Get-Date -Format 'yyMMddHHmmss')"
+& $gcloud projects create $PROJECT_ID --name='AI Assistant'
+& $gcloud config set project $PROJECT_ID
+& $gcloud services enable `
+  gmail.googleapis.com `
+  calendar-json.googleapis.com `
+  drive.googleapis.com `
+  docs.googleapis.com `
+  sheets.googleapis.com `
+  slides.googleapis.com `
+  tasks.googleapis.com `
+  --project $PROJECT_ID
+```
+
+If project creation fails with `Callers must accept Terms of Service`, open
+Google Cloud Console once with the project owner account, accept the Google
+Cloud Terms of Service, and rerun the `projects create` command with a new
+project ID.
+
+Linux/macOS shells can use the equivalent Bash form:
 
 ```bash
 PROJECT_ID="ai-assistant-$(date +%y%m%d%H%M%S)"
 gcloud projects create "$PROJECT_ID" --name="AI Assistant"
 gcloud config set project "$PROJECT_ID"
-gcloud services enable \
-  gmail.googleapis.com \
-  calendar-json.googleapis.com \
-  drive.googleapis.com \
-  docs.googleapis.com \
-  sheets.googleapis.com \
-  slides.googleapis.com \
-  tasks.googleapis.com \
-  --project "$PROJECT_ID"
+gcloud services enable gmail.googleapis.com calendar-json.googleapis.com drive.googleapis.com docs.googleapis.com sheets.googleapis.com slides.googleapis.com tasks.googleapis.com --project "$PROJECT_ID"
 ```
 
 Open the remaining setup pages with Google account chooser URLs so a browser
-with multiple Google accounts does not silently use the wrong account:
+with multiple Google accounts does not silently use the wrong account. Open one
+page at a time and finish it before moving to the next:
 
 ```text
 https://accounts.google.com/AccountChooser?continue=https%3A%2F%2Fconsole.cloud.google.com%2Fauth%2Faudience%3Fproject%3DPROJECT_ID

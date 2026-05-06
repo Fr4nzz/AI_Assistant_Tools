@@ -202,10 +202,16 @@ commands may fail with `ProcessSingleton` errors if the window is left running.
 
 Google Workspace / `gogcli` setup notes:
 
-- Use `gcloud` only for the parts it can automate: authenticating the owner
-  account, creating the project, selecting it, and enabling APIs.
+- Prefer installing Google Cloud CLI and using `gcloud` for the parts it can
+  automate: authenticating the owner account, creating the project, selecting
+  it, and enabling APIs. On Windows, call `gcloud.cmd` from automation if
+  PowerShell blocks `gcloud.ps1`.
+- If `gcloud projects create` fails with `Callers must accept Terms of Service`,
+  open Google Cloud Console with the project owner account, accept the Google
+  Cloud Terms of Service, then rerun project creation with a new project ID.
 - Open Google Auth Platform console pages through an account chooser URL when
-  the browser has multiple Google accounts:
+  the browser has multiple Google accounts. Open one setup page at a time, not
+  all links at once:
 
 ```text
 https://accounts.google.com/AccountChooser?continue=https%3A%2F%2Fconsole.cloud.google.com%2Fauth%2Faudience%3Fproject%3DPROJECT_ID
