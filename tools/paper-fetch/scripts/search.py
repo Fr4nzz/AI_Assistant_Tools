@@ -32,10 +32,11 @@ def search_openalex(query: str, max_results: int = 10) -> List[Dict[str, Any]]:
             authorships = item.get("authorships", [])
             authors = [a.get("author", {}).get("display_name", "") for a in authorships]
             oa = item.get("open_access", {})
+            pub_year = item.get("publication_year")
             results.append({
                 "title": item.get("display_name", ""),
                 "authors": ", ".join(filter(None, authors)),
-                "year": str(item.get("publication_year", "")),
+                "year": str(pub_year) if pub_year is not None else "",
                 "doi": item.get("doi", ""),
                 "source": "openalex",
                 "pdf_url": oa.get("oa_url", ""),
@@ -68,10 +69,11 @@ def search_semantic_scholar(query: str, max_results: int = 10) -> List[Dict[str,
             authors = item.get("authors", [])
             author_names = [a.get("name", "") for a in authors]
             oa_pdf = item.get("openAccessPdf", {}) or {}
+            year = item.get("year")
             results.append({
                 "title": item.get("title", ""),
                 "authors": ", ".join(filter(None, author_names)),
-                "year": str(item.get("year", "")),
+                "year": str(year) if year is not None else "",
                 "doi": item.get("doi", ""),
                 "source": "semantic_scholar",
                 "pdf_url": oa_pdf.get("url", ""),
