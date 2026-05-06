@@ -1,2 +1,2 @@
 name: gogcli
-description: Search and read Gmail through the local gog CLI with sanitized JSON output.
+description: Work with Google services through the local gog CLI with agent-friendly JSON output.

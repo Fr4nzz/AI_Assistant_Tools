@@ -8,7 +8,7 @@ This repo is organized as one folder per tool. Each folder contains the actual s
 
 | Tool | What it enables | Why this setup exists |
 |---|---|---|
-| Google Workspace / Gmail | Gmail search/read through `gog`; Drive, Docs, Sheets, Slides, Forms, Calendar through `gws` | Gmail does not provide a practical reusable browser token for this workflow, so the reliable route is a Google Cloud project + Desktop OAuth client. `gog` is more agent-friendly for Gmail search/thread reads; `gws` remains useful for broader Workspace editing. |
+| Google Workspace / Gmail | Gmail, Calendar, Drive, Docs, Sheets, Slides, Forms, and related Google APIs through `gog` | Gmail does not provide a practical reusable browser token for this workflow, so the reliable route is a Google Cloud project + Desktop OAuth client. `gog` is agent-friendly and supports structured JSON, sanitized Gmail reads, command guards, and multiple Google services. |
 | Outlook / Microsoft 365 | Institutional Outlook mail and calendar | Built for an institutional Microsoft account where third-party Graph app/API permissions were restricted. Uses a headed/headless Outlook Web browser profile and the Outlook Web token path that works for mail/calendar. |
 | OneDrive / Microsoft 365 files | OneDrive and shared Microsoft files | Uses Microsoft Graph file APIs from the signed-in Microsoft web session. Graph file access worked, while Graph mail/calendar scopes did not. |
 | D2L / Brightspace | Course, assignment, deadline, grade, announcement, and LMS file context | Uses browser-backed institutional login because simple API-token setup was not reliable for this environment. |
@@ -28,7 +28,6 @@ Install only one tool:
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool outlook
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool onedrive
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool d2l
-& ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool google-workspace
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool gogcli
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool whatsapp
 ```
@@ -73,9 +72,6 @@ tools/
     README.md
   d2l/
     bin/
-    skill/
-    README.md
-  google-workspace/
     skill/
     README.md
   gogcli/

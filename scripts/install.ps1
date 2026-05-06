@@ -1,5 +1,5 @@
 param(
-  [ValidateSet('all', 'google-workspace', 'gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp')]
+  [ValidateSet('all', 'gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp')]
   [string] $Tool = 'all',
 
   [string] $InstallRoot = (Join-Path $HOME '.ai-assistant-tools'),
@@ -88,35 +88,6 @@ function Install-WhaCli {
   Write-Host "Installed PATH shim to $shim"
 }
 
-function Install-GoogleWorkspace {
-  Install-Skill 'google-workspace' 'google-workspace'
-
-  $skillInstaller = Join-Path $HOME '.codex\skills\.system\skill-installer\scripts\install-skill-from-github.py'
-  if (Test-Path -LiteralPath $skillInstaller) {
-    foreach ($skill in @('gws-shared', 'gws-gmail', 'gws-drive', 'gws-docs')) {
-      python $skillInstaller --repo googleworkspace/cli --path "skills/$skill"
-    }
-  } else {
-    Write-Warning 'Codex skill-installer was not found. Install upstream gws-shared, gws-gmail, gws-drive, and gws-docs skills manually if needed.'
-  }
-
-  $localBin = Join-Path $HOME '.local\bin'
-  New-Item -ItemType Directory -Force -Path $localBin | Out-Null
-  $shim = Join-Path $localBin 'gws.cmd'
-  "@echo off`r`ncall `"%APPDATA%\npm\gws.cmd`" %*`r`n" | Set-Content -LiteralPath $shim -Encoding ASCII
-
-  if (-not (Get-Command gws.cmd -ErrorAction SilentlyContinue)) {
-    if (-not $SkipDependencies) {
-      npm install -g '@googleworkspace/cli'
-    } else {
-      Write-Warning 'gws.cmd was not found. Install it with: npm install -g @googleworkspace/cli'
-    }
-  }
-
-  Write-Host 'Installed google-workspace Codex skill.'
-  Write-Host 'Follow tools/google-workspace/README.md for Google Cloud OAuth setup.'
-}
-
 function Install-GogCli {
   $localBin = Join-Path $HOME '.local\bin'
   New-Item -ItemType Directory -Force -Path $localBin | Out-Null
@@ -144,7 +115,7 @@ function Install-GogCli {
 
   Write-Host "Installed gog.exe to $localBin"
   Write-Host 'Run: gog --version'
-  Write-Host 'Then authenticate Gmail with: gog auth credentials set <client_secret.json>; gog auth add you@gmail.com --services gmail --readonly --gmail-scope readonly'
+  Write-Host 'Then authenticate with: gog auth credentials set <client_secret.json>; gog auth add you@gmail.com --services gmail,calendar,drive,docs,sheets,slides,forms'
 }
 
 function Install-WhatsApp {
@@ -168,7 +139,7 @@ function Install-WhatsApp {
 }
 
 $selected = if ($Tool -eq 'all') {
-  @('google-workspace', 'gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp')
+  @('gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp')
 } else {
   @($Tool)
 }
@@ -178,7 +149,6 @@ foreach ($item in $selected) {
     'outlook' { Install-CliTool 'outlook' @('outlook.py', 'outlook.cmd') @('playwright') }
     'onedrive' { Install-CliTool 'onedrive' @('onedrive.py', 'onedrive.cmd') @('playwright') }
     'd2l' { Install-CliTool 'd2l' @('d2l.py', 'd2l.cmd') @('playwright', 'websockets') }
-    'google-workspace' { Install-GoogleWorkspace }
     'gogcli' { Install-GogCli }
     'whatsapp' { Install-WhatsApp }
   }
