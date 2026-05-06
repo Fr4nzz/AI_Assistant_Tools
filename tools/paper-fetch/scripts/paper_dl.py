@@ -137,7 +137,7 @@ def cmd_set_key(args: argparse.Namespace) -> int:
 def main() -> int:
     parser = argparse.ArgumentParser(
         prog="paper-dl",
-        description="Search and download academic papers from open access sources and academic mirrors.",
+        description="Search and download academic papers from open access sources, repositories, and academic mirrors.",
     )
     parser.add_argument("--json", action="store_true", help="Output JSON")
     sub = parser.add_subparsers(dest="command", required=True)

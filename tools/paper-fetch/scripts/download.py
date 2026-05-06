@@ -1,7 +1,10 @@
 """Download papers with mirror fallback."""
+import hashlib
+import re
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from urllib.parse import quote_plus, urljoin
 
 import requests
 import urllib3
@@ -92,6 +95,78 @@ def try_oa_download(doi: str, save_dir: Path) -> Optional[Dict[str, Any]]:
     except Exception:
         pass
     return None
+
+
+def try_annas_archive_download(identifier: str, save_dir: Path) -> Optional[Dict[str, Any]]:
+    """Try to download via Anna's Archive as a fallback."""
+    base_url = "https://annas-archive.org"
+    session = requests.Session()
+    session.headers.update({
+        "User-Agent": "Mozilla/5.0 (compatible; paper-fetch/1.0)",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+    })
+
+    try:
+        search_url = f"{base_url}/search?q={quote_plus(identifier)}"
+        resp = session.get(search_url, timeout=20)
+        resp.raise_for_status()
+
+        soup = BeautifulSoup(resp.text, "html.parser")
+        file_page_url = ""
+        for anchor in soup.select("a[href]"):
+            href = (anchor.get("href") or "").strip()
+            if re.search(r"/md5/[0-9a-fA-F]{32}", href):
+                file_page_url = urljoin(base_url, href)
+                break
+
+        if not file_page_url:
+            return None
+
+        resp = session.get(file_page_url, timeout=20)
+        resp.raise_for_status()
+
+        soup = BeautifulSoup(resp.text, "html.parser")
+        pdf_url = ""
+        for anchor in soup.select("a[href]"):
+            href = (anchor.get("href") or "").strip()
+            if not href:
+                continue
+            lowered = href.lower()
+            if "torrent" in lowered:
+                continue
+            if ".pdf" in lowered or "download" in lowered:
+                pdf_url = urljoin(base_url, href)
+                break
+
+        if not pdf_url:
+            return None
+
+        resp = session.get(pdf_url, stream=True, timeout=60)
+        resp.raise_for_status()
+
+        first_chunk = next(resp.iter_content(chunk_size=1024), b"")
+        content_type = (resp.headers.get("content-type") or "").lower()
+        if "pdf" not in content_type and not first_chunk.startswith(b"%PDF"):
+            return None
+
+        content = first_chunk + b"".join(resp.iter_content(chunk_size=8192))
+        if not is_valid_pdf(content):
+            return None
+
+        safe_hint = re.sub(r"[^a-zA-Z0-9._-]+", "_", identifier)[:80] or "paper"
+        digest = hashlib.md5((pdf_url + identifier).encode("utf-8")).hexdigest()[:8]
+        path = save_pdf(content, save_dir, doi=identifier, title=f"annas_{safe_hint}_{digest}")
+        return {
+            "status": "success",
+            "path": str(path),
+            "doi": identifier,
+            "title": safe_hint,
+            "source": "annas_archive",
+            "mirror": "",
+        }
+    except Exception:
+        return None
 
 
 def try_mirror_download(doi: str, save_dir: Path) -> Optional[Dict[str, Any]]:
@@ -197,19 +272,24 @@ def download_paper(identifier: str, output_dir: Optional[Path] = None) -> Dict[s
     if result:
         return result
 
-    # Step 3: Mirror primary
+    # Step 3: Anna's Archive fallback
+    result = try_annas_archive_download(doi, save_dir)
+    if result:
+        return result
+
+    # Step 4: Mirror primary
     result = try_mirror_download(doi, save_dir)
     if result:
         return result
 
-    # Step 4: Direct PDF fallback
+    # Step 5: Direct PDF fallback
     result = try_direct_pdf_fallback(doi, save_dir)
     if result:
         return result
 
     return {
         "status": "error",
-        "error": f"Failed to download paper: {doi}. Tried OA, academic mirrors, and direct PDF fallbacks.",
+        "error": f"Failed to download paper: {doi}. Tried OA, Anna's Archive, academic mirrors, and direct PDF fallbacks.",
         "path": "",
         "doi": doi,
         "title": "",
