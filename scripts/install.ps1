@@ -115,7 +115,7 @@ function Install-GogCli {
 
   Write-Host "Installed gog.exe to $localBin"
   Write-Host 'Run: gog --version'
-  Write-Host 'Then authenticate with: gog auth credentials set <client_secret.json>; gog auth add you@gmail.com --services gmail,calendar,drive,docs,sheets,slides,forms'
+  Write-Host 'Then authenticate with: gog auth credentials set <client_secret.json>; gog auth add you@gmail.com --services gmail,calendar,drive,docs,sheets,slides,forms,tasks'
 }
 
 function Install-WhatsApp {

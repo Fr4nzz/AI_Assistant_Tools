@@ -31,6 +31,14 @@ gog auth status
 
 For summaries, search first and then fetch only the relevant threads with `--sanitize-content --json`.
 
+The recommended default auth services are:
+
+```powershell
+gog auth add user@gmail.com --services gmail,calendar,drive,docs,sheets,slides,forms,tasks
+```
+
+Add optional services such as `contacts`, `people`, `classroom`, or `appscript` only when a task needs them.
+
 For non-Gmail work, select the account explicitly and use JSON where possible:
 
 ```powershell

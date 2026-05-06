@@ -24,8 +24,10 @@ Create a Google Cloud project, enable the APIs you need, create a Desktop OAuth 
 
 ```powershell
 gog auth credentials set "$HOME\Downloads\client_secret_....json"
-gog auth add you@gmail.com --services gmail,calendar,drive,docs,sheets,slides,forms
+gog auth add you@gmail.com --services gmail,calendar,drive,docs,sheets,slides,forms,tasks
 ```
+
+The default service set covers mail, files, documents, spreadsheets, presentations, forms/quizzes, calendar, and tasks. Add optional services such as `contacts`, `people`, `classroom`, or `appscript` only when needed.
 
 For read-only Gmail workflows, keep auth narrow if preferred:
 
