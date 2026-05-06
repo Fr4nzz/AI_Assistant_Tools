@@ -81,11 +81,9 @@ tools/
     README.md
 scripts/
   install.ps1
-guides/
-  historical long-form setup notes
 ```
 
-The `guides/` folder is kept as reference material. The installer uses files from `tools/`.
+Each `tools/<name>/README.md` is the setup reference for that tool. The installer uses the files from `tools/`.
 
 ## Security
 
@@ -93,4 +91,3 @@ The `guides/` folder is kept as reference material. The installer uses files fro
 - Prefer read-only scopes unless write access is explicitly needed.
 - Treat send/share/delete/move/write operations as explicit-confirmation actions.
 - These are personal productivity setups, not centrally managed enterprise deployments.
-

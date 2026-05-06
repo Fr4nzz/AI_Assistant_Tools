@@ -73,7 +73,7 @@ function Install-GoogleWorkspace {
   }
 
   Write-Host 'Installed google-workspace Codex skill.'
-  Write-Host 'Follow guides/google-workspace-cli-regenerator-windows-codex.md for Google Cloud OAuth setup.'
+  Write-Host 'Follow tools/google-workspace/README.md for Google Cloud OAuth setup.'
 }
 
 function Install-WhatsApp {
@@ -114,4 +114,3 @@ foreach ($item in $selected) {
 
 Write-Host ''
 Write-Host 'Done. Restart Codex Desktop so new global skills and MCP servers are loaded.'
-

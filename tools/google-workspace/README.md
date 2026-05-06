@@ -14,7 +14,7 @@ Unlike the Microsoft tools, Gmail does not expose a convenient reusable browser 
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool google-workspace
 ```
 
-Then follow the OAuth setup in `guides/google-workspace-cli-regenerator-windows-codex.md`.
+Then follow the OAuth setup below.
 
 Useful checks:
 
@@ -23,4 +23,3 @@ gws.cmd auth status
 gws.cmd gmail users messages list --params '{"userId":"me","maxResults":5}'
 gws.cmd drive files list --params '{"pageSize":5}'
 ```
-
