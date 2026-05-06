@@ -17,7 +17,7 @@ Primero lee el README del repo. Luego dime que herramientas puedo instalar, enum
 Expected agent flow:
 
 1. Read this README and the relevant `tools/<name>/README.md` files.
-2. Ask which tools to install: `gogcli`, `outlook`, `onedrive`, `d2l`, `whatsapp`, or `all`.
+2. Ask which tools to install: `gogcli`, `outlook`, `onedrive`, `d2l`, `whatsapp`, `humanizer`, or `all`.
 3. Detect the OS and use the Windows or Linux install path below.
 4. On Windows, check prerequisites before running the installer:
    `python --version`, `py --version`, and whether `~\.local\bin` is on the
@@ -55,6 +55,7 @@ Expected agent flow:
 | `onedrive` | OneDrive / Microsoft 365 files | OneDrive and shared Microsoft files | Uses Microsoft Graph file APIs from the signed-in Microsoft web session. Graph file access worked, while Graph mail/calendar scopes did not. |
 | `d2l` | D2L / Brightspace | Course, assignment, deadline, grade, announcement, and LMS file context | Uses browser-backed institutional login because simple API-token setup was not reliable for this environment. |
 | `whatsapp` | WhatsApp / Whasapo + wha CLI | WhatsApp chats, search, groups, media discovery/download, explicit sending | Uses Whasapo pairing plus a local `wha` CLI. We moved away from the previous MCP-first approach because historical message sync/tool visibility was inconsistent; `wha` reads Whasapo's SQLite cache directly. |
+| `humanizer` | Humanizer skill | Natural-language rewrite and prose polishing for drafts, docs, emails, PR descriptions, and similar text | Vendors the MIT-licensed Hermes Agent humanizer skill so Codex can apply a focused style pass without any external account setup. |
 
 ## Quick Install - Windows
 
@@ -81,6 +82,7 @@ Install only one tool:
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool d2l
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool gogcli
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool whatsapp
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool humanizer
 ```
 
 Download files and skills without installing dependencies:
@@ -152,6 +154,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/ma
 bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) onedrive
 bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) d2l
 bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) gogcli
+bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) humanizer
 ```
 
 Requirements:
@@ -265,6 +268,9 @@ tools/
     README.md
   whatsapp/
     bin/
+    skill/
+    README.md
+  humanizer/
     skill/
     README.md
 scripts/

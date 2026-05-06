@@ -1,5 +1,5 @@
 param(
-  [ValidateSet('all', 'gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp')]
+  [ValidateSet('all', 'gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer')]
   [string] $Tool = 'all',
 
   [string] $InstallRoot = (Join-Path $HOME '.ai-assistant-tools'),
@@ -138,8 +138,14 @@ function Install-WhatsApp {
   Write-Host 'Then test: wha doctor'
 }
 
+function Install-Humanizer {
+  Install-Skill 'humanizer' 'humanizer'
+  Get-UrlFile "$RepoRawBase/tools/humanizer/skill/LICENSE" (Join-Path $HOME '.codex\skills\humanizer\LICENSE')
+  Write-Host 'Installed humanizer Codex skill.'
+}
+
 $selected = if ($Tool -eq 'all') {
-  @('gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp')
+  @('gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer')
 } else {
   @($Tool)
 }
@@ -151,6 +157,7 @@ foreach ($item in $selected) {
     'd2l' { Install-CliTool 'd2l' @('d2l.py', 'd2l.cmd') @('playwright', 'websockets') }
     'gogcli' { Install-GogCli }
     'whatsapp' { Install-WhatsApp }
+    'humanizer' { Install-Humanizer }
   }
 }
 
