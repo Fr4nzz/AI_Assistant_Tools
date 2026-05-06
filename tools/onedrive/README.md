@@ -46,6 +46,25 @@ $profile = Join-Path $env:LOCALAPPDATA 'outlook-cli\browser-data'
 Start-Process msedge.exe -ArgumentList @('--new-window', "--user-data-dir=$profile", 'https://www.office.com/launch/onedrive')
 ```
 
+On Windows, prefer using the Playwright Chromium binary that the CLI itself uses
+instead of a normal Edge/Chrome profile. This avoids seeding a different browser
+profile than the one headless commands will later read:
+
+```powershell
+$profile = Join-Path $env:LOCALAPPDATA 'outlook-cli\browser-data'
+$chromium = Get-ChildItem "$env:LOCALAPPDATA\ms-playwright" -Recurse -Filter chrome.exe |
+  Where-Object { $_.FullName -like '*chrome-win64\chrome.exe' } |
+  Sort-Object FullName -Descending |
+  Select-Object -First 1 -ExpandProperty FullName
+Start-Process $chromium -ArgumentList @('--new-window', "--user-data-dir=$profile", 'https://www.office.com/', 'https://www.office.com/launch/onedrive', 'https://www.office.com/mycontent', 'https://www.office.com/onedrive')
+```
+
+Confirm the visible window is signed in as the intended institutional account,
+let OneDrive show real files, then close that window completely before running
+headless tests. After a successful bootstrap, `onedrive token` should show
+`aud: https://graph.microsoft.com` and Graph file scopes such as
+`Files.ReadWrite.All` or similar.
+
 If the error persists after Outlook, D2L, and OneDrive have all loaded in that
 profile, the tenant or Office web session may not be issuing a reusable Graph
 token to localStorage. In that case the CLI is installed correctly, but OneDrive
