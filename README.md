@@ -11,7 +11,7 @@ Send this repo URL to your AI coding assistant and ask it to guide the install. 
 ```text
 Ayudame a instalar las herramientas de https://github.com/Fr4nzz/AI_Assistant_Tools.
 
-Primero lee el README del repo. Luego dime que herramientas puedo instalar, enumeralas, y preguntame cuales quiero: todas o solo algunas. Despues instala una por una las que elija, explicando cada login o paso sensible antes de hacerlo. Cuando termines, prueba cada herramienta instalada con un comando de lectura seguro.
+Primero lee el README del repo. Luego dime que herramientas puedo instalar, enumeralas, y preguntame cuales quiero: todas o solo algunas. Despues instala una por una las que elija, explicando cada login o paso sensible antes de hacerlo. Cuando termines, prueba cada herramienta instalada.
 ```
 
 Expected agent flow:
