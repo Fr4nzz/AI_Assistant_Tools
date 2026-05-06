@@ -84,10 +84,3 @@ scripts/
 ```
 
 Each `tools/<name>/README.md` is the setup reference for that tool. The installer uses the files from `tools/`.
-
-## Security
-
-- Do not commit OAuth client secrets, refresh tokens, access tokens, browser profiles, cookies, SQLite message databases, or private attachments.
-- Prefer read-only scopes unless write access is explicitly needed.
-- Treat send/share/delete/move/write operations as explicit-confirmation actions.
-- These are personal productivity setups, not centrally managed enterprise deployments.
