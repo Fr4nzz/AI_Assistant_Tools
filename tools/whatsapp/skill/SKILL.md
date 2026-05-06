@@ -24,6 +24,7 @@ Use first-class `wha` commands, not Codex MCP tools. `wha download`, `wha send-m
 
 ```powershell
 wha doctor
+wha sync --wait 20
 wha search intillacta -n 20
 wha search "field report" -n 20
 wha chats --query "Global Environ" -n 10
@@ -49,7 +50,7 @@ wha media --chat 120363405350719367@g.us --query .m4a --json
 
 For context/search requests:
 
-1. Run `wha doctor` if you need to confirm the cache exists and has messages.
+1. Run `wha sync --wait 20` before search-heavy tasks so Whasapo is running and the SQLite cache has a chance to refresh.
 2. Run broad `wha search` terms.
 3. Identify relevant chat JIDs.
 4. If `wha chats --query "Name"` misses a known chat/group, do not stop. Search distinctive message text, participant names, filenames, or screenshots anchors with `wha search`, then map the discovered chat JID back to the requested name.
@@ -71,6 +72,8 @@ For sending:
 ## Notes
 
 Whasapo's SQLite cache improves as Whasapo runs and syncs messages. If a search returns no results, the message may not be cached yet.
+
+The cache can be stale if Whasapo has not been running recently. `wha sync --wait 20` starts `whasapo serve` in the background if needed and reports current cache counts. Use it at the start of a WhatsApp task when recency matters.
 
 SQLite-backed commands are fast and parallel-safe. Live commands (`wha download`, `wha send-message`, `wha send-file`, and alias imports that explicitly need live data) use a local lock so parallel calls from different assistants queue instead of opening multiple WhatsApp Web streams at once.
 

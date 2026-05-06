@@ -125,7 +125,7 @@ Windows login notes:
   command line contains `outlook-cli\browser-data`, not the user's normal
   browser sessions.
 - For WhatsApp, run `whasapo pair` in a terminal window the user can see, scan
-  the QR code, then start `whasapo serve` immediately so sync begins. Check
+  the QR code, then run `wha sync --wait 60` immediately so sync begins. Check
   `wha doctor` and wait until `messages` and `whatsmeow_contacts` are non-zero
   before searching chats or media.
 

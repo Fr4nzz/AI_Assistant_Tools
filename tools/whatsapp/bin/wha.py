@@ -8,6 +8,7 @@ import os
 import sqlite3
 import subprocess
 import sys
+import time
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -57,6 +58,51 @@ def whasapo_source():
     if not os.path.exists(exe):
         raise SystemExit(f"Whasapo executable not found: {exe}")
     return f"{exe.replace(os.sep, '/')} serve"
+
+
+def whasapo_exe():
+    exe = os.environ.get(
+        "WHASAPO_EXE",
+        os.path.join(os.environ.get("LOCALAPPDATA", ""), "whasapo", "whasapo.exe"),
+    )
+    if not os.path.exists(exe):
+        raise SystemExit(f"Whasapo executable not found: {exe}")
+    return exe
+
+
+def whasapo_running():
+    if os.name == "nt":
+        result = subprocess.run(
+            ["tasklist", "/FI", "IMAGENAME eq whasapo.exe"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+        return "whasapo.exe" in result.stdout.lower()
+    result = subprocess.run(
+        ["pgrep", "-f", "whasapo.*serve"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    return result.returncode == 0
+
+
+def start_whasapo_serve():
+    if whasapo_running():
+        return False
+    exe = whasapo_exe()
+    if os.name == "nt":
+        subprocess.Popen(
+            [exe, "serve"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP,
+        )
+    else:
+        subprocess.Popen([exe, "serve"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+    return True
 
 
 @contextlib.contextmanager
@@ -175,6 +221,38 @@ def cmd_doctor(args):
     aliases = load_aliases()
     info["aliases"] = len(aliases)
     info["aliases_file"] = alias_path()
+    print(json.dumps(info, ensure_ascii=False, indent=2))
+
+
+def cache_counts():
+    path = db_path()
+    info = {"db": path, "exists": os.path.exists(path), "messages": 0, "whatsmeow_contacts": 0}
+    if not info["exists"]:
+        return info
+    st = os.stat(path)
+    info["size_bytes"] = st.st_size
+    info["modified"] = dt.datetime.fromtimestamp(st.st_mtime).isoformat(timespec="seconds")
+    con = connect()
+    for table in ("messages", "whatsmeow_contacts"):
+        try:
+            info[table] = con.execute(f"select count(*) from {table}").fetchone()[0]
+        except sqlite3.Error:
+            info[table] = None
+    return info
+
+
+def cmd_sync(args):
+    started = start_whasapo_serve()
+    deadline = time.time() + args.wait
+    info = cache_counts()
+    while args.wait > 0 and time.time() < deadline:
+        if (info.get("messages") or 0) > 0 and (info.get("whatsmeow_contacts") or 0) > 0:
+            break
+        time.sleep(2)
+        info = cache_counts()
+    info["serve_started"] = started
+    info["serve_running"] = whasapo_running()
+    info["waited_seconds"] = args.wait
     print(json.dumps(info, ensure_ascii=False, indent=2))
 
 
@@ -542,6 +620,10 @@ def main():
     common.add_argument("--width", type=int, default=500)
 
     sub.add_parser("doctor").set_defaults(func=cmd_doctor)
+
+    s = sub.add_parser("sync", help="Start Whasapo serve and wait briefly for the SQLite cache to populate")
+    s.add_argument("--wait", type=int, default=20, help="Seconds to wait for non-empty messages/contacts (default: 20)")
+    s.set_defaults(func=cmd_sync)
 
     a = sub.add_parser("alias", help="Manage local chat aliases")
     a_sub = a.add_subparsers(dest="alias_cmd", required=True)

@@ -56,7 +56,7 @@ In Codex Desktop, pairing and sync are separate steps. After a successful
 the SQLite cache before searching chats:
 
 ```powershell
-Start-Process -FilePath "$env:LOCALAPPDATA\whasapo\whasapo.exe" -ArgumentList 'serve' -WindowStyle Hidden
+wha sync --wait 60
 ```
 
 Then watch `wha doctor` until `messages` and `whatsmeow_contacts` are non-zero:
@@ -69,10 +69,17 @@ Do this before running `wha search`, `wha chats`, `wha contacts`, or `wha media`
 If the cache is still at `0` messages, searches can return no results even
 though WhatsApp is correctly paired.
 
+For normal future use, run `wha sync --wait 20` before search-heavy tasks. The
+local database is a cache, so it can be stale if Whasapo has not been running
+since the phone received new messages. `wha sync` starts `whasapo serve` in the
+background if it is not already running and then reports the current cache
+counts.
+
 ## Test
 
 ```powershell
 wha doctor
+wha sync --wait 20
 wha search intillacta -n 20
 wha chats --query "Global Environ" -n 20
 wha media --query .pdf -n 20
