@@ -1,0 +1,7 @@
+interface:
+  display_name: "Paper Fetch"
+  short_description: "Search and download academic papers"
+  default_prompt: "Search for papers about quantum computing and download the most relevant one."
+
+policy:
+  allow_implicit_invocation: true

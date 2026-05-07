@@ -12,6 +12,9 @@ triggers:
   - reference
   - academic
 argument-hint: "<query|doi|url>"
+metadata:
+  requires:
+    bins: ["paper-dl"]
 ---
 
 # Paper Fetch Skill

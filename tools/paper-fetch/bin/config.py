@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from typing import List, Optional
 
-SKILL_DIR = Path(__file__).resolve().parent.parent
+SKILL_DIR = Path(__file__).resolve().parent
 
 
 def _load_dotenv() -> None:

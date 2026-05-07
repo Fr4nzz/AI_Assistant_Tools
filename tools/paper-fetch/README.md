@@ -1,149 +1,52 @@
 # Paper Fetch
 
-Search and download academic papers with automatic mirror discovery.
+Search and download academic papers from open access sources, repositories, and academic mirrors.
 
 ## What It Does
 
-- **Search** across OpenAlex, Semantic Scholar, Crossref, and arXiv
-- **Download** papers by DOI or URL
+- **Search** across OpenAlex, Semantic Scholar, Crossref, arXiv, bioRxiv, and Google Scholar in parallel
+- **Download** papers by DOI or URL with multi-source fallback (OA → Anna's Archive → mirrors → direct PDF)
 - **Auto-discover** working academic mirrors with health probes
 - **Set API keys** interactively via CLI
 
-## Quick Install
+## Files
 
-### Prerequisites
+- `bin/paper-dl.py` - CLI implementation.
+- `bin/paper-dl.cmd` - Windows launcher.
+- `skill/` - global Codex skill files.
 
-- Python 3.10+ with `pip`
-- `git` (to clone)
+## Install - Windows
 
-### Install
+```powershell
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool paper-fetch
+```
+
+## Install - Linux / CachyOS
 
 ```bash
-# Clone wherever you want
-git clone <repo-url> ~/paper-fetch
-cd ~/paper-fetch/skills/paper-fetch
-
-# Create virtual environment
-python3 -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
+bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) paper-fetch
 ```
 
-### Codex Desktop (Skill Mode)
-
-Copy the skill to your Codex skills directory:
-
-```bash
-# Linux / macOS
-mkdir -p ~/.codex/skills
-cp -r ~/paper-fetch/skills/paper-fetch ~/.codex/skills/paper-fetch
-
-# Windows
-mkdir %USERPROFILE%\.codex\skills
-xcopy /E /I %USERPROFILE%\paper-fetch\skills\paper-fetch %USERPROFILE%\.codex\skills\paper-fetch
-```
-
-Restart Codex Desktop after installing.
-
-### Codex Desktop (MCP Server Mode)
-
-Add to your Claude Desktop config:
-
-**macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-**Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
-**Linux**: `~/.config/Claude/claude_desktop_config.json`
-
-```json
-{
-  "mcpServers": {
-    "paper-fetch": {
-      "command": "python3",
-      "args": ["-m", "scripts.paper_dl", "serve"],
-      "env": {
-        "PAPER_FETCH_UNPAYWALL_EMAIL": "your@email.com"
-      }
-    }
-  }
-}
-```
+The Linux installer creates a venv under `~/.ai-assistant-tools/venv`, installs
+`requests`, `beautifulsoup4`, `urllib3`, and `lxml`, copies the CLI files to
+`~/.ai-assistant-tools/paper-fetch`, and creates the `~/.local/bin/paper-dl` shim.
 
 ## Configuration
 
-### Required: Unpaywall Email
-
-Any valid email works. Set it interactively:
+Set the required email and optional API keys:
 
 ```bash
-python3 scripts/paper_dl.py set-key unpaywall-email your@email.com
+paper-dl set-key unpaywall-email your@email.com
+paper-dl set-key openalex YOUR_KEY_HERE
+paper-dl set-key semantic YOUR_KEY_HERE
 ```
 
-### Optional: API Keys (for better rate limits)
+Get a free OpenAlex key at https://openalex.org/settings/api-key (30-second signup).
 
-#### OpenAlex (Recommended — free, 30-second signup)
-
-1. Go to https://openalex.org/settings/api-key
-2. Click "Create account" or sign in
-3. Copy your API key
-4. Paste it into the chat so the AI can run:
-   ```bash
-   python3 scripts/paper_dl.py set-key openalex YOUR_KEY_HERE
-   ```
-
-#### Semantic Scholar (Optional — free)
-
-1. Go to https://www.semanticscholar.org/product/api
-2. Fill the form and request a key
-3. Once you receive it, run:
-   ```bash
-   python3 scripts/paper_dl.py set-key semantic YOUR_KEY_HERE
-   ```
-
-#### CORE (Optional — free)
-
-1. Go to https://core.ac.uk/services/api
-2. Register for a free key
-3. Run:
-   ```bash
-   python3 scripts/paper_dl.py set-key core YOUR_KEY_HERE
-   ```
-
-## Usage
-
-### Search
+## Test
 
 ```bash
-python3 scripts/paper_dl.py search "quantum entanglement" -n 5
+paper-dl search "CRISPR" -n 5
+paper-dl download 10.1038/s41586-019-1055-0
+paper-dl mirrors
 ```
-
-### Download
-
-```bash
-python3 scripts/paper_dl.py download 10.1038/nature12373
-python3 scripts/paper_dl.py download https://doi.org/10.1038/nature12373
-```
-
-### List Mirrors
-
-```bash
-python3 scripts/paper_dl.py mirrors
-```
-
-### Lookup DOI
-
-```bash
-python3 scripts/paper_dl.py lookup 10.1038/nature12373
-```
-
-## Files
-
-| File | Purpose |
-|------|---------|
-| `scripts/paper_dl.py` | Main CLI entry point |
-| `scripts/search.py` | Search APIs (OpenAlex, Semantic Scholar, Crossref, arXiv) |
-| `scripts/download.py` | Download pipeline |
-| `scripts/mirrors.py` | Mirror discovery and health probes |
-| `scripts/config.py` | Configuration and env vars |
-| `scripts/pdf_utils.py` | PDF validation and filename handling |
-| `SKILL.md` | Codex skill definition |
