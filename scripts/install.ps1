@@ -8,7 +8,9 @@ param(
 
   [switch] $SkipDependencies,
 
-  [switch] $SkipWhasapoMcp
+  [switch] $SkipWhasapoMcp,
+
+  [string] $HermesSkills = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -44,6 +46,23 @@ function Install-Skill {
 function Install-SkillReference {
   param([string] $Name, [string] $Source, [string] $Reference)
   $dest = Join-Path $HOME ".codex\skills\$Name\references"
+  New-Item -ItemType Directory -Force -Path $dest | Out-Null
+  Get-UrlFile "$RepoRawBase/tools/$Source/skill/references/$Reference" (Join-Path $dest $Reference)
+}
+
+function Install-HermesSkill {
+  param([string] $Name, [string] $Source)
+  if (-not $HermesSkills) { return }
+  $dest = Join-Path $HermesSkills $Name
+  New-Item -ItemType Directory -Force -Path $dest | Out-Null
+  Get-UrlFile "$RepoRawBase/tools/$Source/skill/SKILL.md" (Join-Path $dest 'SKILL.md')
+  Write-Host "Installed $Name Hermes skill to $dest"
+}
+
+function Install-HermesSkillReference {
+  param([string] $Name, [string] $Source, [string] $Reference)
+  if (-not $HermesSkills) { return }
+  $dest = Join-Path $HermesSkills "$Name\references"
   New-Item -ItemType Directory -Force -Path $dest | Out-Null
   Get-UrlFile "$RepoRawBase/tools/$Source/skill/references/$Reference" (Join-Path $dest $Reference)
 }
@@ -171,6 +190,7 @@ function Install-WhatsApp {
 
 function Install-Humanizer {
   Install-Skill 'humanizer' 'humanizer'
+  Install-HermesSkill 'humanizer' 'humanizer'
   Get-UrlFile "$RepoRawBase/tools/humanizer/skill/LICENSE" (Join-Path $HOME '.codex\skills\humanizer\LICENSE')
   Write-Host 'Installed humanizer Codex skill.'
 }
@@ -178,6 +198,8 @@ function Install-Humanizer {
 function Install-AcademicResearch {
   Install-Skill 'academic-research' 'academic-research'
   Install-SkillReference 'academic-research' 'academic-research' 'humanizer.md'
+  Install-HermesSkill 'academic-research' 'academic-research'
+  Install-HermesSkillReference 'academic-research' 'academic-research' 'humanizer.md'
   Ensure-GlobalAgentsNote
   Write-Host 'Installed academic-research Codex skill.'
 }
@@ -185,6 +207,7 @@ function Install-AcademicResearch {
 function Install-SkillOnly {
   param([string] $Name)
   Install-Skill $Name $Name
+  Install-HermesSkill $Name $Name
   Write-Host "Installed $Name Codex skill."
 }
 
@@ -246,6 +269,7 @@ PAPER_SEARCH_MCP_SCIHUB_MIRROR_PROBE_WORKERS=8
   "@echo off`r`nset `"PAPER_SEARCH_MCP_ENV_FILE=$envFile`"`r`npython -m paper_search_mcp.cli %*`r`n" | Set-Content -LiteralPath $shim -Encoding ASCII
 
   Install-Skill 'paper-fetch' 'paper-fetch'
+  Install-HermesSkill 'paper-fetch' 'paper-fetch'
 
   if (-not $SkipDependencies) {
     python -m pip install --upgrade 'git+https://github.com/Fr4nzz/paper-search-mcp.git@codex/fallback-download-improvements'
@@ -278,3 +302,9 @@ foreach ($item in $selected) {
 
 Write-Host ''
 Write-Host 'Done. Restart Codex Desktop so new global skills and MCP servers are loaded.'
+
+if ($HermesSkills) {
+  Write-Host ''
+  Write-Host "Hermes skills were also installed to $HermesSkills."
+  Write-Host 'Restart your Hermes session or reload skills for them to take effect.'
+}
