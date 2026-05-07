@@ -74,7 +74,14 @@ def cmd_lookup(args: argparse.Namespace) -> int:
 
     result = lookup_unpaywall(doi)
     if not result:
-        print(f"Error: Unpaywall lookup failed for {doi}", file=sys.stderr)
+        if not Config.UNPAYWALL_EMAIL:
+            print(
+                "Error: Unpaywall lookup requires an email. "
+                "Run: paper-dl set-key unpaywall-email your@email.com",
+                file=sys.stderr,
+            )
+        else:
+            print(f"Error: Unpaywall lookup failed for {doi}", file=sys.stderr)
         return 1
 
     if args.json:

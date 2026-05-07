@@ -29,7 +29,9 @@ Before using this skill, ensure it is installed:
 bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) paper-fetch
 ```
 
-Then configure the required email:
+Search and mirror fallback download work without configuration. For faster and
+more reliable DOI lookup/open-access downloads, configure an Unpaywall contact
+email:
 
 ```bash
 paper-dl set-key unpaywall-email your@email.com
@@ -75,7 +77,9 @@ Download pipeline (fully automatic, agent never specifies source):
 paper-dl lookup 10.1038/nature12373
 ```
 
-Returns title, OA status, and PDF URL from Unpaywall.
+Returns title, OA status, and PDF URL from Unpaywall. This command requires
+`unpaywall-email`; search and mirror fallback downloads can still work without
+it.
 
 ### List working mirrors
 ```bash
