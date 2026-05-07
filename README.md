@@ -56,7 +56,7 @@ Expected agent flow:
 | `d2l` | D2L / Brightspace | Course, assignment, deadline, grade, announcement, and LMS file context | Uses browser-backed institutional login because simple API-token setup was not reliable for this environment. |
 | `whatsapp` | WhatsApp / Whasapo + wha CLI | WhatsApp chats, search, groups, media discovery/download, explicit sending | Uses Whasapo pairing plus a local `wha` CLI. We moved away from the previous MCP-first approach because historical message sync/tool visibility was inconsistent; `wha` reads Whasapo's SQLite cache directly. |
 | `humanizer` | Humanizer skill | Natural-language rewrite and prose polishing for drafts, docs, emails, PR descriptions, and similar text | Vendors the MIT-licensed Hermes Agent humanizer skill so Codex can apply a focused style pass without any external account setup. |
-| `paper-fetch` | Paper Fetch | Search and download academic papers from open access sources, repositories, and academic mirrors | Searches OpenAlex, Semantic Scholar, Crossref, arXiv, bioRxiv, and Google Scholar in parallel. Downloads papers by DOI with multi-source fallback: OA → Anna's Archive → mirrors → direct PDF. |
+| `paper-fetch` | Paper Fetch | Search and download academic papers from open access sources, repositories, and academic mirrors | Searches OpenAlex, Semantic Scholar, Crossref, arXiv, bioRxiv, and Google Scholar in parallel. Downloads papers by DOI with multi-source fallback: OA → mirrors → Anna's Archive → direct PDF. |
 
 ## Quick Install - Windows
 

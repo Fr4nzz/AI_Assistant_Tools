@@ -5,8 +5,8 @@ Search and download academic papers from open access sources, repositories, and 
 ## What It Does
 
 - **Search** across OpenAlex, Semantic Scholar, Crossref, arXiv, bioRxiv, and Google Scholar in parallel
-- **Download** papers by DOI or URL with multi-source fallback (mirrors → OA → Anna's Archive → direct PDF)
-- **Auto-discover** working academic mirrors with health probes
+- **Download** papers by DOI or URL with multi-source fallback (OA → mirrors → Anna's Archive → direct PDF)
+- **Auto-discover** working academic mirrors with parallel health probes and latency-based ordering
 - **Set API keys** interactively via CLI
 
 ## Files
@@ -65,6 +65,11 @@ paper-dl --json search "species distribution modeling" -n 3
 paper-dl download 10.1038/s41586-019-1055-0
 paper-dl mirrors
 ```
+
+Use `paper-dl mirrors --refresh` to force a new mirror discovery pass. The tool
+checks candidate mirrors in parallel, drops mirrors that do not respond, sorts
+working mirrors by latency, and caches that order for 6 hours. This keeps dead
+mirrors from being tried before mirrors that are currently responding.
 
 After setting `unpaywall-email`, also test:
 

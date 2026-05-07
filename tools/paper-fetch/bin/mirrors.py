@@ -1,4 +1,5 @@
 """Sci-Hub mirror discovery with caching and health probes."""
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
 import time
 from typing import List, Optional
@@ -30,7 +31,7 @@ def _fetch_sci_hub_now_sh() -> List[str]:
         resp = requests.get(
             "https://sci-hub.now.sh",
             headers={"User-Agent": Config.USER_AGENT},
-            timeout=15,
+            timeout=Config.MIRROR_DISCOVERY_TIMEOUT,
         )
         resp.raise_for_status()
     except Exception:
@@ -67,7 +68,7 @@ def _fetch_wikidata() -> List[str]:
             "https://query.wikidata.org/sparql",
             params={"query": sparql, "format": "json"},
             headers={"User-Agent": Config.USER_AGENT},
-            timeout=15,
+            timeout=Config.MIRROR_DISCOVERY_TIMEOUT,
         )
         resp.raise_for_status()
         data = resp.json()
@@ -87,7 +88,7 @@ def _fetch_whereisscihub() -> List[str]:
         resp = requests.get(
             "https://whereisscihub.now.sh/api",
             headers={"User-Agent": Config.USER_AGENT},
-            timeout=15,
+            timeout=Config.MIRROR_DISCOVERY_TIMEOUT,
         )
         resp.raise_for_status()
         urls = resp.json()
@@ -120,9 +121,18 @@ def discover_mirrors() -> List[str]:
     if Config.PREFERRED_MIRROR and Config.PREFERRED_MIRROR not in mirrors:
         mirrors.insert(0, _normalize_mirror(Config.PREFERRED_MIRROR))
 
-    mirrors.extend(_fetch_sci_hub_now_sh())
-    mirrors.extend(_fetch_whereisscihub())
-    mirrors.extend(_fetch_wikidata())
+    discovery_sources = [
+        _fetch_sci_hub_now_sh,
+        _fetch_whereisscihub,
+        _fetch_wikidata,
+    ]
+    with ThreadPoolExecutor(max_workers=len(discovery_sources)) as executor:
+        for future in as_completed(executor.submit(source) for source in discovery_sources):
+            try:
+                mirrors.extend(future.result())
+            except Exception:
+                pass
+
     mirrors.extend(HARDCODED_MIRRORS)
 
     seen: set[str] = set()
@@ -136,17 +146,35 @@ def discover_mirrors() -> List[str]:
 
 def _health_probe(mirror: str) -> Optional[float]:
     """Probe a mirror and return latency in seconds, or None if dead."""
+    start = time.time()
     try:
-        start = time.time()
         resp = requests.head(
             mirror,
             headers={"User-Agent": Config.USER_AGENT},
-            timeout=10,
+            timeout=Config.MIRROR_PROBE_TIMEOUT,
             allow_redirects=True,
         )
-        latency = time.time() - start
         if resp.status_code < 500:
-            return latency
+            return time.time() - start
+    except Exception:
+        return None
+
+    # Some mirrors reject HEAD but serve normal browser requests. Only pay for
+    # the fallback GET after the host has already answered the HEAD request.
+    if resp.status_code not in (403, 405):
+        return None
+
+    try:
+        start = time.time()
+        resp = requests.get(
+            mirror,
+            headers={"User-Agent": Config.USER_AGENT},
+            timeout=Config.MIRROR_PROBE_TIMEOUT,
+            allow_redirects=True,
+            stream=True,
+        )
+        if resp.status_code < 500:
+            return time.time() - start
     except Exception:
         pass
     return None
@@ -154,11 +182,22 @@ def _health_probe(mirror: str) -> Optional[float]:
 
 def health_check(mirrors: List[str]) -> List[str]:
     """Return only responsive mirrors, sorted by latency (fastest first)."""
+    if not mirrors:
+        return []
+
     results = []
-    for m in mirrors:
-        latency = _health_probe(m)
-        if latency is not None:
-            results.append((latency, m))
+    max_workers = max(1, min(Config.MIRROR_PROBE_WORKERS, len(mirrors)))
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_to_mirror = {executor.submit(_health_probe, m): m for m in mirrors}
+        for future in as_completed(future_to_mirror):
+            mirror = future_to_mirror[future]
+            try:
+                latency = future.result()
+            except Exception:
+                latency = None
+            if latency is not None:
+                results.append((latency, mirror))
+
     results.sort(key=lambda x: x[0])
     return [m for _, m in results]
 

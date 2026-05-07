@@ -19,7 +19,7 @@ metadata:
 
 # Paper Fetch Skill
 
-Search and download academic papers with automatic mirror discovery and Open Access fallback.
+Search and download academic papers with Open Access lookup, automatic mirror discovery, and fallback sources.
 
 ## Setup (First Time)
 
@@ -68,8 +68,8 @@ paper-dl download https://doi.org/10.1038/nature12373
 
 Download pipeline (fully automatic, agent never specifies source):
 1. Extract/normalize DOI
-2. Try academic mirrors with auto-discovery (primary, no email needed)
-3. Try Open Access download via Unpaywall (fast path, requires email)
+2. Try Open Access download via Unpaywall (fast path, requires email)
+3. Try academic mirrors with auto-discovery (fallback, no email needed)
 4. Try Anna's Archive fallback
 5. Fallback to direct PDF from search APIs
 
@@ -88,7 +88,9 @@ paper-dl mirrors
 paper-dl mirrors --refresh
 ```
 
-Mirrors are auto-discovered from multiple sources, then health-probed and cached for 6 hours.
+Mirrors are auto-discovered from multiple sources, health-probed in parallel,
+sorted by latency, and cached for 6 hours. Use `--refresh` if downloads are
+falling through slow or dead mirrors.
 
 ### Set API keys interactively
 ```bash
@@ -117,8 +119,12 @@ Environment variables (loaded from `.env` in skill directory):
 | `PAPER_FETCH_OPENALEX_API_KEY` | No | Improves rate limits (free at openalex.org) |
 | `PAPER_FETCH_SEMANTIC_API_KEY` | No | Improves rate limits (free at semanticscholar.org) |
 | `PAPER_FETCH_CORE_API_KEY` | No | Improves rate limits (free at core.ac.uk) |
-| `PAPER_FETCH_PREFERRED_MIRROR` | No | Try this mirror first (default: https://sci-hub.box) |
+| `PAPER_FETCH_PREFERRED_MIRROR` | No | Add this mirror at the front of the discovery candidates |
+| `PAPER_FETCH_MIRRORS` | No | Comma-separated mirror override list |
 | `PAPER_FETCH_DOWNLOAD_DIR` | No | Download directory (default: ~/Downloads/papers) |
+| `PAPER_FETCH_MIRROR_DISCOVERY_TIMEOUT` | No | Seconds per mirror-list source (default: 5) |
+| `PAPER_FETCH_MIRROR_PROBE_TIMEOUT` | No | Seconds per mirror health probe (default: 4) |
+| `PAPER_FETCH_MIRROR_PROBE_WORKERS` | No | Parallel mirror probes (default: 8) |
 
 ## Workflow for the Agent
 
