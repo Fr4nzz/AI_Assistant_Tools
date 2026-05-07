@@ -9,7 +9,7 @@ REPO_RAW_BASE="${REPO_RAW_BASE:-https://raw.githubusercontent.com/Fr4nzz/AI_Assi
 
 usage() {
   cat <<'EOF'
-Usage: scripts/install-linux.sh [all|gogcli|outlook|onedrive|d2l|humanizer|paper-fetch|literature-search|citation-zotero|scientific-writing|literature-appraisal|exa-search]
+Usage: scripts/install-linux.sh [all|gogcli|outlook|onedrive|d2l|humanizer|paper-fetch|literature-search|citation-zotero|scientific-writing|literature-appraisal]
 
 Environment overrides:
   INSTALL_ROOT   Default: $HOME/.ai-assistant-tools
@@ -20,7 +20,7 @@ EOF
 }
 
 case "$TOOL" in
-  all|gogcli|outlook|onedrive|d2l|humanizer|paper-fetch|literature-search|citation-zotero|scientific-writing|literature-appraisal|exa-search) ;;
+  all|gogcli|outlook|onedrive|d2l|humanizer|paper-fetch|literature-search|citation-zotero|scientific-writing|literature-appraisal) ;;
   -h|--help) usage; exit 0 ;;
   *) usage >&2; exit 2 ;;
 esac
@@ -117,28 +117,6 @@ install_skill_only() {
   echo "Installed $name Codex skill."
 }
 
-install_exa_search() {
-  mkdir -p "$INSTALL_ROOT/exa-search"
-  download "$REPO_RAW_BASE/tools/exa-search/bin/exa-search.py" "$INSTALL_ROOT/exa-search/exa-search.py"
-  chmod +x "$INSTALL_ROOT/exa-search/exa-search.py"
-  if [ ! -f "$INSTALL_ROOT/exa-search/.env" ]; then
-    cat > "$INSTALL_ROOT/exa-search/.env" <<'EOF'
-EXA_API_KEY=
-EOF
-  fi
-  cat > "$LOCAL_BIN/exa-search" <<EOF
-#!/usr/bin/env bash
-export EXA_SEARCH_ENV_FILE="$INSTALL_ROOT/exa-search/.env"
-exec python "$INSTALL_ROOT/exa-search/exa-search.py" "\$@"
-EOF
-  chmod +x "$LOCAL_BIN/exa-search"
-  install_skill "exa-search" "exa-search"
-  echo "Installed exa-search CLI to $INSTALL_ROOT/exa-search"
-  echo "Config file: $INSTALL_ROOT/exa-search/.env"
-  echo "Installed PATH shim to $LOCAL_BIN/exa-search"
-  echo "Installed exa-search Codex skill."
-}
-
 install_paper_fetch() {
   ensure_venv
   mkdir -p "$INSTALL_ROOT/paper-search-mcp"
@@ -174,7 +152,7 @@ EOF
 
 selected_tools() {
   if [ "$TOOL" = "all" ]; then
-    printf '%s\n' gogcli outlook onedrive d2l humanizer paper-fetch literature-search citation-zotero scientific-writing literature-appraisal exa-search
+    printf '%s\n' gogcli outlook onedrive d2l humanizer paper-fetch literature-search citation-zotero scientific-writing literature-appraisal
   else
     printf '%s\n' "$TOOL"
   fi
@@ -188,7 +166,6 @@ while IFS= read -r item; do
     paper-fetch) install_paper_fetch ;;
     literature-search|citation-zotero|literature-appraisal) install_skill_only "$item" ;;
     scientific-writing) install_scientific_writing ;;
-    exa-search) install_exa_search ;;
   esac
 done < <(selected_tools)
 

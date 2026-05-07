@@ -17,7 +17,7 @@ Primero lee el README del repo. Luego dime que herramientas puedo instalar, enum
 Expected agent flow:
 
 1. Read this README and the relevant `tools/<name>/README.md` files.
-2. Ask which tools to install: `gogcli`, `outlook`, `onedrive`, `d2l`, `whatsapp`, `humanizer`, `paper-fetch`, `literature-search`, `citation-zotero`, `scientific-writing`, `literature-appraisal`, `exa-search`, or `all`.
+2. Ask which tools to install: `gogcli`, `outlook`, `onedrive`, `d2l`, `whatsapp`, `humanizer`, `paper-fetch`, `literature-search`, `citation-zotero`, `scientific-writing`, `literature-appraisal`, or `all`.
 3. Detect the OS and use the Windows or Linux install path below.
 4. On Windows, check prerequisites before running the installer:
    `python --version`, `py --version`, and whether `~\.local\bin` is on the
@@ -61,7 +61,6 @@ Expected agent flow:
 | `citation-zotero` | Zotero citation workflow skill | Zotero-backed source lookup, citation-key validation, BibTeX/CSL/Pandoc workflows, and safe `.docx` citation preparation | Supports reliable citation placeholders and static bibliography generation. For active Zotero fields, it guides verified Zotero plugin workflows instead of promising fragile field-code edits. |
 | `scientific-writing` | Scientific writing skill | Academic manuscript, thesis, literature review, methods/results/discussion, and reviewer-response writing | Adds a strict scientific clarity style pass based on your biology/ecology writing preferences: precise terms, no filler, no em dashes, claims matched to evidence. |
 | `literature-appraisal` | Literature appraisal skill | Evaluates paper relevance, evidence strength, limitations, and citation value | Adapts scientific critical thinking and scholar-evaluation ideas into a concise paper appraisal rubric. |
-| `exa-search` | Exa CLI search skill | Optional Exa search setup and benchmarking guidance | Installs the third-party `exa-cli` package in the tools venv and exposes it as `exa-search` to avoid colliding with the unrelated Linux `exa`/`eza` directory-listing commands. Use it as an experimental search route to compare against native search, Parallel, and paper-search. |
 
 ## Quick Install - Windows
 
@@ -94,7 +93,6 @@ Install only one tool:
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool citation-zotero
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool scientific-writing
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool literature-appraisal
-& ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool exa-search
 ```
 
 For `paper-fetch`, set an Unpaywall contact email after installation. Search and
@@ -180,7 +178,6 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/ma
 bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) citation-zotero
 bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) scientific-writing
 bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) literature-appraisal
-bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) exa-search
 ```
 
 For `paper-fetch`, set an Unpaywall contact email after installation. Search and

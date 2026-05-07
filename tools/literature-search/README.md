@@ -1,8 +1,8 @@
 # Literature Search
 
 Installs a Codex skill for literature-review discovery. It coordinates native
-web search, Parallel search when configured, supplemental `paper-search search`,
-and optional Exa search, then uses `paper-search metadata-dois` for DOI
+web search, Parallel search when configured, and supplemental `paper-search search`,
+then uses `paper-search metadata-dois` for DOI
 metadata and ranking.
 
 This is a skill-only tool; no extra binary is required beyond the optional

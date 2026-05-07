@@ -31,16 +31,9 @@ available:
 3. Paper-search topic search (`paper-search search`): slower and less reliable
    as a primary search, but useful as a supplemental academic-index pass. Start
    it in the background first when doing a three-engine comparison.
-4. Exa search, if installed/configured: optional comparison source. Do not run
-   it by default for every literature search because it consumes paid credits
-   and early benchmarks showed high overlap with native/Parallel results for
-   academic paper discovery. Use it when the user asks to compare engines, when
-   native/Parallel results are weak, or when searching for code/package docs.
-
 If time, accounts, or paid credits are limited, use native search first and add
 Parallel or paper-search only when the topic is broad, high stakes, or the user
-explicitly wants a more exhaustive search. Treat Exa as opt-in unless the user
-has asked for a benchmark or a broader search-engine comparison.
+explicitly wants a more exhaustive search.
 
 ## Query Strategy
 

@@ -1,5 +1,5 @@
 param(
-  [ValidateSet('all', 'gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer', 'paper-fetch', 'literature-search', 'citation-zotero', 'scientific-writing', 'literature-appraisal', 'exa-search')]
+  [ValidateSet('all', 'gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer', 'paper-fetch', 'literature-search', 'citation-zotero', 'scientific-writing', 'literature-appraisal')]
   [string] $Tool = 'all',
 
   [string] $InstallRoot = (Join-Path $HOME '.ai-assistant-tools'),
@@ -163,29 +163,6 @@ function Install-SkillOnly {
   Write-Host "Installed $Name Codex skill."
 }
 
-function Install-ExaSearch {
-  $toolDir = Join-Path $InstallRoot 'exa-search'
-  New-Item -ItemType Directory -Force -Path $toolDir | Out-Null
-  Get-UrlFile "$RepoRawBase/tools/exa-search/bin/exa-search.py" (Join-Path $toolDir 'exa-search.py')
-  Get-UrlFile "$RepoRawBase/tools/exa-search/bin/exa-search.cmd" (Join-Path $toolDir 'exa-search.cmd')
-
-  $envFile = Join-Path $toolDir '.env'
-  if (-not (Test-Path -LiteralPath $envFile)) {
-    'EXA_API_KEY=' | Set-Content -LiteralPath $envFile -Encoding ASCII
-  }
-
-  $localBin = Join-Path $HOME '.local\bin'
-  New-Item -ItemType Directory -Force -Path $localBin | Out-Null
-  $shim = Join-Path $localBin 'exa-search.cmd'
-  "@echo off`r`nset `"EXA_SEARCH_ENV_FILE=$envFile`"`r`npython `"$toolDir\exa-search.py`" %*`r`n" | Set-Content -LiteralPath $shim -Encoding ASCII
-
-  Install-Skill 'exa-search' 'exa-search'
-  Write-Host "Installed exa-search CLI to $toolDir"
-  Write-Host "Config file: $envFile"
-  Write-Host "Installed PATH shim to $shim"
-  Write-Host 'Installed exa-search Codex skill.'
-}
-
 function Install-PaperFetch {
   $toolDir = Join-Path $InstallRoot 'paper-search-mcp'
   New-Item -ItemType Directory -Force -Path $toolDir | Out-Null
@@ -226,7 +203,7 @@ PAPER_SEARCH_MCP_SCIHUB_MIRROR_PROBE_WORKERS=8
 }
 
 $selected = if ($Tool -eq 'all') {
-  @('gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer', 'paper-fetch', 'literature-search', 'citation-zotero', 'scientific-writing', 'literature-appraisal', 'exa-search')
+  @('gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer', 'paper-fetch', 'literature-search', 'citation-zotero', 'scientific-writing', 'literature-appraisal')
 } else {
   @($Tool)
 }
@@ -244,7 +221,6 @@ foreach ($item in $selected) {
     'citation-zotero' { Install-SkillOnly 'citation-zotero' }
     'scientific-writing' { Install-ScientificWriting }
     'literature-appraisal' { Install-SkillOnly 'literature-appraisal' }
-    'exa-search' { Install-ExaSearch }
   }
 }
 
