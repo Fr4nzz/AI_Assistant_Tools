@@ -56,7 +56,7 @@ Optional API keys in the same `.env`:
 
 ### Enrich DOI Metadata In Batch
 
-Use this after native/Parallel/web discovery finds candidate DOIs and you need a
+Use this after native/web discovery finds candidate DOIs and you need a
 ranking table:
 
 ```bash
@@ -113,7 +113,7 @@ paper-search read arxiv 2106.12345 -o ~/Downloads/papers
 
 1. If the user gives a DOI and wants the PDF, run `paper-search download-doi <doi> -o ~/Downloads/papers`.
 2. If the user asks to find papers by topic/title, use normal web/search tools first to identify the paper and DOI. Do not use `paper-search search` as the default discovery method.
-3. If normal/Parallel search returns multiple DOIs, use `metadata-dois` to enrich and rank them before deciding what to read or download.
+3. If normal search returns multiple DOIs, use `metadata-dois` to enrich and rank them before deciding what to read or download.
 4. If normal search returns one DOI and the user wants the PDF, use `download-doi`; if it returns only a source-specific ID, use `download <source> <paper_id>`.
 5. Use `paper-search search` only as a supplementary/last-resort metadata lookup when normal search is unavailable or the user explicitly asks to use this CLI.
 6. Always report the saved path and whether the source was Unpaywall/OA, repository, source-native, or mirror fallback when available.
