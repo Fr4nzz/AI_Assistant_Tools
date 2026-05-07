@@ -121,5 +121,5 @@ paper-search read arxiv 2106.12345 -o ~/Downloads/papers
 ## Notes
 
 - Unpaywall email is recommended because DOI downloads are usually faster than repository/mirror fallbacks.
-- `paper-search search` is not the preferred broad discovery tool.
+- `paper-search search` is not the preferred broad discovery tool, but when used it returns compact records without abstracts by default. Add `--include-abstracts` only for shortlisted papers.
 - Optional mirror fallback is user responsibility. The tool tries open/source-native and Unpaywall paths before mirrors.

@@ -31,6 +31,13 @@ available:
 3. Paper-search topic search (`paper-search search`): slower and less reliable
    as a primary search, but useful as a supplemental academic-index pass. Start
    it in the background first when doing a three-engine comparison.
+
+For literature reviews, let `paper-search search` use its default result count
+unless benchmarking requires a fixed smaller value. It returns compact records
+without abstracts by default, so a broader candidate list does not flood the
+agent context. Add `--include-abstracts` only after selecting papers whose
+abstracts are worth inspecting.
+
 If time, accounts, or paid credits are limited, use native search first and add
 Parallel or paper-search only when the topic is broad, high stakes, or the user
 explicitly wants a more exhaustive search.
@@ -61,6 +68,9 @@ Create a candidate table with:
 - whether full text seems available
 
 Deduplicate by DOI first, then normalized title.
+Keep abstracts out of the first consolidation table unless they are needed to
+resolve ambiguity. Use titles, venues, years, snippets, citation counts, and DOI
+metadata first; fetch abstracts for the shortlist.
 
 ## Metadata And Ranking
 
