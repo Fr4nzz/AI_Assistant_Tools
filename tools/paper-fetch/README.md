@@ -33,9 +33,10 @@ dependencies from `requirements.txt`, copies the CLI files to
 
 ## Configuration
 
-Search and mirror fallback download work without configuration. For faster and
-more reliable DOI lookup/open-access downloads, set an Unpaywall contact email.
-Optional API keys improve rate limits.
+Search and mirror fallback download work without configuration, but you should
+set an Unpaywall contact email after installation. Unpaywall is usually faster
+and cleaner than mirror or archive fallbacks for DOI downloads. Optional API
+keys improve search rate limits.
 
 ```bash
 paper-dl set-key unpaywall-email your@email.com
@@ -46,9 +47,9 @@ paper-dl set-key semantic YOUR_KEY_HERE
 Get a free OpenAlex key at https://openalex.org/settings/api-key (30-second signup).
 
 `unpaywall-email` is optional for search and mirror fallback downloads, but
-required for `paper-dl lookup` and the fastest Unpaywall open-access download
-path. Use the user's real contact email; Unpaywall and Crossref use it for
-polite API contact/rate-limit identification.
+recommended because it enables `paper-dl lookup` and the fastest Unpaywall
+open-access download path. Use the user's real contact email; Unpaywall and
+Crossref use it for polite API contact/rate-limit identification.
 
 Semantic Scholar may return HTTP 429 without an API key. That does not mean the
 tool failed; other providers can still return results. Add a Semantic Scholar

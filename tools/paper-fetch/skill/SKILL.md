@@ -29,9 +29,10 @@ Before using this skill, ensure it is installed:
 bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) paper-fetch
 ```
 
-Search and mirror fallback download work without configuration. For faster and
-more reliable DOI lookup/open-access downloads, configure an Unpaywall contact
-email:
+Search and mirror fallback download work without configuration, but agents
+should recommend configuring an Unpaywall contact email after installation.
+Unpaywall is usually faster and cleaner than mirror or archive fallbacks for DOI
+downloads:
 
 ```bash
 paper-dl set-key unpaywall-email your@email.com
@@ -113,9 +114,9 @@ paper-dl search "CRISPR" --json
 
 Environment variables (loaded from `.env` in skill directory):
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `PAPER_FETCH_UNPAYWALL_EMAIL` | **Yes** | Any valid email for Unpaywall DOI lookup |
+| Variable | Setup | Description |
+|----------|-------|-------------|
+| `PAPER_FETCH_UNPAYWALL_EMAIL` | Recommended | Any valid email for faster Unpaywall DOI lookup/download |
 | `PAPER_FETCH_OPENALEX_API_KEY` | No | Improves rate limits (free at openalex.org) |
 | `PAPER_FETCH_SEMANTIC_API_KEY` | No | Improves rate limits (free at semanticscholar.org) |
 | `PAPER_FETCH_CORE_API_KEY` | No | Improves rate limits (free at core.ac.uk) |

@@ -87,6 +87,14 @@ Install only one tool:
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool paper-fetch
 ```
 
+For `paper-fetch`, set an Unpaywall contact email after installation. Search and
+mirror fallback can work without it, but Unpaywall is usually the fastest and
+cleanest DOI download path:
+
+```powershell
+paper-dl set-key unpaywall-email your@email.com
+```
+
 Download files and skills without installing dependencies:
 
 ```powershell
@@ -158,6 +166,14 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/ma
 bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) gogcli
 bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) humanizer
 bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) paper-fetch
+```
+
+For `paper-fetch`, set an Unpaywall contact email after installation. Search and
+mirror fallback can work without it, but Unpaywall is usually the fastest and
+cleanest DOI download path:
+
+```bash
+paper-dl set-key unpaywall-email your@email.com
 ```
 
 Requirements:
