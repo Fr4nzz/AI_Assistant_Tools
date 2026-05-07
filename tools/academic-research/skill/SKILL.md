@@ -24,7 +24,7 @@ triggers:
   - evidence strength
 argument-hint: "<research question, paper list, draft, DOI list, or writing task>"
 metadata:
-  optional_bins: ["paper-search", "pandoc"]
+  optional_bins: ["paper-search", "parallel-cli", "pandoc"]
   optional_skills: ["paper-fetch"]
 ---
 
@@ -72,12 +72,14 @@ available:
 
 1. Native web/search tools: best for current web coverage, disambiguation, and
    source inspection.
-2. `paper-search topic search` (`paper-search search`): slower and less reliable
+2. Parallel search (`parallel-cli search`): useful second opinion and broader
+   web retrieval when the user has configured Parallel.
+3. Paper-search topic search (`paper-search search`): slower and less reliable
    as a primary search, but useful as a supplemental academic-index pass. Start
-   it in the background first when doing a multi-engine comparison.
+   it in the background first when doing a three-engine comparison.
 
-If time or accounts are limited, use native search first and add
-paper-search only when the topic is broad, high stakes, or the user
+If time, accounts, or paid credits are limited, use native search first and add
+Parallel or paper-search only when the topic is broad, high stakes, or the user
 explicitly wants a more exhaustive search.
 
 Break the research question into 3-5 complementary prompts:
