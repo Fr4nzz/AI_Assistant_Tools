@@ -24,7 +24,7 @@ triggers:
   - evidence strength
 argument-hint: "<research question, paper list, draft, DOI list, or writing task>"
 metadata:
-  optional_bins: ["paper-search", "parallel-cli", "pandoc"]
+  optional_bins: ["paper-search", "pandoc"]
   optional_skills: ["paper-fetch"]
 ---
 
@@ -70,16 +70,14 @@ Minimum todo list:
 For an important literature-review seed search, run these in parallel when
 available:
 
-1. Native Codex/web search: best for current web coverage, disambiguation, and
+1. Native web/search tools: best for current web coverage, disambiguation, and
    source inspection.
-2. Parallel search (`parallel-cli search`): useful second opinion and broader
-   web retrieval when the user has configured Parallel.
-3. Paper-search topic search (`paper-search search`): slower and less reliable
+2. `paper-search topic search` (`paper-search search`): slower and less reliable
    as a primary search, but useful as a supplemental academic-index pass. Start
-   it in the background first when doing a three-engine comparison.
+   it in the background first when doing a multi-engine comparison.
 
-If time, accounts, or paid credits are limited, use native search first and add
-Parallel or paper-search only when the topic is broad, high stakes, or the user
+If time or accounts are limited, use native search first and add
+paper-search only when the topic is broad, high stakes, or the user
 explicitly wants a more exhaustive search.
 
 Break the research question into 3-5 complementary prompts:
@@ -106,7 +104,7 @@ availability are not proof of relevance or quality.
 ## Multi-Paper Reading
 
 Do not read many papers one by one in the main agent if subagents are
-available. Use one agent per coherent cluster; use one agent per paper only for
+available. Use one subagent per coherent cluster; use one subagent per paper only for
 dense, central, or difficult papers.
 
 The main agent owns the review question, synthesis matrix, final argument,
