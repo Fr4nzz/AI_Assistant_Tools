@@ -59,7 +59,7 @@ def search_semantic_scholar(query: str, max_results: int = 10) -> List[Dict[str,
     params: Dict[str, Any] = {
         "query": query,
         "limit": min(max_results, 100),
-        "fields": "title,authors,year,doi,openAccessPdf",
+        "fields": "paperId,title,authors,year,externalIds,openAccessPdf",
     }
     headers = _headers()
     if Config.SEMANTIC_API_KEY:
@@ -74,12 +74,13 @@ def search_semantic_scholar(query: str, max_results: int = 10) -> List[Dict[str,
             authors = item.get("authors", [])
             author_names = [a.get("name", "") for a in authors]
             oa_pdf = item.get("openAccessPdf", {}) or {}
+            external_ids = item.get("externalIds", {}) or {}
             year = item.get("year")
             results.append({
                 "title": item.get("title", ""),
                 "authors": ", ".join(filter(None, author_names)),
                 "year": str(year) if year is not None else "",
-                "doi": item.get("doi", ""),
+                "doi": external_ids.get("DOI", ""),
                 "source": "semantic_scholar",
                 "pdf_url": oa_pdf.get("url", ""),
                 "is_oa": bool(oa_pdf.get("url")),
