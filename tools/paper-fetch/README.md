@@ -5,7 +5,7 @@ Search and download academic papers from open access sources, repositories, and 
 ## What It Does
 
 - **Search** across OpenAlex, Semantic Scholar, Crossref, arXiv, bioRxiv, and Google Scholar in parallel
-- **Download** papers by DOI or URL with multi-source fallback (OA → Anna's Archive → mirrors → direct PDF)
+- **Download** papers by DOI or URL with multi-source fallback (mirrors → OA → Anna's Archive → direct PDF)
 - **Auto-discover** working academic mirrors with health probes
 - **Set API keys** interactively via CLI
 

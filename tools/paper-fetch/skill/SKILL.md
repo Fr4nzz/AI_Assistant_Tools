@@ -58,7 +58,7 @@ paper-dl search "quantum entanglement" -n 5
 paper-dl --json search "quantum entanglement" -n 5
 ```
 
-Searches across OpenAlex, Semantic Scholar, Crossref, and arXiv. Returns title, authors, year, DOI, and PDF URL (if available).
+Searches across OpenAlex, Semantic Scholar, Crossref, arXiv, bioRxiv, and Google Scholar in parallel. Returns title, authors, year, DOI, and PDF URL (if available).
 
 ### Download a paper
 ```bash
@@ -68,9 +68,10 @@ paper-dl download https://doi.org/10.1038/nature12373
 
 Download pipeline (fully automatic, agent never specifies source):
 1. Extract/normalize DOI
-2. Try Open Access download via Unpaywall (fast path)
-3. Try academic mirrors with auto-discovery (primary)
-4. Fallback to direct PDF from search APIs
+2. Try academic mirrors with auto-discovery (primary, no email needed)
+3. Try Open Access download via Unpaywall (fast path, requires email)
+4. Try Anna's Archive fallback
+5. Fallback to direct PDF from search APIs
 
 ### Lookup DOI metadata
 ```bash
@@ -83,18 +84,18 @@ it.
 
 ### List working mirrors
 ```bash
-python3 scripts/paper_dl.py mirrors
-python3 scripts/paper_dl.py mirrors --refresh
+paper-dl mirrors
+paper-dl mirrors --refresh
 ```
 
 Mirrors are auto-discovered from multiple sources, then health-probed and cached for 6 hours.
 
 ### Set API keys interactively
 ```bash
-python3 scripts/paper_dl.py set-key openalex YOUR_KEY
-python3 scripts/paper_dl.py set-key semantic YOUR_KEY
-python3 scripts/paper_dl.py set-key core YOUR_KEY
-python3 scripts/paper_dl.py set-key unpaywall-email your@email.com
+paper-dl set-key openalex YOUR_KEY
+paper-dl set-key semantic YOUR_KEY
+paper-dl set-key core YOUR_KEY
+paper-dl set-key unpaywall-email your@email.com
 ```
 
 This writes keys to `.env` so the skill remembers them.
@@ -103,7 +104,7 @@ This writes keys to `.env` so the skill remembers them.
 
 Add `--json` to any command for machine-readable output:
 ```bash
-python3 scripts/paper_dl.py search "CRISPR" --json
+paper-dl search "CRISPR" --json
 ```
 
 ## Configuration

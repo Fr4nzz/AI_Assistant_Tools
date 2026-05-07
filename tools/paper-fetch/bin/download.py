@@ -249,9 +249,10 @@ def download_paper(identifier: str, output_dir: Optional[Path] = None) -> Dict[s
 
     Pipeline:
       1. Extract/normalize DOI
-      2. Try OA download (Unpaywall) — fast
-      3. Try academic mirrors — primary
-      4. Try direct PDF fallback — last resort
+      2. Try academic mirrors — primary, fastest, no email needed
+      3. Try OA download (Unpaywall) — fast path, requires email
+      4. Try Anna's Archive fallback
+      5. Try direct PDF fallback — last resort
     """
     save_dir = output_dir or Config.ensure_download_dir()
     doi = extract_doi(identifier)
@@ -267,18 +268,18 @@ def download_paper(identifier: str, output_dir: Optional[Path] = None) -> Dict[s
             "mirror": "",
         }
 
-    # Step 2: OA fast path
+    # Step 2: Mirror primary (fastest, no email needed)
+    result = try_mirror_download(doi, save_dir)
+    if result:
+        return result
+
+    # Step 3: OA fast path (requires email)
     result = try_oa_download(doi, save_dir)
     if result:
         return result
 
-    # Step 3: Anna's Archive fallback
+    # Step 4: Anna's Archive fallback
     result = try_annas_archive_download(doi, save_dir)
-    if result:
-        return result
-
-    # Step 4: Mirror primary
-    result = try_mirror_download(doi, save_dir)
     if result:
         return result
 
@@ -289,7 +290,7 @@ def download_paper(identifier: str, output_dir: Optional[Path] = None) -> Dict[s
 
     return {
         "status": "error",
-        "error": f"Failed to download paper: {doi}. Tried OA, Anna's Archive, academic mirrors, and direct PDF fallbacks.",
+        "error": f"Failed to download paper: {doi}. Tried academic mirrors, OA, Anna's Archive, and direct PDF fallbacks.",
         "path": "",
         "doi": doi,
         "title": "",
