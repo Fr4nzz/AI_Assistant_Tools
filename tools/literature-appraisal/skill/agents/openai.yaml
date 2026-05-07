@@ -1,0 +1,7 @@
+interface:
+  display_name: "Literature Appraisal"
+  short_description: "Evaluate paper quality, relevance, and citation value"
+  default_prompt: "Appraise these papers and rank which ones I should read first."
+
+policy:
+  allow_implicit_invocation: true

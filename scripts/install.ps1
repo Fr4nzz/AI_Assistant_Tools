@@ -1,5 +1,5 @@
 param(
-  [ValidateSet('all', 'gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer', 'paper-fetch')]
+  [ValidateSet('all', 'gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer', 'paper-fetch', 'literature-search', 'citation-zotero', 'scientific-writing', 'literature-appraisal', 'exa-search')]
   [string] $Tool = 'all',
 
   [string] $InstallRoot = (Join-Path $HOME '.ai-assistant-tools'),
@@ -39,6 +39,13 @@ function Install-Skill {
   New-Item -ItemType Directory -Force -Path (Join-Path $dest 'agents') | Out-Null
   Get-UrlFile "$RepoRawBase/tools/$Source/skill/SKILL.md" (Join-Path $dest 'SKILL.md')
   Get-UrlFile "$RepoRawBase/tools/$Source/skill/agents/openai.yaml" (Join-Path $dest 'agents\openai.yaml')
+}
+
+function Install-SkillReference {
+  param([string] $Name, [string] $Source, [string] $Reference)
+  $dest = Join-Path $HOME ".codex\skills\$Name\references"
+  New-Item -ItemType Directory -Force -Path $dest | Out-Null
+  Get-UrlFile "$RepoRawBase/tools/$Source/skill/references/$Reference" (Join-Path $dest $Reference)
 }
 
 function Install-CliTool {
@@ -144,6 +151,41 @@ function Install-Humanizer {
   Write-Host 'Installed humanizer Codex skill.'
 }
 
+function Install-ScientificWriting {
+  Install-Skill 'scientific-writing' 'scientific-writing'
+  Install-SkillReference 'scientific-writing' 'scientific-writing' 'humanizer.md'
+  Write-Host 'Installed scientific-writing Codex skill.'
+}
+
+function Install-SkillOnly {
+  param([string] $Name)
+  Install-Skill $Name $Name
+  Write-Host "Installed $Name Codex skill."
+}
+
+function Install-ExaSearch {
+  if (-not $SkipDependencies) {
+    python -m pip install --upgrade exa-cli
+  }
+
+  $localBin = Join-Path $HOME '.local\bin'
+  New-Item -ItemType Directory -Force -Path $localBin | Out-Null
+  $shim = Join-Path $localBin 'exa-search.cmd'
+  $scripts = python -c "import sysconfig; print(sysconfig.get_path('scripts'))"
+  $exaExe = Join-Path $scripts 'exa.exe'
+  if (Test-Path -LiteralPath $exaExe) {
+    "@echo off`r`ncall `"$exaExe`" %*`r`n" | Set-Content -LiteralPath $shim -Encoding ASCII
+  } else {
+    "@echo off`r`npython -m main %*`r`n" | Set-Content -LiteralPath $shim -Encoding ASCII
+  }
+
+  Install-Skill 'exa-search' 'exa-search'
+  Write-Host 'Installed exa-cli.'
+  Write-Host "Installed PATH shim to $shim"
+  Write-Host 'Set EXA_API_KEY before using Exa API search.'
+  Write-Host 'Installed exa-search Codex skill.'
+}
+
 function Install-PaperFetch {
   $toolDir = Join-Path $InstallRoot 'paper-search-mcp'
   New-Item -ItemType Directory -Force -Path $toolDir | Out-Null
@@ -184,7 +226,7 @@ PAPER_SEARCH_MCP_SCIHUB_MIRROR_PROBE_WORKERS=8
 }
 
 $selected = if ($Tool -eq 'all') {
-  @('gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer', 'paper-fetch')
+  @('gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer', 'paper-fetch', 'literature-search', 'citation-zotero', 'scientific-writing', 'literature-appraisal', 'exa-search')
 } else {
   @($Tool)
 }
@@ -198,6 +240,11 @@ foreach ($item in $selected) {
     'whatsapp' { Install-WhatsApp }
     'humanizer' { Install-Humanizer }
     'paper-fetch' { Install-PaperFetch }
+    'literature-search' { Install-SkillOnly 'literature-search' }
+    'citation-zotero' { Install-SkillOnly 'citation-zotero' }
+    'scientific-writing' { Install-ScientificWriting }
+    'literature-appraisal' { Install-SkillOnly 'literature-appraisal' }
+    'exa-search' { Install-ExaSearch }
   }
 }
 

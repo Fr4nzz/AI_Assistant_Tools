@@ -1,0 +1,7 @@
+interface:
+  display_name: "Literature Search"
+  short_description: "Discover and triage papers across multiple search engines"
+  default_prompt: "Find core papers for a literature review on species distribution models under climate change."
+
+policy:
+  allow_implicit_invocation: true

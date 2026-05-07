@@ -1,0 +1,7 @@
+interface:
+  display_name: "Scientific Writing"
+  short_description: "Draft and polish precise academic scientific prose"
+  default_prompt: "Revise this literature review paragraph for clarity and scientific tone."
+
+policy:
+  allow_implicit_invocation: true

@@ -9,7 +9,7 @@ REPO_RAW_BASE="${REPO_RAW_BASE:-https://raw.githubusercontent.com/Fr4nzz/AI_Assi
 
 usage() {
   cat <<'EOF'
-Usage: scripts/install-linux.sh [all|gogcli|outlook|onedrive|d2l|humanizer|paper-fetch]
+Usage: scripts/install-linux.sh [all|gogcli|outlook|onedrive|d2l|humanizer|paper-fetch|literature-search|citation-zotero|scientific-writing|literature-appraisal|exa-search]
 
 Environment overrides:
   INSTALL_ROOT   Default: $HOME/.ai-assistant-tools
@@ -20,7 +20,7 @@ EOF
 }
 
 case "$TOOL" in
-  all|gogcli|outlook|onedrive|d2l|humanizer|paper-fetch) ;;
+  all|gogcli|outlook|onedrive|d2l|humanizer|paper-fetch|literature-search|citation-zotero|scientific-writing|literature-appraisal|exa-search) ;;
   -h|--help) usage; exit 0 ;;
   *) usage >&2; exit 2 ;;
 esac
@@ -44,6 +44,14 @@ install_skill() {
   mkdir -p "$CODEX_SKILLS/$name/agents"
   download "$REPO_RAW_BASE/tools/$source/skill/SKILL.md" "$CODEX_SKILLS/$name/SKILL.md"
   download "$REPO_RAW_BASE/tools/$source/skill/agents/openai.yaml" "$CODEX_SKILLS/$name/agents/openai.yaml"
+}
+
+install_skill_reference() {
+  local name="$1"
+  local source="$2"
+  local ref="$3"
+  mkdir -p "$CODEX_SKILLS/$name/references"
+  download "$REPO_RAW_BASE/tools/$source/skill/references/$ref" "$CODEX_SKILLS/$name/references/$ref"
 }
 
 ensure_venv() {
@@ -97,6 +105,33 @@ install_humanizer() {
   echo "Installed humanizer Codex skill."
 }
 
+install_scientific_writing() {
+  install_skill "scientific-writing" "scientific-writing"
+  install_skill_reference "scientific-writing" "scientific-writing" "humanizer.md"
+  echo "Installed scientific-writing Codex skill."
+}
+
+install_skill_only() {
+  local name="$1"
+  install_skill "$name" "$name"
+  echo "Installed $name Codex skill."
+}
+
+install_exa_search() {
+  ensure_venv
+  "$INSTALL_ROOT/venv/bin/python" -m pip install --upgrade exa-cli
+  cat > "$LOCAL_BIN/exa-search" <<EOF
+#!/usr/bin/env bash
+exec "$INSTALL_ROOT/venv/bin/exa" "\$@"
+EOF
+  chmod +x "$LOCAL_BIN/exa-search"
+  install_skill "exa-search" "exa-search"
+  echo "Installed exa-cli to $INSTALL_ROOT/venv"
+  echo "Installed PATH shim to $LOCAL_BIN/exa-search"
+  echo "Set EXA_API_KEY before using Exa API search."
+  echo "Installed exa-search Codex skill."
+}
+
 install_paper_fetch() {
   ensure_venv
   mkdir -p "$INSTALL_ROOT/paper-search-mcp"
@@ -132,7 +167,7 @@ EOF
 
 selected_tools() {
   if [ "$TOOL" = "all" ]; then
-    printf '%s\n' gogcli outlook onedrive d2l humanizer paper-fetch
+    printf '%s\n' gogcli outlook onedrive d2l humanizer paper-fetch literature-search citation-zotero scientific-writing literature-appraisal exa-search
   else
     printf '%s\n' "$TOOL"
   fi
@@ -144,6 +179,9 @@ while IFS= read -r item; do
     outlook|onedrive|d2l) install_python_cli "$item" ;;
     humanizer) install_humanizer ;;
     paper-fetch) install_paper_fetch ;;
+    literature-search|citation-zotero|literature-appraisal) install_skill_only "$item" ;;
+    scientific-writing) install_scientific_writing ;;
+    exa-search) install_exa_search ;;
   esac
 done < <(selected_tools)
 

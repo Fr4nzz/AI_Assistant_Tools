@@ -1,0 +1,7 @@
+interface:
+  display_name: "Exa Search"
+  short_description: "Configure and benchmark Exa as an optional search engine"
+  default_prompt: "Benchmark Exa against native search and Parallel for a literature review topic."
+
+policy:
+  allow_implicit_invocation: true
