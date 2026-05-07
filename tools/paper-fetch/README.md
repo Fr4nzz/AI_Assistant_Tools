@@ -1,19 +1,19 @@
 # Paper Fetch
 
-Search and download academic papers from open access sources, repositories, and academic mirrors.
+Installs the `paper-search` CLI from
+[`Fr4nzz/paper-search-mcp`](https://github.com/Fr4nzz/paper-search-mcp), a fork
+of [`openags/paper-search-mcp`](https://github.com/openags/paper-search-mcp).
+
+The install name remains `paper-fetch` for compatibility with existing
+AI_Assistant_Tools setup commands.
 
 ## What It Does
 
-- **Search** across OpenAlex, Semantic Scholar, Crossref, arXiv, bioRxiv, and Google Scholar in parallel
-- **Download** papers by DOI or URL with multi-source fallback (OA → mirrors → Anna's Archive → direct PDF)
-- **Auto-discover** working academic mirrors with parallel health probes and latency-based ordering
-- **Set API keys** interactively via CLI
-
-## Files
-
-- `bin/paper-dl.py` - CLI implementation.
-- `bin/paper-dl.cmd` - Windows launcher.
-- `skill/` - global Codex skill files.
+- Searches 20+ public academic sources through `paper-search`.
+- Downloads PDFs by DOI with source-native, Unpaywall, repository, and optional mirror fallback.
+- Uses source timeouts so slow providers do not block every search.
+- Validates PDF downloads to avoid empty or non-PDF files.
+- Uses dynamic Sci-Hub mirror discovery only as an optional final fallback.
 
 ## Install - Windows
 
@@ -27,53 +27,43 @@ Search and download academic papers from open access sources, repositories, and 
 bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) paper-fetch
 ```
 
-The Linux installer creates a venv under `~/.ai-assistant-tools/venv`, installs
-dependencies from `requirements.txt`, copies the CLI files to
-`~/.ai-assistant-tools/paper-fetch`, and creates the `~/.local/bin/paper-dl` shim.
+Linux installs into `~/.ai-assistant-tools/venv`, creates
+`~/.local/bin/paper-search`, and writes configuration to:
+
+```text
+~/.ai-assistant-tools/paper-search-mcp/.env
+```
 
 ## Configuration
 
-Search and mirror fallback download work without configuration, but you should
-set an Unpaywall contact email after installation. Unpaywall is usually faster
-and cleaner than mirror or archive fallbacks for DOI downloads. Optional API
-keys improve search rate limits.
+Set an Unpaywall email after installation. Search and some fallbacks work
+without it, but Unpaywall is usually the fastest and cleanest DOI PDF path.
+
+Linux:
 
 ```bash
-paper-dl set-key unpaywall-email your@email.com
-paper-dl set-key openalex YOUR_KEY_HERE
-paper-dl set-key semantic YOUR_KEY_HERE
+sed -i 's/^PAPER_SEARCH_MCP_UNPAYWALL_EMAIL=.*/PAPER_SEARCH_MCP_UNPAYWALL_EMAIL=your@email.com/' ~/.ai-assistant-tools/paper-search-mcp/.env
 ```
 
-Get a free OpenAlex key at https://openalex.org/settings/api-key (30-second signup).
+Windows:
 
-`unpaywall-email` is optional for search and mirror fallback downloads, but
-recommended because it enables `paper-dl lookup` and the fastest Unpaywall
-open-access download path. Use the user's real contact email; Unpaywall and
-Crossref use it for polite API contact/rate-limit identification.
+```powershell
+(Get-Content "$HOME\.ai-assistant-tools\paper-search-mcp\.env") -replace '^PAPER_SEARCH_MCP_UNPAYWALL_EMAIL=.*', 'PAPER_SEARCH_MCP_UNPAYWALL_EMAIL=your@email.com' | Set-Content "$HOME\.ai-assistant-tools\paper-search-mcp\.env"
+```
 
-Semantic Scholar may return HTTP 429 without an API key. That does not mean the
-tool failed; other providers can still return results. Add a Semantic Scholar
-key only if higher search throughput is needed.
+Optional keys in the same file:
 
-Global flags go before the subcommand. Use `paper-dl --json search ...`, not
-`paper-dl search ... --json`.
+- `PAPER_SEARCH_MCP_CORE_API_KEY`
+- `PAPER_SEARCH_MCP_SEMANTIC_SCHOLAR_API_KEY`
+- `PAPER_SEARCH_MCP_GOOGLE_SCHOLAR_PROXY_URL`
 
 ## Test
 
 ```bash
-paper-dl search "CRISPR" -n 5
-paper-dl --json search "species distribution modeling" -n 3
-paper-dl download 10.1038/s41586-019-1055-0
-paper-dl mirrors
+paper-search sources
+paper-search search "species distribution modeling" -n 3 -s openalex,crossref,arxiv --source-timeout 20
+paper-search download-doi 10.1038/s41593-020-0658-y -o ~/Downloads/papers --no-scihub
 ```
 
-Use `paper-dl mirrors --refresh` to force a new mirror discovery pass. The tool
-checks candidate mirrors in parallel, drops mirrors that do not respond, sorts
-working mirrors by latency, and caches that order for 6 hours. This keeps dead
-mirrors from being tried before mirrors that are currently responding.
-
-After setting `unpaywall-email`, also test:
-
-```bash
-paper-dl --json lookup 10.1038/s41586-019-1055-0
-```
+With Unpaywall configured, DOI downloads should normally use the fast
+Unpaywall/open-access path when available.

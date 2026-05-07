@@ -1,6 +1,6 @@
 ---
 name: paper-fetch
-description: Search and download academic papers from open repositories and academic mirrors. Use when the user asks to find, search for, or download a paper, PDF, article, DOI, or reference.
+description: Search, download, and read academic papers from open repositories, public academic APIs, Unpaywall, and optional academic mirrors. Use when the user asks to find, search for, download, or read a paper, PDF, article, DOI, or reference.
 triggers:
   - paper
   - download paper
@@ -14,131 +14,106 @@ triggers:
 argument-hint: "<query|doi|url>"
 metadata:
   requires:
-    bins: ["paper-dl"]
+    bins: ["paper-search"]
 ---
 
 # Paper Fetch Skill
 
-Search and download academic papers with Open Access lookup, automatic mirror discovery, and fallback sources.
+This skill uses the `paper-search` CLI from
+`Fr4nzz/paper-search-mcp`, a fork of `openags/paper-search-mcp` with DOI
+fallback downloads, Unpaywall-first DOI resolution, source timeouts, PDF
+validation, and dynamic Sci-Hub mirror discovery.
 
-## Setup (First Time)
+## Setup
 
-Before using this skill, ensure it is installed:
+Install:
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) paper-fetch
 ```
 
-Search and mirror fallback download work without configuration, but agents
-should recommend configuring an Unpaywall contact email after installation.
-Unpaywall is usually faster and cleaner than mirror or archive fallbacks for DOI
-downloads:
+The installer creates:
+
+- `paper-search` on PATH
+- `~/.ai-assistant-tools/paper-search-mcp/.env`
+
+Recommend setting an Unpaywall contact email after installation. It is optional
+for search and some fallbacks, but it enables the fastest and cleanest DOI PDF
+path.
 
 ```bash
-paper-dl set-key unpaywall-email your@email.com
-paper-dl set-key mailto your@email.com
+sed -i 's/^PAPER_SEARCH_MCP_UNPAYWALL_EMAIL=.*/PAPER_SEARCH_MCP_UNPAYWALL_EMAIL=your@email.com/' ~/.ai-assistant-tools/paper-search-mcp/.env
 ```
 
-### Optional: Get an OpenAlex API Key (Recommended)
+Optional API keys in the same `.env`:
 
-1. Go to https://openalex.org/settings/api-key
-2. Create an account or sign in
-3. Copy the API key
-4. Run:
-   ```bash
-   paper-dl set-key openalex PASTE_KEY_HERE
-   ```
-
-This improves search rate limits and is free.
+- `PAPER_SEARCH_MCP_CORE_API_KEY`
+- `PAPER_SEARCH_MCP_SEMANTIC_SCHOLAR_API_KEY`
+- `PAPER_SEARCH_MCP_GOOGLE_SCHOLAR_PROXY_URL`
 
 ## Commands
 
-### Search for papers
+### Search
+
 ```bash
-paper-dl search "quantum entanglement" -n 5
-paper-dl --json search "quantum entanglement" -n 5
+paper-search search "quantum entanglement" -n 5 -s openalex,crossref,arxiv,semantic --source-timeout 20
 ```
 
-Searches across OpenAlex, Semantic Scholar, Crossref, arXiv, bioRxiv, and Google Scholar in parallel. Returns title, authors, year, DOI, and PDF URL (if available).
+Use targeted sources for speed. Broad `-s all` can be useful, but some providers
+are slow or rate-limited.
 
-### Download a paper
-```bash
-paper-dl download 10.1038/nature12373
-paper-dl download https://doi.org/10.1038/nature12373
+Common sources:
+
+```text
+arxiv,pubmed,biorxiv,medrxiv,google_scholar,iacr,semantic,crossref,openalex,pmc,core,europepmc,dblp,openaire,citeseerx,doaj,base,zenodo,hal,ssrn,unpaywall
 ```
 
-Download pipeline (fully automatic, agent never specifies source):
-1. Extract/normalize DOI
-2. Try Open Access download via Unpaywall (fast path, requires email)
-3. Try academic mirrors with auto-discovery (fallback, no email needed)
-4. Try Anna's Archive fallback
-5. Fallback to direct PDF from search APIs
+### Download By DOI
 
-### Lookup DOI metadata
+Prefer this when the user provides a DOI:
+
 ```bash
-paper-dl lookup 10.1038/nature12373
+paper-search download-doi 10.1038/s41593-020-0658-y -o ~/Downloads/papers
 ```
 
-Returns title, OA status, and PDF URL from Unpaywall. This command requires
-`unpaywall-email`; search and mirror fallback downloads can still work without
-it.
+For open-access-only behavior:
 
-### List working mirrors
 ```bash
-paper-dl mirrors
-paper-dl mirrors --refresh
+paper-search download-doi 10.1038/s41593-020-0658-y -o ~/Downloads/papers --no-scihub
 ```
 
-Mirrors are auto-discovered from multiple sources, health-probed in parallel,
-sorted by latency, and cached for 6 hours. Use `--refresh` if downloads are
-falling through slow or dead mirrors.
+Download pipeline:
 
-### Set API keys interactively
+1. Source-native download
+2. Unpaywall DOI resolution
+3. Open repositories such as OpenAIRE, CORE, Europe PMC, and PMC
+4. Optional Sci-Hub fallback with discovered/cached working mirrors
+
+### Download From A Specific Source
+
+Use this when search returns a source-specific `paper_id`:
+
 ```bash
-paper-dl set-key openalex YOUR_KEY
-paper-dl set-key semantic YOUR_KEY
-paper-dl set-key core YOUR_KEY
-paper-dl set-key unpaywall-email your@email.com
+paper-search download arxiv 2106.12345 -o ~/Downloads/papers
+paper-search download semantic DOI:10.1038/s41593-020-0658-y -o ~/Downloads/papers
 ```
 
-This writes keys to `.env` so the skill remembers them.
+### Read / Extract Text
 
-## JSON Output
-
-Add `--json` to any command for machine-readable output:
 ```bash
-paper-dl search "CRISPR" --json
+paper-search read arxiv 2106.12345 -o ~/Downloads/papers
 ```
 
-## Configuration
+## Workflow For Agents
 
-Environment variables (loaded from `.env` in skill directory):
-
-| Variable | Setup | Description |
-|----------|-------|-------------|
-| `PAPER_FETCH_UNPAYWALL_EMAIL` | Recommended | Any valid email for faster Unpaywall DOI lookup/download |
-| `PAPER_FETCH_OPENALEX_API_KEY` | No | Improves rate limits (free at openalex.org) |
-| `PAPER_FETCH_SEMANTIC_API_KEY` | No | Improves rate limits (free at semanticscholar.org) |
-| `PAPER_FETCH_CORE_API_KEY` | No | Improves rate limits (free at core.ac.uk) |
-| `PAPER_FETCH_PREFERRED_MIRROR` | No | Add this mirror at the front of the discovery candidates |
-| `PAPER_FETCH_MIRRORS` | No | Comma-separated mirror override list |
-| `PAPER_FETCH_DOWNLOAD_DIR` | No | Download directory (default: ~/Downloads/papers) |
-| `PAPER_FETCH_MIRROR_DISCOVERY_TIMEOUT` | No | Seconds per mirror-list source (default: 5) |
-| `PAPER_FETCH_MIRROR_PROBE_TIMEOUT` | No | Seconds per mirror health probe (default: 4) |
-| `PAPER_FETCH_MIRROR_PROBE_WORKERS` | No | Parallel mirror probes (default: 8) |
-
-## Workflow for the Agent
-
-When the user asks for a paper:
-
-1. **If they have a DOI or URL**: Run `paper_dl.py download <identifier>` directly.
-2. **If they describe a paper by title/topic**: Run `paper_dl.py search "<query>"` first, show results, then download the best match.
-3. **Always report the source**: Tell the user whether it was downloaded via Open Access or academic mirror.
-4. **If download fails**: Report which sources were tried and suggest the user check their connection or try a different DOI.
+1. If the user gives a DOI and wants the PDF, run `paper-search download-doi <doi> -o ~/Downloads/papers`.
+2. If the user asks to find papers by topic/title, run `paper-search search "<query>" -n 5 -s openalex,crossref,arxiv,semantic --source-timeout 20`.
+3. Present the best results with title, year, source, DOI, and PDF availability.
+4. Download the selected paper with `download-doi` when a DOI exists; otherwise use `download <source> <paper_id>`.
+5. Always report the saved path and whether the source was Unpaywall/OA, repository, source-native, or mirror fallback when available.
 
 ## Notes
 
-- For very recent papers (2022+), Open Access sources are more reliable.
-- The skill does not require any paid API keys to function.
-- Downloads are saved to `~/Downloads/papers/` by default.
-- The agent using this skill does not need to know the underlying download mechanism — the abstraction is fully transparent.
+- Unpaywall email is recommended because DOI downloads are usually faster than repository/mirror fallbacks.
+- Google Scholar may return no results or time out because of bot detection; use targeted public sources first.
+- Optional mirror fallback is user responsibility. The tool tries open/source-native and Unpaywall paths before mirrors.

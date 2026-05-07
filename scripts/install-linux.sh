@@ -99,21 +99,35 @@ install_humanizer() {
 
 install_paper_fetch() {
   ensure_venv
-  mkdir -p "$INSTALL_ROOT/paper-fetch"
-  for f in paper-dl.py paper-dl.cmd config.py search.py download.py mirrors.py pdf_utils.py; do
-    download "$REPO_RAW_BASE/tools/paper-fetch/bin/$f" "$INSTALL_ROOT/paper-fetch/$f"
-  done
-  download "$REPO_RAW_BASE/tools/paper-fetch/requirements.txt" "$INSTALL_ROOT/paper-fetch/requirements.txt"
-  chmod +x "$INSTALL_ROOT/paper-fetch/paper-dl.py"
-  "$INSTALL_ROOT/venv/bin/python" -m pip install -r "$INSTALL_ROOT/paper-fetch/requirements.txt"
-  cat > "$LOCAL_BIN/paper-dl" <<EOF
-#!/usr/bin/env bash
-exec "$INSTALL_ROOT/venv/bin/python" "$INSTALL_ROOT/paper-fetch/paper-dl.py" "\$@"
+  mkdir -p "$INSTALL_ROOT/paper-search-mcp"
+  "$INSTALL_ROOT/venv/bin/python" -m pip install --upgrade \
+    "git+https://github.com/Fr4nzz/paper-search-mcp.git@codex/fallback-download-improvements"
+  if [ ! -f "$INSTALL_ROOT/paper-search-mcp/.env" ]; then
+    cat > "$INSTALL_ROOT/paper-search-mcp/.env" <<'EOF'
+# Optional but recommended: enables faster Unpaywall DOI lookup/download.
+PAPER_SEARCH_MCP_UNPAYWALL_EMAIL=
+
+# Optional API keys / tuning.
+PAPER_SEARCH_MCP_CORE_API_KEY=
+PAPER_SEARCH_MCP_SEMANTIC_SCHOLAR_API_KEY=
+PAPER_SEARCH_MCP_GOOGLE_SCHOLAR_PROXY_URL=
+PAPER_SEARCH_MCP_SCIHUB_MIRRORS=
+PAPER_SEARCH_MCP_SCIHUB_MIRROR_CACHE_TTL=21600
+PAPER_SEARCH_MCP_SCIHUB_MIRROR_PROBE_TIMEOUT=4
+PAPER_SEARCH_MCP_SCIHUB_MIRROR_DISCOVERY_TIMEOUT=5
+PAPER_SEARCH_MCP_SCIHUB_MIRROR_PROBE_WORKERS=8
 EOF
-  chmod +x "$LOCAL_BIN/paper-dl"
+  fi
+  cat > "$LOCAL_BIN/paper-search" <<EOF
+#!/usr/bin/env bash
+export PAPER_SEARCH_MCP_ENV_FILE="$INSTALL_ROOT/paper-search-mcp/.env"
+exec "$INSTALL_ROOT/venv/bin/python" -m paper_search_mcp.cli "\$@"
+EOF
+  chmod +x "$LOCAL_BIN/paper-search"
   install_skill "paper-fetch" "paper-fetch"
-  echo "Installed paper-dl CLI to $INSTALL_ROOT/paper-fetch"
-  echo "Installed PATH shim to $LOCAL_BIN/paper-dl"
+  echo "Installed paper-search from Fr4nzz/paper-search-mcp to $INSTALL_ROOT/venv"
+  echo "Config file: $INSTALL_ROOT/paper-search-mcp/.env"
+  echo "Installed PATH shim to $LOCAL_BIN/paper-search"
 }
 
 selected_tools() {

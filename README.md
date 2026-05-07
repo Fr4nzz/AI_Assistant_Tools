@@ -56,7 +56,7 @@ Expected agent flow:
 | `d2l` | D2L / Brightspace | Course, assignment, deadline, grade, announcement, and LMS file context | Uses browser-backed institutional login because simple API-token setup was not reliable for this environment. |
 | `whatsapp` | WhatsApp / Whasapo + wha CLI | WhatsApp chats, search, groups, media discovery/download, explicit sending | Uses Whasapo pairing plus a local `wha` CLI. We moved away from the previous MCP-first approach because historical message sync/tool visibility was inconsistent; `wha` reads Whasapo's SQLite cache directly. |
 | `humanizer` | Humanizer skill | Natural-language rewrite and prose polishing for drafts, docs, emails, PR descriptions, and similar text | Vendors the MIT-licensed Hermes Agent humanizer skill so Codex can apply a focused style pass without any external account setup. |
-| `paper-fetch` | Paper Fetch | Search and download academic papers from open access sources, repositories, and academic mirrors | Searches OpenAlex, Semantic Scholar, Crossref, arXiv, bioRxiv, and Google Scholar in parallel. Downloads papers by DOI with multi-source fallback: OA → mirrors → Anna's Archive → direct PDF. |
+| `paper-fetch` | Paper Search / Paper Fetch | Search, download, and read academic papers from 20+ public academic sources | Installs `paper-search` from the `Fr4nzz/paper-search-mcp` fork. DOI downloads use source-native paths, Unpaywall, open repositories, and optional discovered academic mirrors. |
 
 ## Quick Install - Windows
 
@@ -88,11 +88,11 @@ Install only one tool:
 ```
 
 For `paper-fetch`, set an Unpaywall contact email after installation. Search and
-mirror fallback can work without it, but Unpaywall is usually the fastest and
-cleanest DOI download path:
+some fallbacks can work without it, but Unpaywall is usually the fastest and
+cleanest DOI PDF path. Edit `%USERPROFILE%\.ai-assistant-tools\paper-search-mcp\.env`:
 
 ```powershell
-paper-dl set-key unpaywall-email your@email.com
+(Get-Content "$HOME\.ai-assistant-tools\paper-search-mcp\.env") -replace '^PAPER_SEARCH_MCP_UNPAYWALL_EMAIL=.*', 'PAPER_SEARCH_MCP_UNPAYWALL_EMAIL=your@email.com' | Set-Content "$HOME\.ai-assistant-tools\paper-search-mcp\.env"
 ```
 
 Download files and skills without installing dependencies:
@@ -169,11 +169,11 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/ma
 ```
 
 For `paper-fetch`, set an Unpaywall contact email after installation. Search and
-mirror fallback can work without it, but Unpaywall is usually the fastest and
-cleanest DOI download path:
+some fallbacks can work without it, but Unpaywall is usually the fastest and
+cleanest DOI PDF path:
 
 ```bash
-paper-dl set-key unpaywall-email your@email.com
+sed -i 's/^PAPER_SEARCH_MCP_UNPAYWALL_EMAIL=.*/PAPER_SEARCH_MCP_UNPAYWALL_EMAIL=your@email.com/' ~/.ai-assistant-tools/paper-search-mcp/.env
 ```
 
 Requirements:

@@ -145,28 +145,41 @@ function Install-Humanizer {
 }
 
 function Install-PaperFetch {
-  $toolDir = Join-Path $InstallRoot 'paper-fetch'
+  $toolDir = Join-Path $InstallRoot 'paper-search-mcp'
   New-Item -ItemType Directory -Force -Path $toolDir | Out-Null
-
-  foreach ($file in @('paper-dl.py', 'paper-dl.cmd', 'config.py', 'search.py', 'download.py', 'mirrors.py', 'pdf_utils.py')) {
-    Get-UrlFile "$RepoRawBase/tools/paper-fetch/bin/$file" (Join-Path $toolDir $file)
-  }
-  Get-UrlFile "$RepoRawBase/tools/paper-fetch/requirements.txt" (Join-Path $toolDir 'requirements.txt')
 
   $localBin = Join-Path $HOME '.local\bin'
   New-Item -ItemType Directory -Force -Path $localBin | Out-Null
 
-  # Main shim: paper-dl.cmd
-  $shim = Join-Path $localBin 'paper-dl.cmd'
-  "@echo off`r`ncall `"$toolDir\paper-dl.cmd`" %*`r`n" | Set-Content -LiteralPath $shim -Encoding ASCII
+  $envFile = Join-Path $toolDir '.env'
+  if (-not (Test-Path -LiteralPath $envFile)) {
+@'
+# Optional but recommended: enables faster Unpaywall DOI lookup/download.
+PAPER_SEARCH_MCP_UNPAYWALL_EMAIL=
+
+# Optional API keys / tuning.
+PAPER_SEARCH_MCP_CORE_API_KEY=
+PAPER_SEARCH_MCP_SEMANTIC_SCHOLAR_API_KEY=
+PAPER_SEARCH_MCP_GOOGLE_SCHOLAR_PROXY_URL=
+PAPER_SEARCH_MCP_SCIHUB_MIRRORS=
+PAPER_SEARCH_MCP_SCIHUB_MIRROR_CACHE_TTL=21600
+PAPER_SEARCH_MCP_SCIHUB_MIRROR_PROBE_TIMEOUT=4
+PAPER_SEARCH_MCP_SCIHUB_MIRROR_DISCOVERY_TIMEOUT=5
+PAPER_SEARCH_MCP_SCIHUB_MIRROR_PROBE_WORKERS=8
+'@ | Set-Content -LiteralPath $envFile -Encoding ASCII
+  }
+
+  $shim = Join-Path $localBin 'paper-search.cmd'
+  "@echo off`r`nset `"PAPER_SEARCH_MCP_ENV_FILE=$envFile`"`r`npython -m paper_search_mcp.cli %*`r`n" | Set-Content -LiteralPath $shim -Encoding ASCII
 
   Install-Skill 'paper-fetch' 'paper-fetch'
 
   if (-not $SkipDependencies) {
-    python -m pip install -r (Join-Path $toolDir 'requirements.txt')
+    python -m pip install --upgrade 'git+https://github.com/Fr4nzz/paper-search-mcp.git@codex/fallback-download-improvements'
   }
 
-  Write-Host "Installed paper-dl CLI to $toolDir"
+  Write-Host 'Installed paper-search from Fr4nzz/paper-search-mcp.'
+  Write-Host "Config file: $envFile"
   Write-Host "Installed PATH shim to $shim"
 }
 
