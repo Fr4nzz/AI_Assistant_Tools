@@ -1,16 +1,13 @@
 ---
 name: paper-fetch
-description: Search, download, and read academic papers from open repositories, public academic APIs, Unpaywall, and optional academic mirrors. Use when the user asks to find, search for, download, or read a paper, PDF, article, DOI, or reference.
+description: Download and read known academic paper PDFs using DOI, arXiv ID, source-specific paper ID, or direct paper URL. Use after a paper has already been identified; for broad paper discovery or literature search, prefer normal web/search tools first.
 triggers:
-  - paper
   - download paper
-  - find paper
-  - search paper
   - doi
   - pdf
-  - article
-  - reference
-  - academic
+  - paper url
+  - arxiv id
+  - read paper
 argument-hint: "<query|doi|url>"
 metadata:
   requires:
@@ -19,10 +16,14 @@ metadata:
 
 # Paper Fetch Skill
 
-This skill uses the `paper-search` CLI from
-`Fr4nzz/paper-search-mcp`, a fork of `openags/paper-search-mcp` with DOI
-fallback downloads, Unpaywall-first DOI resolution, source timeouts, PDF
-validation, and dynamic Sci-Hub mirror discovery.
+This skill uses the `paper-search` CLI from `Fr4nzz/paper-search-mcp`, a fork
+of `openags/paper-search-mcp` with DOI fallback downloads, Unpaywall-first DOI
+resolution, PDF validation, and dynamic Sci-Hub mirror discovery.
+
+Use this skill primarily for PDF retrieval and text extraction once the target
+paper is known. For broad discovery, recommendations, or literature search, use
+normal web/search tools first because they are usually better at ranking,
+current coverage, and disambiguation than `paper-search search`.
 
 ## Setup
 
@@ -38,8 +39,7 @@ The installer creates:
 - `~/.ai-assistant-tools/paper-search-mcp/.env`
 
 Recommend setting an Unpaywall contact email after installation. It is optional
-for search and some fallbacks, but it enables the fastest and cleanest DOI PDF
-path.
+for some fallbacks, but it enables the fastest and cleanest DOI PDF path.
 
 ```bash
 sed -i 's/^PAPER_SEARCH_MCP_UNPAYWALL_EMAIL=.*/PAPER_SEARCH_MCP_UNPAYWALL_EMAIL=your@email.com/' ~/.ai-assistant-tools/paper-search-mcp/.env
@@ -52,21 +52,6 @@ Optional API keys in the same `.env`:
 - `PAPER_SEARCH_MCP_GOOGLE_SCHOLAR_PROXY_URL`
 
 ## Commands
-
-### Search
-
-```bash
-paper-search search "quantum entanglement" -n 5 -s openalex,crossref,arxiv,semantic --source-timeout 20
-```
-
-Use targeted sources for speed. Broad `-s all` can be useful, but some providers
-are slow or rate-limited.
-
-Common sources:
-
-```text
-arxiv,pubmed,biorxiv,medrxiv,google_scholar,iacr,semantic,crossref,openalex,pmc,core,europepmc,dblp,openaire,citeseerx,doaj,base,zenodo,hal,ssrn,unpaywall
-```
 
 ### Download By DOI
 
@@ -107,13 +92,13 @@ paper-search read arxiv 2106.12345 -o ~/Downloads/papers
 ## Workflow For Agents
 
 1. If the user gives a DOI and wants the PDF, run `paper-search download-doi <doi> -o ~/Downloads/papers`.
-2. If the user asks to find papers by topic/title, run `paper-search search "<query>" -n 5 -s openalex,crossref,arxiv,semantic --source-timeout 20`.
-3. Present the best results with title, year, source, DOI, and PDF availability.
-4. Download the selected paper with `download-doi` when a DOI exists; otherwise use `download <source> <paper_id>`.
+2. If the user asks to find papers by topic/title, use normal web/search tools first to identify the paper and DOI. Do not use `paper-search search` as the default discovery method.
+3. If normal search returns a DOI, use `download-doi`; if it returns only a source-specific ID, use `download <source> <paper_id>`.
+4. Use `paper-search search` only as a last-resort metadata lookup when normal search is unavailable or the user explicitly asks to use this CLI.
 5. Always report the saved path and whether the source was Unpaywall/OA, repository, source-native, or mirror fallback when available.
 
 ## Notes
 
 - Unpaywall email is recommended because DOI downloads are usually faster than repository/mirror fallbacks.
-- Google Scholar may return no results or time out because of bot detection; use targeted public sources first.
+- `paper-search search` is not the preferred broad discovery tool.
 - Optional mirror fallback is user responsibility. The tool tries open/source-native and Unpaywall paths before mirrors.

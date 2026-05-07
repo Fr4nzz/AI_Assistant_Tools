@@ -9,11 +9,14 @@ AI_Assistant_Tools setup commands.
 
 ## What It Does
 
-- Searches 20+ public academic sources through `paper-search`.
-- Downloads PDFs by DOI with source-native, Unpaywall, repository, and optional mirror fallback.
-- Uses source timeouts so slow providers do not block every search.
+- Downloads known PDFs by DOI with source-native, Unpaywall, repository, and optional mirror fallback.
+- Extracts text from source-specific paper downloads when supported.
 - Validates PDF downloads to avoid empty or non-PDF files.
 - Uses dynamic Sci-Hub mirror discovery only as an optional final fallback.
+
+For broad discovery or literature search, prefer normal web/search tools first.
+Use `paper-search` after the target paper is identified, especially when you
+have a DOI, arXiv ID, or source-specific paper ID.
 
 ## Install - Windows
 
@@ -61,7 +64,6 @@ Optional keys in the same file:
 
 ```bash
 paper-search sources
-paper-search search "species distribution modeling" -n 3 -s openalex,crossref,arxiv --source-timeout 20
 paper-search download-doi 10.1038/s41593-020-0658-y -o ~/Downloads/papers --no-scihub
 ```
 
