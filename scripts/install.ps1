@@ -1,5 +1,5 @@
 param(
-  [ValidateSet('all', 'gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer')]
+  [ValidateSet('all', 'gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer', 'paper-fetch')]
   [string] $Tool = 'all',
 
   [string] $InstallRoot = (Join-Path $HOME '.ai-assistant-tools'),
@@ -144,8 +144,34 @@ function Install-Humanizer {
   Write-Host 'Installed humanizer Codex skill.'
 }
 
+function Install-PaperFetch {
+  $toolDir = Join-Path $InstallRoot 'paper-fetch'
+  New-Item -ItemType Directory -Force -Path $toolDir | Out-Null
+
+  foreach ($file in @('paper-dl.py', 'paper-dl.cmd', 'config.py', 'search.py', 'download.py', 'mirrors.py', 'pdf_utils.py')) {
+    Get-UrlFile "$RepoRawBase/tools/paper-fetch/bin/$file" (Join-Path $toolDir $file)
+  }
+  Get-UrlFile "$RepoRawBase/tools/paper-fetch/requirements.txt" (Join-Path $toolDir 'requirements.txt')
+
+  $localBin = Join-Path $HOME '.local\bin'
+  New-Item -ItemType Directory -Force -Path $localBin | Out-Null
+
+  # Main shim: paper-dl.cmd
+  $shim = Join-Path $localBin 'paper-dl.cmd'
+  "@echo off`r`ncall `"$toolDir\paper-dl.cmd`" %*`r`n" | Set-Content -LiteralPath $shim -Encoding ASCII
+
+  Install-Skill 'paper-fetch' 'paper-fetch'
+
+  if (-not $SkipDependencies) {
+    python -m pip install -r (Join-Path $toolDir 'requirements.txt')
+  }
+
+  Write-Host "Installed paper-dl CLI to $toolDir"
+  Write-Host "Installed PATH shim to $shim"
+}
+
 $selected = if ($Tool -eq 'all') {
-  @('gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer')
+  @('gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer', 'paper-fetch')
 } else {
   @($Tool)
 }
@@ -158,6 +184,7 @@ foreach ($item in $selected) {
     'gogcli' { Install-GogCli }
     'whatsapp' { Install-WhatsApp }
     'humanizer' { Install-Humanizer }
+    'paper-fetch' { Install-PaperFetch }
   }
 }
 

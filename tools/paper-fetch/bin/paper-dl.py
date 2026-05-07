@@ -74,7 +74,14 @@ def cmd_lookup(args: argparse.Namespace) -> int:
 
     result = lookup_unpaywall(doi)
     if not result:
-        print(f"Error: Unpaywall lookup failed for {doi}", file=sys.stderr)
+        if not Config.UNPAYWALL_EMAIL:
+            print(
+                "Error: Unpaywall lookup requires an email. "
+                "Run: paper-dl set-key unpaywall-email your@email.com",
+                file=sys.stderr,
+            )
+        else:
+            print(f"Error: Unpaywall lookup failed for {doi}", file=sys.stderr)
         return 1
 
     if args.json:
@@ -137,7 +144,7 @@ def cmd_set_key(args: argparse.Namespace) -> int:
 def main() -> int:
     parser = argparse.ArgumentParser(
         prog="paper-dl",
-        description="Search and download academic papers from open access sources and academic mirrors.",
+        description="Search and download academic papers from open access sources, repositories, and academic mirrors.",
     )
     parser.add_argument("--json", action="store_true", help="Output JSON")
     sub = parser.add_subparsers(dest="command", required=True)

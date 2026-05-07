@@ -9,7 +9,7 @@ REPO_RAW_BASE="${REPO_RAW_BASE:-https://raw.githubusercontent.com/Fr4nzz/AI_Assi
 
 usage() {
   cat <<'EOF'
-Usage: scripts/install-linux.sh [all|gogcli|outlook|onedrive|d2l|humanizer]
+Usage: scripts/install-linux.sh [all|gogcli|outlook|onedrive|d2l|humanizer|paper-fetch]
 
 Environment overrides:
   INSTALL_ROOT   Default: $HOME/.ai-assistant-tools
@@ -20,7 +20,7 @@ EOF
 }
 
 case "$TOOL" in
-  all|gogcli|outlook|onedrive|d2l|humanizer) ;;
+  all|gogcli|outlook|onedrive|d2l|humanizer|paper-fetch) ;;
   -h|--help) usage; exit 0 ;;
   *) usage >&2; exit 2 ;;
 esac
@@ -97,9 +97,28 @@ install_humanizer() {
   echo "Installed humanizer Codex skill."
 }
 
+install_paper_fetch() {
+  ensure_venv
+  mkdir -p "$INSTALL_ROOT/paper-fetch"
+  for f in paper-dl.py paper-dl.cmd config.py search.py download.py mirrors.py pdf_utils.py; do
+    download "$REPO_RAW_BASE/tools/paper-fetch/bin/$f" "$INSTALL_ROOT/paper-fetch/$f"
+  done
+  download "$REPO_RAW_BASE/tools/paper-fetch/requirements.txt" "$INSTALL_ROOT/paper-fetch/requirements.txt"
+  chmod +x "$INSTALL_ROOT/paper-fetch/paper-dl.py"
+  "$INSTALL_ROOT/venv/bin/python" -m pip install -r "$INSTALL_ROOT/paper-fetch/requirements.txt"
+  cat > "$LOCAL_BIN/paper-dl" <<EOF
+#!/usr/bin/env bash
+exec "$INSTALL_ROOT/venv/bin/python" "$INSTALL_ROOT/paper-fetch/paper-dl.py" "\$@"
+EOF
+  chmod +x "$LOCAL_BIN/paper-dl"
+  install_skill "paper-fetch" "paper-fetch"
+  echo "Installed paper-dl CLI to $INSTALL_ROOT/paper-fetch"
+  echo "Installed PATH shim to $LOCAL_BIN/paper-dl"
+}
+
 selected_tools() {
   if [ "$TOOL" = "all" ]; then
-    printf '%s\n' gogcli outlook onedrive d2l humanizer
+    printf '%s\n' gogcli outlook onedrive d2l humanizer paper-fetch
   else
     printf '%s\n' "$TOOL"
   fi
@@ -110,6 +129,7 @@ while IFS= read -r item; do
     gogcli) install_gogcli ;;
     outlook|onedrive|d2l) install_python_cli "$item" ;;
     humanizer) install_humanizer ;;
+    paper-fetch) install_paper_fetch ;;
   esac
 done < <(selected_tools)
 

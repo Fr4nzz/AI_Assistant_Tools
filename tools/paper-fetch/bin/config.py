@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from typing import List, Optional
 
-SKILL_DIR = Path(__file__).resolve().parent.parent
+SKILL_DIR = Path(__file__).resolve().parent
 
 
 def _load_dotenv() -> None:
@@ -47,6 +47,9 @@ class Config:
 
     MIRROR_CACHE_TTL: int = int(os.getenv("PAPER_FETCH_MIRROR_CACHE_TTL", "21600"))
     MIRROR_CACHE_FILE: Path = Path("/tmp/paper-fetch-mirrors-cache.json")
+    MIRROR_DISCOVERY_TIMEOUT: float = float(os.getenv("PAPER_FETCH_MIRROR_DISCOVERY_TIMEOUT", "5"))
+    MIRROR_PROBE_TIMEOUT: float = float(os.getenv("PAPER_FETCH_MIRROR_PROBE_TIMEOUT", "4"))
+    MIRROR_PROBE_WORKERS: int = int(os.getenv("PAPER_FETCH_MIRROR_PROBE_WORKERS", "8"))
 
     USER_AGENT: str = (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
