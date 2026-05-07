@@ -1,5 +1,5 @@
 param(
-  [ValidateSet('all', 'gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer', 'paper-fetch', 'literature-search', 'citation-zotero', 'scientific-writing', 'literature-appraisal')]
+  [ValidateSet('all', 'gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer', 'paper-fetch', 'literature-search', 'literature-review', 'citation-zotero', 'scientific-writing', 'literature-appraisal', 'superpowers')]
   [string] $Tool = 'all',
 
   [string] $InstallRoot = (Join-Path $HOME '.ai-assistant-tools'),
@@ -163,6 +163,35 @@ function Install-SkillOnly {
   Write-Host "Installed $Name Codex skill."
 }
 
+function Install-Superpowers {
+  Install-Skill 'superpowers-helper' 'superpowers'
+  $config = Join-Path $HOME '.codex\config.toml'
+  New-Item -ItemType Directory -Force -Path (Split-Path -Parent $config) | Out-Null
+  $header = '[plugins."superpowers@openai-curated"]'
+  $text = if (Test-Path -LiteralPath $config) { Get-Content -Raw -LiteralPath $config } else { '' }
+
+  if ($text.Contains($header)) {
+    $pattern = '(?s)(\[plugins\."superpowers@openai-curated"\]\r?\n)(.*?)(?=\r?\n\[|\z)'
+    $text = [regex]::Replace($text, $pattern, {
+      param($m)
+      $body = $m.Groups[2].Value
+      if ($body -match '(?m)^enabled\s*=') {
+        $body = [regex]::Replace($body, '(?m)^enabled\s*=.*$', 'enabled = true')
+      } else {
+        $body = "enabled = true`n$body"
+      }
+      $m.Groups[1].Value + $body.TrimEnd() + "`n"
+    })
+  } else {
+    if ($text -and -not $text.EndsWith("`n")) { $text += "`n" }
+    $text += "`n[plugins.`"superpowers@openai-curated`"]`nenabled = true`n"
+  }
+
+  Set-Content -LiteralPath $config -Value $text -Encoding UTF8
+  Write-Host "Enabled Superpowers plugin in $config"
+  Write-Host 'Restart Codex Desktop. If the plugin does not appear, install Superpowers from the Plugins UI.'
+}
+
 function Install-PaperFetch {
   $toolDir = Join-Path $InstallRoot 'paper-search-mcp'
   New-Item -ItemType Directory -Force -Path $toolDir | Out-Null
@@ -203,7 +232,7 @@ PAPER_SEARCH_MCP_SCIHUB_MIRROR_PROBE_WORKERS=8
 }
 
 $selected = if ($Tool -eq 'all') {
-  @('gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer', 'paper-fetch', 'literature-search', 'citation-zotero', 'scientific-writing', 'literature-appraisal')
+  @('gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer', 'paper-fetch', 'literature-search', 'literature-review', 'citation-zotero', 'scientific-writing', 'literature-appraisal', 'superpowers')
 } else {
   @($Tool)
 }
@@ -218,9 +247,11 @@ foreach ($item in $selected) {
     'humanizer' { Install-Humanizer }
     'paper-fetch' { Install-PaperFetch }
     'literature-search' { Install-SkillOnly 'literature-search' }
+    'literature-review' { Install-SkillOnly 'literature-review' }
     'citation-zotero' { Install-SkillOnly 'citation-zotero' }
     'scientific-writing' { Install-ScientificWriting }
     'literature-appraisal' { Install-SkillOnly 'literature-appraisal' }
+    'superpowers' { Install-Superpowers }
   }
 }
 

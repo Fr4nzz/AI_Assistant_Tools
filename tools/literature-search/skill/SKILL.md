@@ -19,6 +19,10 @@ Use this skill for initial paper discovery. It coordinates several search
 routes, then uses `paper-fetch` / `paper-search metadata-dois` only after
 candidate papers or DOIs are identified.
 
+After the user chooses a reading set, switch to `literature-review` for
+screening, parallel paper reading, markdown summaries, topic extracts, and
+synthesis matrices.
+
 ## Default Discovery Pattern
 
 For an important literature-review seed search, run these in parallel when
@@ -97,3 +101,5 @@ Report:
 
 Avoid claiming a paper is central only because it ranked high mechanically.
 Open and inspect abstracts or key sections before making strong claims.
+For many selected papers, do not read them one by one in the main agent. Use
+`literature-review` to distribute reading and synthesize distilled notes.

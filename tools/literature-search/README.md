@@ -12,6 +12,10 @@ requested.
 This is a skill-only tool; no extra binary is required beyond the optional
 search tools it can use.
 
+Use this skill for initial discovery. After selecting papers to read, use the
+`literature-review` skill for multi-paper reading, markdown summaries, and
+synthesis.
+
 ## Install
 
 Linux:

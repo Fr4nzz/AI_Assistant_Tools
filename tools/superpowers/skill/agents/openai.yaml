@@ -1,0 +1,7 @@
+interface:
+  display_name: "Superpowers Helper"
+  short_description: "Enable and explain the Codex Superpowers plugin"
+  default_prompt: "Help me install the Superpowers plugin in Codex."
+
+policy:
+  allow_implicit_invocation: true

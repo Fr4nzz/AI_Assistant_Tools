@@ -4,23 +4,27 @@ set -euo pipefail
 TOOL="${1:-all}"
 INSTALL_ROOT="${INSTALL_ROOT:-$HOME/.ai-assistant-tools}"
 LOCAL_BIN="${LOCAL_BIN:-$HOME/.local/bin}"
-CODEX_SKILLS="${CODEX_SKILLS:-$HOME/.codex/skills}"
+CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
+CODEX_SKILLS="${CODEX_SKILLS:-$CODEX_HOME/skills}"
+CODEX_CONFIG="${CODEX_CONFIG:-$CODEX_HOME/config.toml}"
 REPO_RAW_BASE="${REPO_RAW_BASE:-https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main}"
 
 usage() {
   cat <<'EOF'
-Usage: scripts/install-linux.sh [all|gogcli|outlook|onedrive|d2l|humanizer|paper-fetch|literature-search|citation-zotero|scientific-writing|literature-appraisal]
+Usage: scripts/install-linux.sh [all|gogcli|outlook|onedrive|d2l|humanizer|paper-fetch|literature-search|literature-review|citation-zotero|scientific-writing|literature-appraisal|superpowers]
 
 Environment overrides:
   INSTALL_ROOT   Default: $HOME/.ai-assistant-tools
   LOCAL_BIN      Default: $HOME/.local/bin
+  CODEX_HOME     Default: $HOME/.codex
   CODEX_SKILLS   Default: $HOME/.codex/skills
+  CODEX_CONFIG   Default: $HOME/.codex/config.toml
   REPO_RAW_BASE  Default: raw GitHub main branch
 EOF
 }
 
 case "$TOOL" in
-  all|gogcli|outlook|onedrive|d2l|humanizer|paper-fetch|literature-search|citation-zotero|scientific-writing|literature-appraisal) ;;
+  all|gogcli|outlook|onedrive|d2l|humanizer|paper-fetch|literature-search|literature-review|citation-zotero|scientific-writing|literature-appraisal|superpowers) ;;
   -h|--help) usage; exit 0 ;;
   *) usage >&2; exit 2 ;;
 esac
@@ -117,6 +121,39 @@ install_skill_only() {
   echo "Installed $name Codex skill."
 }
 
+install_superpowers() {
+  install_skill "superpowers-helper" "superpowers"
+  mkdir -p "$(dirname "$CODEX_CONFIG")"
+  python - "$CODEX_CONFIG" <<'PY'
+from pathlib import Path
+import re
+import sys
+
+path = Path(sys.argv[1]).expanduser()
+text = path.read_text() if path.exists() else ""
+header = '[plugins."superpowers@openai-curated"]'
+
+if header in text:
+    pattern = re.compile(r'(\[plugins\."superpowers@openai-curated"\]\n)(.*?)(?=\n\[|\Z)', re.S)
+    def repl(match):
+        body = match.group(2)
+        if re.search(r'(?m)^enabled\s*=', body):
+            body = re.sub(r'(?m)^enabled\s*=.*$', 'enabled = true', body)
+        else:
+            body = 'enabled = true\n' + body
+        return match.group(1) + body.rstrip() + "\n"
+    text = pattern.sub(repl, text)
+else:
+    if text and not text.endswith("\n"):
+        text += "\n"
+    text += '\n[plugins."superpowers@openai-curated"]\nenabled = true\n'
+
+path.write_text(text)
+PY
+  echo "Enabled Superpowers plugin in $CODEX_CONFIG"
+  echo "Restart Codex Desktop. If the plugin does not appear, install Superpowers from the Plugins UI."
+}
+
 install_paper_fetch() {
   ensure_venv
   mkdir -p "$INSTALL_ROOT/paper-search-mcp"
@@ -152,7 +189,7 @@ EOF
 
 selected_tools() {
   if [ "$TOOL" = "all" ]; then
-    printf '%s\n' gogcli outlook onedrive d2l humanizer paper-fetch literature-search citation-zotero scientific-writing literature-appraisal
+    printf '%s\n' gogcli outlook onedrive d2l humanizer paper-fetch literature-search literature-review citation-zotero scientific-writing literature-appraisal superpowers
   else
     printf '%s\n' "$TOOL"
   fi
@@ -164,8 +201,9 @@ while IFS= read -r item; do
     outlook|onedrive|d2l) install_python_cli "$item" ;;
     humanizer) install_humanizer ;;
     paper-fetch) install_paper_fetch ;;
-    literature-search|citation-zotero|literature-appraisal) install_skill_only "$item" ;;
+    literature-search|literature-review|citation-zotero|literature-appraisal) install_skill_only "$item" ;;
     scientific-writing) install_scientific_writing ;;
+    superpowers) install_superpowers ;;
   esac
 done < <(selected_tools)
 
