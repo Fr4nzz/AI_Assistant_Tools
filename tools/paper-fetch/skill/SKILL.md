@@ -1,6 +1,6 @@
 ---
 name: paper-fetch
-description: Download and read known academic paper PDFs using DOI, arXiv ID, source-specific paper ID, or direct paper URL. Use after a paper has already been identified; for broad paper discovery or literature search, prefer normal web/search tools first.
+description: Download/read known academic paper PDFs and enrich known DOI batches using DOI, arXiv ID, source-specific paper ID, or direct paper URL. Use after papers have already been identified; for broad paper discovery or literature search, prefer normal web/search tools first.
 triggers:
   - download paper
   - doi
@@ -20,10 +20,11 @@ This skill uses the `paper-search` CLI from `Fr4nzz/paper-search-mcp`, a fork
 of `openags/paper-search-mcp` with DOI fallback downloads, Unpaywall-first DOI
 resolution, PDF validation, and dynamic Sci-Hub mirror discovery.
 
-Use this skill primarily for PDF retrieval and text extraction once the target
-paper is known. For broad discovery, recommendations, or literature search, use
-normal web/search tools first because they are usually better at ranking,
-current coverage, and disambiguation than `paper-search search`.
+Use this skill primarily for PDF retrieval, text extraction, and DOI metadata
+enrichment once target papers are known. For broad discovery, recommendations,
+or literature search, use normal web/search tools first because they are usually
+better at ranking, current coverage, and disambiguation than
+`paper-search search`.
 
 ## Setup
 
@@ -52,6 +53,22 @@ Optional API keys in the same `.env`:
 - `PAPER_SEARCH_MCP_GOOGLE_SCHOLAR_PROXY_URL`
 
 ## Commands
+
+### Enrich DOI Metadata In Batch
+
+Use this after native/Parallel/web discovery finds candidate DOIs and you need a
+ranking table:
+
+```bash
+paper-search metadata-dois 10.1038/s41593-020-0658-y 10.1111/ecog.03049 -o ~/Downloads/papers/metadata.json
+paper-search metadata-dois --input dois.txt --output ~/Downloads/papers/metadata.json
+```
+
+The command queries Crossref, OpenAlex, and Unpaywall in parallel. If
+`PAPER_SEARCH_MCP_SEMANTIC_SCHOLAR_API_KEY` is configured, Semantic Scholar is
+included automatically. Output includes merged title, authors, year, DOI,
+abstract when available, citation count, OA/PDF URL, source coverage, and raw
+per-source records.
 
 ### Download By DOI
 
@@ -93,9 +110,10 @@ paper-search read arxiv 2106.12345 -o ~/Downloads/papers
 
 1. If the user gives a DOI and wants the PDF, run `paper-search download-doi <doi> -o ~/Downloads/papers`.
 2. If the user asks to find papers by topic/title, use normal web/search tools first to identify the paper and DOI. Do not use `paper-search search` as the default discovery method.
-3. If normal search returns a DOI, use `download-doi`; if it returns only a source-specific ID, use `download <source> <paper_id>`.
-4. Use `paper-search search` only as a last-resort metadata lookup when normal search is unavailable or the user explicitly asks to use this CLI.
-5. Always report the saved path and whether the source was Unpaywall/OA, repository, source-native, or mirror fallback when available.
+3. If normal/Parallel search returns multiple DOIs, use `metadata-dois` to enrich and rank them before deciding what to read or download.
+4. If normal search returns one DOI and the user wants the PDF, use `download-doi`; if it returns only a source-specific ID, use `download <source> <paper_id>`.
+5. Use `paper-search search` only as a supplementary/last-resort metadata lookup when normal search is unavailable or the user explicitly asks to use this CLI.
+6. Always report the saved path and whether the source was Unpaywall/OA, repository, source-native, or mirror fallback when available.
 
 ## Notes
 

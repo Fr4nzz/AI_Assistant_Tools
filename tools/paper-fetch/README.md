@@ -10,6 +10,7 @@ AI_Assistant_Tools setup commands.
 ## What It Does
 
 - Downloads known PDFs by DOI with source-native, Unpaywall, repository, and optional mirror fallback.
+- Enriches batches of known DOIs through Crossref, OpenAlex, Unpaywall, and optional Semantic Scholar.
 - Extracts text from source-specific paper downloads when supported.
 - Validates PDF downloads to avoid empty or non-PDF files.
 - Uses dynamic Sci-Hub mirror discovery only as an optional final fallback.
@@ -17,6 +18,10 @@ AI_Assistant_Tools setup commands.
 For broad discovery or literature search, prefer normal web/search tools first.
 Use `paper-search` after the target paper is identified, especially when you
 have a DOI, arXiv ID, or source-specific paper ID.
+
+For literature-review workflows, use normal search and/or Parallel search for
+initial discovery, then pass discovered DOI candidates to `metadata-dois` for a
+structured ranking table.
 
 ## Install - Windows
 
@@ -64,6 +69,7 @@ Optional keys in the same file:
 
 ```bash
 paper-search sources
+paper-search metadata-dois 10.1038/s41593-020-0658-y 10.1111/ecog.03049 -o ~/Downloads/papers/metadata.json
 paper-search download-doi 10.1038/s41593-020-0658-y -o ~/Downloads/papers --no-scihub
 ```
 
