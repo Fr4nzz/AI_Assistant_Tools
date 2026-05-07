@@ -1,0 +1,7 @@
+interface:
+  display_name: "Academic Research"
+  short_description: "Discover, read, appraise, cite, and write from academic papers"
+  default_prompt: "Build a literature-review workflow for a research question, find papers, appraise them, and draft a synthesis."
+
+policy:
+  allow_implicit_invocation: true

@@ -1,7 +1,0 @@
-interface:
-  display_name: "Literature Review"
-  short_description: "Read, summarize, appraise, and synthesize sets of papers"
-  default_prompt: "Synthesize these papers into a literature review matrix and draft outline."
-
-policy:
-  allow_implicit_invocation: true

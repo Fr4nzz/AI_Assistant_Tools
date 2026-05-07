@@ -1,7 +1,0 @@
-interface:
-  display_name: "Citation Zotero"
-  short_description: "Manage Zotero-backed citations and docx bibliography workflows"
-  default_prompt: "Add Zotero-backed citations to this manuscript draft and generate a bibliography."
-
-policy:
-  allow_implicit_invocation: true

@@ -11,7 +11,7 @@ REPO_RAW_BASE="${REPO_RAW_BASE:-https://raw.githubusercontent.com/Fr4nzz/AI_Assi
 
 usage() {
   cat <<'EOF'
-Usage: scripts/install-linux.sh [all|gogcli|outlook|onedrive|d2l|humanizer|paper-fetch|literature-search|literature-review|citation-zotero|scientific-writing|literature-appraisal|superpowers]
+Usage: scripts/install-linux.sh [all|gogcli|outlook|onedrive|d2l|humanizer|paper-fetch|academic-research|superpowers]
 
 Environment overrides:
   INSTALL_ROOT   Default: $HOME/.ai-assistant-tools
@@ -24,7 +24,7 @@ EOF
 }
 
 case "$TOOL" in
-  all|gogcli|outlook|onedrive|d2l|humanizer|paper-fetch|literature-search|literature-review|citation-zotero|scientific-writing|literature-appraisal|superpowers) ;;
+  all|gogcli|outlook|onedrive|d2l|humanizer|paper-fetch|academic-research|superpowers) ;;
   -h|--help) usage; exit 0 ;;
   *) usage >&2; exit 2 ;;
 esac
@@ -62,21 +62,35 @@ ensure_global_agents_note() {
   local agents="$CODEX_HOME/AGENTS.md"
   local marker="AI_ASSISTANT_TOOLS_RESEARCH_SKILLS"
   mkdir -p "$(dirname "$agents")"
-  if [ -f "$agents" ] && grep -q "$marker" "$agents"; then
-    return
-  fi
-  cat >> "$agents" <<'EOF'
+  local block
+  block="$(cat <<'EOF'
 
 <!-- AI_ASSISTANT_TOOLS_RESEARCH_SKILLS -->
 For scientific research and literature-review tasks, prefer the AI_Assistant_Tools research skills when installed:
-- Use `literature-search` for initial paper discovery across native search, Parallel, and paper-search.
+- Use `academic-research` for literature discovery, review planning, paper reading, appraisal, Zotero/citation workflows, and scientific writing.
 - Use `paper-fetch` / `paper-search` to download known PDFs and enrich DOI metadata.
-- Use `literature-review` after selecting papers: make a todo list, screen papers, delegate reading when useful, write markdown paper summaries/topic extracts, build a synthesis matrix, then draft from evidence.
-- Use `literature-appraisal` to judge paper relevance, evidence strength, limitations, and citation value.
-- Use `scientific-writing` only for the final academic prose/style pass.
-- Use `citation-zotero` for Zotero, BibTeX/CSL, citation keys, and docx citation workflows.
+- For initial discovery, run native search, Parallel search when configured, and paper-search in parallel when the review needs broad coverage.
+- After selecting papers, make a todo list, screen papers, delegate reading when useful, write markdown paper summaries/topic extracts, build a synthesis matrix, then draft from evidence.
 <!-- /AI_ASSISTANT_TOOLS_RESEARCH_SKILLS -->
 EOF
+)"
+  if [ -f "$agents" ] && grep -q "$marker" "$agents"; then
+    BLOCK="$block" python - "$agents" <<'PY'
+from pathlib import Path
+import os
+import re
+import sys
+
+path = Path(sys.argv[1]).expanduser()
+text = path.read_text()
+block = os.environ["BLOCK"].strip("\n")
+pattern = re.compile(r"\n?<!-- AI_ASSISTANT_TOOLS_RESEARCH_SKILLS -->.*?<!-- /AI_ASSISTANT_TOOLS_RESEARCH_SKILLS -->", re.S)
+text = pattern.sub("\n" + block, text)
+path.write_text(text)
+PY
+  else
+    printf '%s\n' "$block" >> "$agents"
+  fi
 }
 
 ensure_venv() {
@@ -130,10 +144,11 @@ install_humanizer() {
   echo "Installed humanizer Codex skill."
 }
 
-install_scientific_writing() {
-  install_skill "scientific-writing" "scientific-writing"
-  install_skill_reference "scientific-writing" "scientific-writing" "humanizer.md"
-  echo "Installed scientific-writing Codex skill."
+install_academic_research() {
+  install_skill "academic-research" "academic-research"
+  install_skill_reference "academic-research" "academic-research" "humanizer.md"
+  ensure_global_agents_note
+  echo "Installed academic-research Codex skill."
 }
 
 install_skill_only() {
@@ -175,11 +190,6 @@ PY
   echo "Restart Codex Desktop. If the plugin does not appear, install Superpowers from the Plugins UI."
 }
 
-install_literature_review() {
-  install_skill_only "literature-review"
-  ensure_global_agents_note
-}
-
 install_paper_fetch() {
   ensure_venv
   mkdir -p "$INSTALL_ROOT/paper-search-mcp"
@@ -215,7 +225,7 @@ EOF
 
 selected_tools() {
   if [ "$TOOL" = "all" ]; then
-    printf '%s\n' gogcli outlook onedrive d2l humanizer paper-fetch literature-search literature-review citation-zotero scientific-writing literature-appraisal superpowers
+    printf '%s\n' gogcli outlook onedrive d2l humanizer paper-fetch academic-research superpowers
   else
     printf '%s\n' "$TOOL"
   fi
@@ -227,9 +237,7 @@ while IFS= read -r item; do
     outlook|onedrive|d2l) install_python_cli "$item" ;;
     humanizer) install_humanizer ;;
     paper-fetch) install_paper_fetch; ensure_global_agents_note ;;
-    literature-search|citation-zotero|literature-appraisal) install_skill_only "$item"; ensure_global_agents_note ;;
-    literature-review) install_literature_review ;;
-    scientific-writing) install_scientific_writing ;;
+    academic-research) install_academic_research ;;
     superpowers) install_superpowers ;;
   esac
 done < <(selected_tools)

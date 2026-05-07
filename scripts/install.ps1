@@ -1,5 +1,5 @@
 param(
-  [ValidateSet('all', 'gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer', 'paper-fetch', 'literature-search', 'literature-review', 'citation-zotero', 'scientific-writing', 'literature-appraisal', 'superpowers')]
+  [ValidateSet('all', 'gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer', 'paper-fetch', 'academic-research', 'superpowers')]
   [string] $Tool = 'all',
 
   [string] $InstallRoot = (Join-Path $HOME '.ai-assistant-tools'),
@@ -52,21 +52,24 @@ function Ensure-GlobalAgentsNote {
   $agents = Join-Path $HOME '.codex\AGENTS.md'
   $marker = 'AI_ASSISTANT_TOOLS_RESEARCH_SKILLS'
   New-Item -ItemType Directory -Force -Path (Split-Path -Parent $agents) | Out-Null
-  if ((Test-Path -LiteralPath $agents) -and (Select-String -LiteralPath $agents -SimpleMatch $marker -Quiet)) {
-    return
-  }
-@'
+  $block = @'
 
 <!-- AI_ASSISTANT_TOOLS_RESEARCH_SKILLS -->
 For scientific research and literature-review tasks, prefer the AI_Assistant_Tools research skills when installed:
-- Use `literature-search` for initial paper discovery across native search, Parallel, and paper-search.
+- Use `academic-research` for literature discovery, review planning, paper reading, appraisal, Zotero/citation workflows, and scientific writing.
 - Use `paper-fetch` / `paper-search` to download known PDFs and enrich DOI metadata.
-- Use `literature-review` after selecting papers: make a todo list, screen papers, delegate reading when useful, write markdown paper summaries/topic extracts, build a synthesis matrix, then draft from evidence.
-- Use `literature-appraisal` to judge paper relevance, evidence strength, limitations, and citation value.
-- Use `scientific-writing` only for the final academic prose/style pass.
-- Use `citation-zotero` for Zotero, BibTeX/CSL, citation keys, and docx citation workflows.
+- For initial discovery, run native search, Parallel search when configured, and paper-search in parallel when the review needs broad coverage.
+- After selecting papers, make a todo list, screen papers, delegate reading when useful, write markdown paper summaries/topic extracts, build a synthesis matrix, then draft from evidence.
 <!-- /AI_ASSISTANT_TOOLS_RESEARCH_SKILLS -->
-'@ | Add-Content -LiteralPath $agents
+'@
+  if ((Test-Path -LiteralPath $agents) -and (Select-String -LiteralPath $agents -SimpleMatch $marker -Quiet)) {
+    $text = Get-Content -Raw -LiteralPath $agents
+    $pattern = '(?s)\r?\n?<!-- AI_ASSISTANT_TOOLS_RESEARCH_SKILLS -->.*?<!-- /AI_ASSISTANT_TOOLS_RESEARCH_SKILLS -->'
+    $text = [regex]::Replace($text, $pattern, "`n$($block.Trim())")
+    Set-Content -LiteralPath $agents -Value $text -Encoding UTF8
+  } else {
+    Add-Content -LiteralPath $agents -Value $block
+  }
 }
 
 function Install-CliTool {
@@ -172,11 +175,11 @@ function Install-Humanizer {
   Write-Host 'Installed humanizer Codex skill.'
 }
 
-function Install-ScientificWriting {
-  Install-Skill 'scientific-writing' 'scientific-writing'
-  Install-SkillReference 'scientific-writing' 'scientific-writing' 'humanizer.md'
+function Install-AcademicResearch {
+  Install-Skill 'academic-research' 'academic-research'
+  Install-SkillReference 'academic-research' 'academic-research' 'humanizer.md'
   Ensure-GlobalAgentsNote
-  Write-Host 'Installed scientific-writing Codex skill.'
+  Write-Host 'Installed academic-research Codex skill.'
 }
 
 function Install-SkillOnly {
@@ -212,11 +215,6 @@ function Install-Superpowers {
   Set-Content -LiteralPath $config -Value $text -Encoding UTF8
   Write-Host "Enabled Superpowers plugin in $config"
   Write-Host 'Restart Codex Desktop. If the plugin does not appear, install Superpowers from the Plugins UI.'
-}
-
-function Install-LiteratureReview {
-  Install-SkillOnly 'literature-review'
-  Ensure-GlobalAgentsNote
 }
 
 function Install-PaperFetch {
@@ -259,7 +257,7 @@ PAPER_SEARCH_MCP_SCIHUB_MIRROR_PROBE_WORKERS=8
 }
 
 $selected = if ($Tool -eq 'all') {
-  @('gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer', 'paper-fetch', 'literature-search', 'literature-review', 'citation-zotero', 'scientific-writing', 'literature-appraisal', 'superpowers')
+  @('gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer', 'paper-fetch', 'academic-research', 'superpowers')
 } else {
   @($Tool)
 }
@@ -273,11 +271,7 @@ foreach ($item in $selected) {
     'whatsapp' { Install-WhatsApp }
     'humanizer' { Install-Humanizer }
     'paper-fetch' { Install-PaperFetch; Ensure-GlobalAgentsNote }
-    'literature-search' { Install-SkillOnly 'literature-search'; Ensure-GlobalAgentsNote }
-    'literature-review' { Install-LiteratureReview }
-    'citation-zotero' { Install-SkillOnly 'citation-zotero'; Ensure-GlobalAgentsNote }
-    'scientific-writing' { Install-ScientificWriting }
-    'literature-appraisal' { Install-SkillOnly 'literature-appraisal'; Ensure-GlobalAgentsNote }
+    'academic-research' { Install-AcademicResearch }
     'superpowers' { Install-Superpowers }
   }
 }
