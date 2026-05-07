@@ -103,8 +103,9 @@ install_paper_fetch() {
   for f in paper-dl.py paper-dl.cmd config.py search.py download.py mirrors.py pdf_utils.py; do
     download "$REPO_RAW_BASE/tools/paper-fetch/bin/$f" "$INSTALL_ROOT/paper-fetch/$f"
   done
+  download "$REPO_RAW_BASE/tools/paper-fetch/requirements.txt" "$INSTALL_ROOT/paper-fetch/requirements.txt"
   chmod +x "$INSTALL_ROOT/paper-fetch/paper-dl.py"
-  "$INSTALL_ROOT/venv/bin/python" -m pip install requests beautifulsoup4 urllib3 lxml
+  "$INSTALL_ROOT/venv/bin/python" -m pip install -r "$INSTALL_ROOT/paper-fetch/requirements.txt"
   cat > "$LOCAL_BIN/paper-dl" <<EOF
 #!/usr/bin/env bash
 exec "$INSTALL_ROOT/venv/bin/python" "$INSTALL_ROOT/paper-fetch/paper-dl.py" "\$@"

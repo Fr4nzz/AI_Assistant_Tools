@@ -151,6 +151,7 @@ function Install-PaperFetch {
   foreach ($file in @('paper-dl.py', 'paper-dl.cmd', 'config.py', 'search.py', 'download.py', 'mirrors.py', 'pdf_utils.py')) {
     Get-UrlFile "$RepoRawBase/tools/paper-fetch/bin/$file" (Join-Path $toolDir $file)
   }
+  Get-UrlFile "$RepoRawBase/tools/paper-fetch/requirements.txt" (Join-Path $toolDir 'requirements.txt')
 
   $localBin = Join-Path $HOME '.local\bin'
   New-Item -ItemType Directory -Force -Path $localBin | Out-Null
@@ -162,7 +163,7 @@ function Install-PaperFetch {
   Install-Skill 'paper-fetch' 'paper-fetch'
 
   if (-not $SkipDependencies) {
-    python -m pip install requests beautifulsoup4 urllib3 lxml
+    python -m pip install -r (Join-Path $toolDir 'requirements.txt')
   }
 
   Write-Host "Installed paper-dl CLI to $toolDir"

@@ -26,19 +26,14 @@ Search and download academic papers with automatic mirror discovery and Open Acc
 Before using this skill, ensure it is installed:
 
 ```bash
-# Linux / macOS — copy skill to Codex skills directory
-mkdir -p ~/.codex/skills
-cp -r /path/to/repo/skills/paper-fetch ~/.codex/skills/paper-fetch
-cd ~/.codex/skills/paper-fetch
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) paper-fetch
 ```
 
 Then configure the required email:
 
 ```bash
-python3 scripts/paper_dl.py set-key unpaywall-email your@email.com
+paper-dl set-key unpaywall-email your@email.com
+paper-dl set-key mailto your@email.com
 ```
 
 ### Optional: Get an OpenAlex API Key (Recommended)
@@ -48,7 +43,7 @@ python3 scripts/paper_dl.py set-key unpaywall-email your@email.com
 3. Copy the API key
 4. Run:
    ```bash
-   python3 scripts/paper_dl.py set-key openalex PASTE_KEY_HERE
+   paper-dl set-key openalex PASTE_KEY_HERE
    ```
 
 This improves search rate limits and is free.
@@ -57,15 +52,16 @@ This improves search rate limits and is free.
 
 ### Search for papers
 ```bash
-python3 scripts/paper_dl.py search "quantum entanglement" -n 5
+paper-dl search "quantum entanglement" -n 5
+paper-dl --json search "quantum entanglement" -n 5
 ```
 
 Searches across OpenAlex, Semantic Scholar, Crossref, and arXiv. Returns title, authors, year, DOI, and PDF URL (if available).
 
 ### Download a paper
 ```bash
-python3 scripts/paper_dl.py download 10.1038/nature12373
-python3 scripts/paper_dl.py download https://doi.org/10.1038/nature12373
+paper-dl download 10.1038/nature12373
+paper-dl download https://doi.org/10.1038/nature12373
 ```
 
 Download pipeline (fully automatic, agent never specifies source):
@@ -76,7 +72,7 @@ Download pipeline (fully automatic, agent never specifies source):
 
 ### Lookup DOI metadata
 ```bash
-python3 scripts/paper_dl.py lookup 10.1038/nature12373
+paper-dl lookup 10.1038/nature12373
 ```
 
 Returns title, OA status, and PDF URL from Unpaywall.
