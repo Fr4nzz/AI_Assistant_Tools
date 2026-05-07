@@ -68,7 +68,10 @@ The command queries Crossref, OpenAlex, and Unpaywall in parallel. If
 `PAPER_SEARCH_MCP_SEMANTIC_SCHOLAR_API_KEY` is configured, Semantic Scholar is
 included automatically. Output includes merged title, authors, year, DOI,
 abstract when available, citation count, OA/PDF URL, source coverage, and raw
-per-source records.
+per-source records. Ranking fields include `rank_score`, `rank_components`,
+`rank_reasons`, and `oa_pdf_sources`. PDF availability in the ranking uses all
+fast OA metadata sources checked for that DOI, not only OpenAlex; mirror probing
+is reserved for `download-doi`.
 
 ### Download By DOI
 

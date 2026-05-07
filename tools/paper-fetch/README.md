@@ -23,6 +23,11 @@ For literature-review workflows, use normal search and/or Parallel search for
 initial discovery, then pass discovered DOI candidates to `metadata-dois` for a
 structured ranking table.
 
+`metadata-dois` checks fast open metadata sources in parallel for each DOI.
+PDF availability in its ranking is based on all checked OA sources, exposed as
+`oa_pdf_sources`, not only OpenAlex. Mirror probing is intentionally reserved
+for `download-doi` so metadata ranking stays fast.
+
 ## Install - Windows
 
 ```powershell
