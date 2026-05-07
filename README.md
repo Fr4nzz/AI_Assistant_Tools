@@ -1,6 +1,6 @@
 # AI Assistant Tools
 
-Local-first setup files for giving Codex Desktop access to personal productivity tools.
+Local-first setup files for giving Codex Desktop or Hermes Agent access to personal productivity tools.
 
 This repo is organized as one folder per tool. Each folder contains the actual scripts/skills when the tool is custom, plus a short README explaining the authentication model and first test commands.
 
@@ -55,10 +55,10 @@ Expected agent flow:
 | `onedrive` | OneDrive / Microsoft 365 files | OneDrive and shared Microsoft files | Uses Microsoft Graph file APIs from the signed-in Microsoft web session. Graph file access worked, while Graph mail/calendar scopes did not. |
 | `d2l` | D2L / Brightspace | Course, assignment, deadline, grade, announcement, and LMS file context | Uses browser-backed institutional login because simple API-token setup was not reliable for this environment. |
 | `whatsapp` | WhatsApp / Whasapo + wha CLI | WhatsApp chats, search, groups, media discovery/download, explicit sending | Uses Whasapo pairing plus a local `wha` CLI. We moved away from the previous MCP-first approach because historical message sync/tool visibility was inconsistent; `wha` reads Whasapo's SQLite cache directly. |
-| `humanizer` | Humanizer skill | Natural-language rewrite and prose polishing for drafts, docs, emails, PR descriptions, and similar text | Vendors the MIT-licensed Hermes Agent humanizer skill so Codex can apply a focused style pass without any external account setup. |
-| `paper-fetch` | Paper Search / Paper Fetch | Download and read known academic paper PDFs by DOI or source-specific ID | Installs `paper-search` from the `Fr4nzz/paper-search-mcp` fork. Use normal search/web tools for discovery first; DOI downloads use source-native paths, Unpaywall, open repositories, and optional discovered academic mirrors. |
-| `academic-research` | Academic research skill | Literature discovery, multi-paper reading, synthesis, appraisal, Zotero/citation workflows, and scientific writing | Merges the previous literature-search, literature-review, citation-zotero, scientific-writing, and literature-appraisal skills into one coherent workflow. It uses native search, Parallel when configured, and paper-search as complementary discovery routes, then uses `paper-fetch` for known DOI metadata/PDF retrieval. |
-| `superpowers` | Codex Superpowers plugin helper | Brainstorming, planning, verification, and subagent workflow skills | Enables `[plugins."superpowers@openai-curated"]` in Codex config and installs a tiny helper skill. Restart Codex Desktop afterward; if the official marketplace cache is missing, finish from the Plugins UI. |
+| `humanizer` | Humanizer skill | Natural-language rewrite and prose polishing for drafts, docs, emails, PR descriptions, and similar text | Vendors the MIT-licensed Hermes Agent humanizer skill so Codex can apply a focused style pass without any external account setup. Also works natively in Hermes. |
+| `paper-fetch` | Paper Search / Paper Fetch | Download and read known academic paper PDFs by DOI or source-specific ID | Installs `paper-search` from the `Fr4nzz/paper-search-mcp` fork. Use normal search/web tools for discovery first; DOI downloads use source-native paths, Unpaywall, open repositories, and optional discovered academic mirrors. Compatible with Codex and Hermes. |
+| `academic-research` | Academic research skill | Literature discovery, multi-paper reading, synthesis, appraisal, Zotero/citation workflows, and scientific writing | Merges the previous literature-search, literature-review, citation-zotero, scientific-writing, and literature-appraisal skills into one coherent workflow. It uses native search, Parallel when configured, and paper-search as complementary discovery routes, then uses `paper-fetch` for known DOI metadata/PDF retrieval. Compatible with Codex and Hermes. |
+| `superpowers` | Codex Superpowers plugin helper | Brainstorming, planning, verification, and subagent workflow skills | Enables `[plugins."superpowers@openai-curated"]` in Codex config and installs a tiny helper skill. Restart Codex Desktop afterward; if the official marketplace cache is missing, finish from the Plugins UI. Codex only. |
 
 ## Quick Install - Windows
 
@@ -232,6 +232,28 @@ setsid chromium --new-window --ozone-platform-hint=auto \
 After signing in, close visible Chromium windows before running headless
 commands. Chromium locks the profile while a visible window is open, so headless
 commands may fail with `ProcessSingleton` errors if the window is left running.
+
+## Hermes Agent Install
+
+Hermes Agent uses the same CLI tools but loads skills from a different path.
+The Linux installer can also copy skills to the Hermes skills directory when
+`HERMES_SKILLS` is set.
+
+Install a tool for Hermes:
+
+```bash
+export HERMES_SKILLS="$HOME/.hermes/profiles/$(whoami)/skills/custom"
+bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) paper-fetch
+bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) academic-research
+```
+
+Hermes skills are placed under:
+
+```text
+~/.hermes/profiles/<user>/skills/custom
+```
+
+Restart your Hermes session or reload skills after installing.
 
 Google Workspace / `gogcli` setup notes:
 

@@ -5,7 +5,7 @@ Installs the `paper-search` CLI from
 of [`openags/paper-search-mcp`](https://github.com/openags/paper-search-mcp).
 
 The install name remains `paper-fetch` for compatibility with existing
-AI_Assistant_Tools setup commands.
+AI_Assistant_Tools setup commands. Works with Codex Desktop and Hermes Agent.
 
 ## What It Does
 

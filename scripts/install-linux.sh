@@ -7,6 +7,8 @@ LOCAL_BIN="${LOCAL_BIN:-$HOME/.local/bin}"
 CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
 CODEX_SKILLS="${CODEX_SKILLS:-$CODEX_HOME/skills}"
 CODEX_CONFIG="${CODEX_CONFIG:-$CODEX_HOME/config.toml}"
+HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
+HERMES_SKILLS="${HERMES_SKILLS:-}"
 REPO_RAW_BASE="${REPO_RAW_BASE:-https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main}"
 
 usage() {
@@ -19,6 +21,7 @@ Environment overrides:
   CODEX_HOME     Default: $HOME/.codex
   CODEX_SKILLS   Default: $HOME/.codex/skills
   CODEX_CONFIG   Default: $HOME/.codex/config.toml
+  HERMES_SKILLS  Default: (empty) — when set, also copies skills to this path
   REPO_RAW_BASE  Default: raw GitHub main branch
 EOF
 }
@@ -56,6 +59,28 @@ install_skill_reference() {
   local ref="$3"
   mkdir -p "$CODEX_SKILLS/$name/references"
   download "$REPO_RAW_BASE/tools/$source/skill/references/$ref" "$CODEX_SKILLS/$name/references/$ref"
+}
+
+install_hermes_skill() {
+  if [ -z "$HERMES_SKILLS" ]; then
+    return 0
+  fi
+  local name="$1"
+  local source="$2"
+  mkdir -p "$HERMES_SKILLS/$name"
+  download "$REPO_RAW_BASE/tools/$source/skill/SKILL.md" "$HERMES_SKILLS/$name/SKILL.md"
+  echo "Installed $name Hermes skill to $HERMES_SKILLS/$name"
+}
+
+install_hermes_skill_reference() {
+  if [ -z "$HERMES_SKILLS" ]; then
+    return 0
+  fi
+  local name="$1"
+  local source="$2"
+  local ref="$3"
+  mkdir -p "$HERMES_SKILLS/$name/references"
+  download "$REPO_RAW_BASE/tools/$source/skill/references/$ref" "$HERMES_SKILLS/$name/references/$ref"
 }
 
 ensure_global_agents_note() {
@@ -140,6 +165,7 @@ install_gogcli() {
 
 install_humanizer() {
   install_skill "humanizer" "humanizer"
+  install_hermes_skill "humanizer" "humanizer"
   download "$REPO_RAW_BASE/tools/humanizer/skill/LICENSE" "$CODEX_SKILLS/humanizer/LICENSE"
   echo "Installed humanizer Codex skill."
 }
@@ -147,6 +173,8 @@ install_humanizer() {
 install_academic_research() {
   install_skill "academic-research" "academic-research"
   install_skill_reference "academic-research" "academic-research" "humanizer.md"
+  install_hermes_skill "academic-research" "academic-research"
+  install_hermes_skill_reference "academic-research" "academic-research" "humanizer.md"
   ensure_global_agents_note
   echo "Installed academic-research Codex skill."
 }
@@ -154,6 +182,7 @@ install_academic_research() {
 install_skill_only() {
   local name="$1"
   install_skill "$name" "$name"
+  install_hermes_skill "$name" "$name"
   echo "Installed $name Codex skill."
 }
 
@@ -218,6 +247,7 @@ exec "$INSTALL_ROOT/venv/bin/python" -m paper_search_mcp.cli "\$@"
 EOF
   chmod +x "$LOCAL_BIN/paper-search"
   install_skill "paper-fetch" "paper-fetch"
+  install_hermes_skill "paper-fetch" "paper-fetch"
   echo "Installed paper-search from Fr4nzz/paper-search-mcp to $INSTALL_ROOT/venv"
   echo "Config file: $INSTALL_ROOT/paper-search-mcp/.env"
   echo "Installed PATH shim to $LOCAL_BIN/paper-search"
@@ -246,3 +276,10 @@ cat <<EOF
 
 Done. Make sure $LOCAL_BIN is on PATH, then restart Codex Desktop so new global skills are loaded.
 EOF
+
+if [ -n "$HERMES_SKILLS" ]; then
+  cat <<EOF
+Hermes skills were also installed to $HERMES_SKILLS.
+Restart your Hermes session or reload skills for them to take effect.
+EOF
+fi

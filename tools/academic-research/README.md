@@ -1,8 +1,9 @@
 # Academic Research
 
-Installs one Codex skill for academic research workflows around literature
+Installs one AI agent skill for academic research workflows around literature
 reviews: discovery, screening, paper reading, synthesis, appraisal, citation
-workflow planning, and scientific writing.
+workflow planning, and scientific writing. Works with Codex Desktop and
+Hermes Agent.
 
 `paper-fetch` remains a separate tool because it installs the `paper-search`
 CLI for DOI metadata and PDF download. Use `academic-research` to decide what
