@@ -38,6 +38,14 @@ Use `paper-fetch` / `paper-search` as the operational tool for known DOI
 metadata and PDF retrieval. Do not use paper-search as the only discovery
 route unless the user asks for a quick single-tool search.
 
+## Tool Authentication
+
+Some optional tools listed in `optional_bins` require setup before first use.
+
+- **parallel-cli**: Requires login. Choose the flow that matches your environment:
+  - **Desktop / local GUI**: run `parallel-cli login` (opens browser automatically).
+  - **Headless / SSH / remote server / Hermes Agent**: run `parallel-cli login --device`, then complete authentication on another device by visiting the printed URL and entering the code.
+
 ## Default Workflow
 
 Before substantial work, create and maintain a visible todo list. Update it as
