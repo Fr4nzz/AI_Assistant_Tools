@@ -1,6 +1,6 @@
 ---
 name: literature-review
-description: Use when the user needs to read, screen, summarize, synthesize, or write from a set of academic papers after initial literature search has found candidate sources.
+description: Use when the user needs to read, screen, audit, summarize, synthesize, or write from academic papers, literature-review drafts, or deep-research reports.
 triggers:
   - literature review
   - read papers
@@ -8,6 +8,9 @@ triggers:
   - summarize papers
   - research synthesis
   - review matrix
+  - verify citations
+  - deep research
+  - draft audit
 argument-hint: "<research question plus paper list or folder>"
 metadata:
   optional_skills: ["literature-search", "paper-fetch", "literature-appraisal", "scientific-writing", "citation-zotero"]
@@ -28,11 +31,14 @@ raw search dumps.
 Use for:
 
 - reading many papers after initial discovery
+- auditing an existing literature-review draft
+- checking ChatGPT/Gemini/Claude deep-research outputs against real papers
 - screening abstracts and full texts
 - extracting evidence for a thesis or manuscript section
 - building a synthesis matrix
 - writing a literature review from paper notes
 - tracking citation roles and limitations
+- improving a draft under a word limit
 
 Use `literature-search` first when the paper set does not exist yet.
 Use `scientific-writing` only for the final prose/style pass.
@@ -46,18 +52,24 @@ final prose when papers still need screening, summary, appraisal, or synthesis.
 Minimum todo list:
 
 1. Define review question and scope.
-2. Confirm or run initial literature search.
-3. Screen and deduplicate candidate papers.
-4. Retrieve PDFs or abstracts for the shortlist.
-5. Cluster papers by theme/method/debate.
-6. Delegate or perform paper reading.
-7. Write paper summaries and topic extracts.
-8. Build synthesis matrix.
-9. Appraise evidence strength and limitations.
-10. Draft outline.
-11. Draft prose from synthesis.
-12. Apply `scientific-writing` final style pass.
-13. Check citations and unresolved claims.
+2. Identify source material: draft, bibliography, deep-research reports,
+   paper list, PDFs, notes, and word limit.
+3. Extract claims and citations from the existing draft/reports.
+4. Verify high-impact or suspicious claims against cited papers.
+5. Confirm references and citation style.
+6. Run or update literature search for omissions.
+7. Screen and deduplicate candidate papers.
+8. Retrieve PDFs or abstracts for the shortlist.
+9. Cluster papers by theme/method/debate.
+10. Delegate or perform paper reading.
+11. Write paper summaries and topic extracts.
+12. Build synthesis matrix.
+13. Appraise evidence strength and limitations.
+14. Decide what to add, cut, merge, or reframe under any word limit.
+15. Draft outline or revision plan.
+16. Draft prose from synthesis.
+17. Apply `scientific-writing` final style pass.
+18. Check citations and unresolved claims.
 
 1. Define the review question, scope, inclusion/exclusion criteria, and expected
    output before reading deeply.
@@ -74,6 +86,96 @@ Minimum todo list:
 8. Use `scientific-writing` for the final writing-style pass.
 9. Use `citation-zotero` when citation keys, Zotero, BibTeX/CSL, or `.docx`
    workflows are needed.
+
+## Existing Draft / Deep-Research Audit
+
+Use this mode when the user already has a literature-review draft, notes, or
+deep-research reports from ChatGPT, Gemini, Claude, Perplexity, or similar
+systems.
+
+Do not assume those reports are correct. They may have used only abstracts,
+mixed ideas between papers, invented details, cited the right paper for the
+wrong claim, or missed recent/relevant work.
+
+Audit steps:
+
+1. Extract a claim-citation table from the draft/report.
+2. Prioritize verification for claims that are central, surprising,
+   quantitative, controversial, or repeated in the argument.
+3. For each prioritized claim, check the cited source's abstract and, when
+   needed, methods/results/discussion using `paper-fetch` or available PDFs.
+4. Mark each claim as:
+   - `supported`
+   - `partly supported`
+   - `unsupported`
+   - `wrong source`
+   - `needs full text`
+   - `citation missing`
+5. Check whether the draft mixed findings from one paper while citing another.
+6. Check that references are real, complete, non-duplicated, and formatted in
+   the requested style (APA or the style already used).
+7. Run a fresh targeted literature search to find relevant missing papers,
+   newer reviews, stronger evidence, or contrary findings.
+8. Produce an editorial triage table:
+   - keep as is
+   - revise wording
+   - replace citation
+   - add source
+   - remove claim
+   - add caveat
+
+### Claim-Citation Audit Table
+
+```markdown
+| Draft claim | Current citation | Verification status | What the source actually supports | Fix |
+|---|---|---|---|---|
+```
+
+### Reference Check
+
+Check:
+
+- author spellings
+- year
+- title
+- journal/book/source
+- volume/issue/pages/article number
+- DOI/URL
+- APA or requested style consistency
+- whether in-text citations match the reference list
+- whether every reference is cited and every citation has a reference
+
+## Word-Limit Triage
+
+If the user has a word limit, do not just append new findings. Weigh the value
+of each idea against the review question.
+
+When proposing additions, identify what should be cut, compressed, or moved to
+notes/supplementary material.
+
+Prioritize content that:
+
+- directly answers the review question
+- changes interpretation
+- strengthens a weak claim
+- adds an important caveat
+- updates outdated evidence
+- resolves a contradiction
+
+Cut or compress content that:
+
+- repeats a point already made
+- is background but not necessary
+- cites weak evidence where stronger evidence is available
+- is interesting but peripheral
+- over-explains a method already familiar to the target audience
+
+Output a compact tradeoff table:
+
+```markdown
+| Change | Add/cut/compress | Reason | Word impact |
+|---|---|---|---|
+```
 
 ## Parallel Reading With Subagents
 
