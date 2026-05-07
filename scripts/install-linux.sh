@@ -118,17 +118,24 @@ install_skill_only() {
 }
 
 install_exa_search() {
-  ensure_venv
-  "$INSTALL_ROOT/venv/bin/python" -m pip install --upgrade exa-cli
+  mkdir -p "$INSTALL_ROOT/exa-search"
+  download "$REPO_RAW_BASE/tools/exa-search/bin/exa-search.py" "$INSTALL_ROOT/exa-search/exa-search.py"
+  chmod +x "$INSTALL_ROOT/exa-search/exa-search.py"
+  if [ ! -f "$INSTALL_ROOT/exa-search/.env" ]; then
+    cat > "$INSTALL_ROOT/exa-search/.env" <<'EOF'
+EXA_API_KEY=
+EOF
+  fi
   cat > "$LOCAL_BIN/exa-search" <<EOF
 #!/usr/bin/env bash
-exec "$INSTALL_ROOT/venv/bin/exa" "\$@"
+export EXA_SEARCH_ENV_FILE="$INSTALL_ROOT/exa-search/.env"
+exec python "$INSTALL_ROOT/exa-search/exa-search.py" "\$@"
 EOF
   chmod +x "$LOCAL_BIN/exa-search"
   install_skill "exa-search" "exa-search"
-  echo "Installed exa-cli to $INSTALL_ROOT/venv"
+  echo "Installed exa-search CLI to $INSTALL_ROOT/exa-search"
+  echo "Config file: $INSTALL_ROOT/exa-search/.env"
   echo "Installed PATH shim to $LOCAL_BIN/exa-search"
-  echo "Set EXA_API_KEY before using Exa API search."
   echo "Installed exa-search Codex skill."
 }
 

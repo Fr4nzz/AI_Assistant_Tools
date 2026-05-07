@@ -164,25 +164,25 @@ function Install-SkillOnly {
 }
 
 function Install-ExaSearch {
-  if (-not $SkipDependencies) {
-    python -m pip install --upgrade exa-cli
+  $toolDir = Join-Path $InstallRoot 'exa-search'
+  New-Item -ItemType Directory -Force -Path $toolDir | Out-Null
+  Get-UrlFile "$RepoRawBase/tools/exa-search/bin/exa-search.py" (Join-Path $toolDir 'exa-search.py')
+  Get-UrlFile "$RepoRawBase/tools/exa-search/bin/exa-search.cmd" (Join-Path $toolDir 'exa-search.cmd')
+
+  $envFile = Join-Path $toolDir '.env'
+  if (-not (Test-Path -LiteralPath $envFile)) {
+    'EXA_API_KEY=' | Set-Content -LiteralPath $envFile -Encoding ASCII
   }
 
   $localBin = Join-Path $HOME '.local\bin'
   New-Item -ItemType Directory -Force -Path $localBin | Out-Null
   $shim = Join-Path $localBin 'exa-search.cmd'
-  $scripts = python -c "import sysconfig; print(sysconfig.get_path('scripts'))"
-  $exaExe = Join-Path $scripts 'exa.exe'
-  if (Test-Path -LiteralPath $exaExe) {
-    "@echo off`r`ncall `"$exaExe`" %*`r`n" | Set-Content -LiteralPath $shim -Encoding ASCII
-  } else {
-    "@echo off`r`npython -m main %*`r`n" | Set-Content -LiteralPath $shim -Encoding ASCII
-  }
+  "@echo off`r`nset `"EXA_SEARCH_ENV_FILE=$envFile`"`r`npython `"$toolDir\exa-search.py`" %*`r`n" | Set-Content -LiteralPath $shim -Encoding ASCII
 
   Install-Skill 'exa-search' 'exa-search'
-  Write-Host 'Installed exa-cli.'
+  Write-Host "Installed exa-search CLI to $toolDir"
+  Write-Host "Config file: $envFile"
   Write-Host "Installed PATH shim to $shim"
-  Write-Host 'Set EXA_API_KEY before using Exa API search.'
   Write-Host 'Installed exa-search Codex skill.'
 }
 

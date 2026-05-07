@@ -21,7 +21,7 @@ show it is better for the user's topic.
 
 Main pieces:
 
-- Local CLI: `exa-search`, backed by the third-party `exa-cli` package.
+- Local CLI: `exa-search`, a small wrapper around Exa's current Search API.
 - Hosted MCP, optional: `https://mcp.exa.ai/mcp`
 - MCP repo: https://github.com/exa-labs/exa-mcp-server
 - Python SDK: `exa-py`
@@ -29,9 +29,9 @@ Main pieces:
 
 ## Install / Configure
 
-The AI_Assistant_Tools installer installs `exa-cli` in its Python environment
-and exposes it as `exa-search` to avoid collisions with unrelated Linux `exa`
-or `eza` commands. Set an API key before use:
+The AI_Assistant_Tools installer exposes the command as `exa-search` to avoid
+collisions with unrelated Linux `exa` or `eza` commands. Set an API key before
+use:
 
 ```bash
 export EXA_API_KEY="your_exa_key"
@@ -41,10 +41,13 @@ Get a key from https://dashboard.exa.ai/api-keys or the API key links in
 https://exa.ai/docs. Treat the key like a password; do not paste it into public
 logs or commits.
 
+The installer also creates `~/.ai-assistant-tools/exa-search/.env`, where
+`EXA_API_KEY=` can be stored for persistent local use.
+
 Basic test:
 
 ```bash
-exa-search search "species distribution modeling spatial block cross validation" -n 5
+exa-search search "species distribution modeling spatial block cross validation" -n 5 --json
 ```
 
 Exa currently advertises a free monthly request tier, but API limits and pricing
@@ -64,14 +67,12 @@ codex mcp add exa --url https://mcp.exa.ai/mcp
 ## Useful Commands
 
 ```bash
-exa-search search "query" -n 10
-exa-search contents "https://example.org/paper"
-exa-search similar "https://example.org/paper"
-exa-search answer "what are the main methods for spatial cross-validation in SDMs?"
+exa-search search "query" -n 10 --type auto --json
+exa-search search "query" --type deep --summary --json
+exa-search contents "https://example.org/paper" --text --json
 ```
 
-`exa-cli` prints text, not strict JSON. For benchmarking, capture stdout and
-deduplicate results by URL/title/DOI.
+For benchmarking, prefer `--json`, then deduplicate results by URL/title/DOI.
 
 ## Benchmark Pattern
 
