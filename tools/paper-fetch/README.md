@@ -1,13 +1,31 @@
 # Paper Fetch
 
-Search and download academic papers from open access sources, repositories, and academic mirrors.
+Download academic papers from open access sources, repositories, and academic
+mirrors after the best candidates have been found through normal research.
 
 ## What It Does
 
-- **Search** across OpenAlex, Semantic Scholar, Crossref, arXiv, bioRxiv, and Google Scholar in parallel
+- **Search** across OpenAlex, Semantic Scholar, Crossref, arXiv, bioRxiv, and Google Scholar in parallel, useful as a fallback or quick first pass
 - **Download** papers by DOI or URL with multi-source fallback (OA → mirrors → Anna's Archive → direct PDF)
 - **Auto-discover** working academic mirrors with parallel health probes and latency-based ordering
 - **Set API keys** interactively via CLI
+
+## Recommended Agent Workflow
+
+For literature discovery, ranking, and "best papers" requests, use normal web
+research first. Normal search is better at finding recent papers, benchmark
+pages, publisher pages, dataset pages, and field-specific context. Use
+`paper-dl search` only as a quick fallback or to supplement metadata.
+
+Use this tool primarily after candidate papers are known:
+
+1. Find and rank papers with normal search.
+2. Extract DOI, arXiv URL, publisher URL, or title from the selected papers.
+3. Use `paper-dl lookup <doi>` to check open-access metadata when an Unpaywall
+   email is configured.
+4. Use `paper-dl download <doi-or-url>` to fetch the PDF through Open Access,
+   mirrors, archives, or direct PDF links.
+5. Report which source was used for the download.
 
 ## Files
 

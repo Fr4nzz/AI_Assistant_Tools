@@ -1,6 +1,6 @@
 ---
 name: paper-fetch
-description: Search and download academic papers from open repositories and academic mirrors. Use when the user asks to find, search for, or download a paper, PDF, article, DOI, or reference.
+description: Download academic papers from open repositories and academic mirrors after candidate papers are known. Use primarily when the user asks to download a paper/PDF/DOI/URL or check OA PDF availability.
 triggers:
   - paper
   - download paper
@@ -19,7 +19,10 @@ metadata:
 
 # Paper Fetch Skill
 
-Search and download academic papers with Open Access lookup, automatic mirror discovery, and fallback sources.
+Download academic papers with Open Access lookup, automatic mirror discovery,
+and fallback sources. Normal web research is usually better for discovering and
+ranking the best papers on a topic; use `paper-dl` mainly to retrieve PDFs or
+check DOI/OA metadata once good candidates have been identified.
 
 ## Setup (First Time)
 
@@ -129,12 +132,22 @@ Environment variables (loaded from `.env` in skill directory):
 
 ## Workflow for the Agent
 
-When the user asks for a paper:
+When the user asks for papers:
 
-1. **If they have a DOI or URL**: Run `paper_dl.py download <identifier>` directly.
-2. **If they describe a paper by title/topic**: Run `paper_dl.py search "<query>"` first, show results, then download the best match.
-3. **Always report the source**: Tell the user whether it was downloaded via Open Access or academic mirror.
-4. **If download fails**: Report which sources were tried and suggest the user check their connection or try a different DOI.
+1. **If they ask for the best/relevant papers on a topic**: Use normal web
+   research first to identify and rank candidates. Prefer publisher pages,
+   arXiv, conference pages, dataset pages, PubMed, institutional repositories,
+   and other authoritative sources.
+2. **If they have a DOI or URL**: Run `paper-dl download <identifier>` directly.
+3. **If they have a title but no DOI/URL**: Use normal search to resolve the
+   DOI or canonical page first, then run `paper-dl download`.
+4. **If normal search is unavailable or a quick metadata pass is enough**: Use
+   `paper-dl search "<query>"`, but treat results as candidates, not as the
+   final ranking.
+5. **Always report the source**: Tell the user whether it was downloaded via
+   Open Access, mirror, archive, or direct PDF.
+6. **If download fails**: Report which sources were tried and suggest a
+   different DOI/URL or manual access through the publisher/library.
 
 ## Notes
 
