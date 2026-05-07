@@ -58,6 +58,27 @@ install_skill_reference() {
   download "$REPO_RAW_BASE/tools/$source/skill/references/$ref" "$CODEX_SKILLS/$name/references/$ref"
 }
 
+ensure_global_agents_note() {
+  local agents="$CODEX_HOME/AGENTS.md"
+  local marker="AI_ASSISTANT_TOOLS_RESEARCH_SKILLS"
+  mkdir -p "$(dirname "$agents")"
+  if [ -f "$agents" ] && grep -q "$marker" "$agents"; then
+    return
+  fi
+  cat >> "$agents" <<'EOF'
+
+<!-- AI_ASSISTANT_TOOLS_RESEARCH_SKILLS -->
+For scientific research and literature-review tasks, prefer the AI_Assistant_Tools research skills when installed:
+- Use `literature-search` for initial paper discovery across native search, Parallel, and paper-search.
+- Use `paper-fetch` / `paper-search` to download known PDFs and enrich DOI metadata.
+- Use `literature-review` after selecting papers: make a todo list, screen papers, delegate reading when useful, write markdown paper summaries/topic extracts, build a synthesis matrix, then draft from evidence.
+- Use `literature-appraisal` to judge paper relevance, evidence strength, limitations, and citation value.
+- Use `scientific-writing` only for the final academic prose/style pass.
+- Use `citation-zotero` for Zotero, BibTeX/CSL, citation keys, and docx citation workflows.
+<!-- /AI_ASSISTANT_TOOLS_RESEARCH_SKILLS -->
+EOF
+}
+
 ensure_venv() {
   if [ ! -x "$INSTALL_ROOT/venv/bin/python" ]; then
     python -m venv "$INSTALL_ROOT/venv"
@@ -154,6 +175,11 @@ PY
   echo "Restart Codex Desktop. If the plugin does not appear, install Superpowers from the Plugins UI."
 }
 
+install_literature_review() {
+  install_skill_only "literature-review"
+  ensure_global_agents_note
+}
+
 install_paper_fetch() {
   ensure_venv
   mkdir -p "$INSTALL_ROOT/paper-search-mcp"
@@ -200,8 +226,9 @@ while IFS= read -r item; do
     gogcli) install_gogcli ;;
     outlook|onedrive|d2l) install_python_cli "$item" ;;
     humanizer) install_humanizer ;;
-    paper-fetch) install_paper_fetch ;;
-    literature-search|literature-review|citation-zotero|literature-appraisal) install_skill_only "$item" ;;
+    paper-fetch) install_paper_fetch; ensure_global_agents_note ;;
+    literature-search|citation-zotero|literature-appraisal) install_skill_only "$item"; ensure_global_agents_note ;;
+    literature-review) install_literature_review ;;
     scientific-writing) install_scientific_writing ;;
     superpowers) install_superpowers ;;
   esac

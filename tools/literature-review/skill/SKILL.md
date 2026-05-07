@@ -39,6 +39,26 @@ Use `scientific-writing` only for the final prose/style pass.
 
 ## Review Pipeline
 
+Before doing substantial work, create and maintain a visible todo list for the
+pipeline. Update it as phases complete. Do not jump from discovery directly to
+final prose when papers still need screening, summary, appraisal, or synthesis.
+
+Minimum todo list:
+
+1. Define review question and scope.
+2. Confirm or run initial literature search.
+3. Screen and deduplicate candidate papers.
+4. Retrieve PDFs or abstracts for the shortlist.
+5. Cluster papers by theme/method/debate.
+6. Delegate or perform paper reading.
+7. Write paper summaries and topic extracts.
+8. Build synthesis matrix.
+9. Appraise evidence strength and limitations.
+10. Draft outline.
+11. Draft prose from synthesis.
+12. Apply `scientific-writing` final style pass.
+13. Check citations and unresolved claims.
+
 1. Define the review question, scope, inclusion/exclusion criteria, and expected
    output before reading deeply.
 2. Organize papers into clusters by theme, method, taxon/system, geography,
@@ -136,6 +156,25 @@ After reading, create a matrix like:
 ```
 
 Use the matrix to group the review by ideas, not by papers.
+
+## Visual Synthesis
+
+Figures are optional, not mandatory. Propose one when it would clarify the
+review or help the reader remember the structure.
+
+Useful figure types:
+
+- PRISMA-style flow diagram for systematic or scoping reviews
+- search/screening flowchart
+- thematic synthesis map
+- conceptual framework diagram
+- method comparison diagram
+- evidence-gap map
+- causal/mechanistic diagram for ecological or biological processes
+
+Before generating a figure, state what question the figure answers and what
+data or concepts it will contain. Prefer simple diagrams over decorative
+graphics. Do not generate figures merely to satisfy a quota.
 
 ## Writing From The Matrix
 

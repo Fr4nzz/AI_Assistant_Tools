@@ -48,6 +48,27 @@ function Install-SkillReference {
   Get-UrlFile "$RepoRawBase/tools/$Source/skill/references/$Reference" (Join-Path $dest $Reference)
 }
 
+function Ensure-GlobalAgentsNote {
+  $agents = Join-Path $HOME '.codex\AGENTS.md'
+  $marker = 'AI_ASSISTANT_TOOLS_RESEARCH_SKILLS'
+  New-Item -ItemType Directory -Force -Path (Split-Path -Parent $agents) | Out-Null
+  if ((Test-Path -LiteralPath $agents) -and (Select-String -LiteralPath $agents -SimpleMatch $marker -Quiet)) {
+    return
+  }
+@'
+
+<!-- AI_ASSISTANT_TOOLS_RESEARCH_SKILLS -->
+For scientific research and literature-review tasks, prefer the AI_Assistant_Tools research skills when installed:
+- Use `literature-search` for initial paper discovery across native search, Parallel, and paper-search.
+- Use `paper-fetch` / `paper-search` to download known PDFs and enrich DOI metadata.
+- Use `literature-review` after selecting papers: make a todo list, screen papers, delegate reading when useful, write markdown paper summaries/topic extracts, build a synthesis matrix, then draft from evidence.
+- Use `literature-appraisal` to judge paper relevance, evidence strength, limitations, and citation value.
+- Use `scientific-writing` only for the final academic prose/style pass.
+- Use `citation-zotero` for Zotero, BibTeX/CSL, citation keys, and docx citation workflows.
+<!-- /AI_ASSISTANT_TOOLS_RESEARCH_SKILLS -->
+'@ | Add-Content -LiteralPath $agents
+}
+
 function Install-CliTool {
   param(
     [string] $Name,
@@ -154,6 +175,7 @@ function Install-Humanizer {
 function Install-ScientificWriting {
   Install-Skill 'scientific-writing' 'scientific-writing'
   Install-SkillReference 'scientific-writing' 'scientific-writing' 'humanizer.md'
+  Ensure-GlobalAgentsNote
   Write-Host 'Installed scientific-writing Codex skill.'
 }
 
@@ -190,6 +212,11 @@ function Install-Superpowers {
   Set-Content -LiteralPath $config -Value $text -Encoding UTF8
   Write-Host "Enabled Superpowers plugin in $config"
   Write-Host 'Restart Codex Desktop. If the plugin does not appear, install Superpowers from the Plugins UI.'
+}
+
+function Install-LiteratureReview {
+  Install-SkillOnly 'literature-review'
+  Ensure-GlobalAgentsNote
 }
 
 function Install-PaperFetch {
@@ -245,12 +272,12 @@ foreach ($item in $selected) {
     'gogcli' { Install-GogCli }
     'whatsapp' { Install-WhatsApp }
     'humanizer' { Install-Humanizer }
-    'paper-fetch' { Install-PaperFetch }
-    'literature-search' { Install-SkillOnly 'literature-search' }
-    'literature-review' { Install-SkillOnly 'literature-review' }
-    'citation-zotero' { Install-SkillOnly 'citation-zotero' }
+    'paper-fetch' { Install-PaperFetch; Ensure-GlobalAgentsNote }
+    'literature-search' { Install-SkillOnly 'literature-search'; Ensure-GlobalAgentsNote }
+    'literature-review' { Install-LiteratureReview }
+    'citation-zotero' { Install-SkillOnly 'citation-zotero'; Ensure-GlobalAgentsNote }
     'scientific-writing' { Install-ScientificWriting }
-    'literature-appraisal' { Install-SkillOnly 'literature-appraisal' }
+    'literature-appraisal' { Install-SkillOnly 'literature-appraisal'; Ensure-GlobalAgentsNote }
     'superpowers' { Install-Superpowers }
   }
 }
