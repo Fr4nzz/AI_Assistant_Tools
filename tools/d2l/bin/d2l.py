@@ -81,7 +81,7 @@ _chrome_proc = None
 
 
 def _infer_account_email() -> str | None:
-    explicit = os.environ.get("D2L_ACCOUNT_EMAIL")
+    explicit = os.environ.get("MICROSOFT_ACCOUNT_EMAIL") or os.environ.get("D2L_ACCOUNT_EMAIL")
     if explicit:
         return explicit
     try:

@@ -27,6 +27,11 @@ Expected agent flow:
 5. Run the installer for the selected tools. The installer is safe to rerun if
    a prerequisite fails partway through.
 6. Guide browser logins, OAuth consent, QR pairing, or institutional sign-in one tool at a time.
+   When installing `outlook`, `onedrive`, or `d2l`, ask the user for their
+   Microsoft/institutional email address and configure it as
+   `MICROSOFT_ACCOUNT_EMAIL`. This is not a secret; it lets headless login
+   fill the email screen, after which the saved browser password can autofill
+   the password field if Chromium has it saved.
    For Microsoft/USFQ logins, explicitly remind the user to choose
    "Mantener mi sesion iniciada" / "Stay signed in" when prompted.
    This is what makes later headless commands reuse the same session.
@@ -133,6 +138,14 @@ Windows login notes:
 
 - Outlook, OneDrive, and D2L share the browser profile at
   `%LOCALAPPDATA%\outlook-cli\browser-data`.
+- Optional but recommended: set the Microsoft account email once so Outlook,
+  OneDrive, and D2L can autofill blank Microsoft login screens:
+
+```powershell
+[Environment]::SetEnvironmentVariable('MICROSOFT_ACCOUNT_EMAIL', 'you@school.edu', 'User')
+```
+
+  Restart Codex Desktop or the terminal after setting it.
 - Run `outlook login` and `d2l login` in visible browser windows the first time.
   Choose "Mantener mi sesion iniciada" / "Stay signed in" if Microsoft asks.
 - Close those visible browser windows before testing commands such as
@@ -223,6 +236,15 @@ Linux login notes:
 
 - D2L, Outlook, and OneDrive share the Chromium profile at
   `~/.local/share/outlook-cli/browser-data`.
+- Optional but recommended: set the Microsoft account email once so Outlook,
+  OneDrive, and D2L can autofill blank Microsoft login screens:
+
+```bash
+printf '\nexport MICROSOFT_ACCOUNT_EMAIL="you@school.edu"\n' >> ~/.profile
+export MICROSOFT_ACCOUNT_EMAIL="you@school.edu"
+```
+
+  Restart Codex Desktop or the terminal after setting it.
 - If installing D2L and Outlook together, open both headed login flows during
   initial setup: `d2l login` for Brightspace and `outlook login` for Outlook
   Web. They share Microsoft SSO state, but a second visible login or service

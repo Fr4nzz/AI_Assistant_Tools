@@ -28,6 +28,7 @@ GRAPH_BASE = "https://graph.microsoft.com/v1.0"
 OWA_URL = "https://outlook.cloud.microsoft/mail/"
 TOKEN_BOOTSTRAP_URLS = [
     "https://www.office.com/launch/onedrive",
+    "https://onedrive.live.com/",
     "https://www.office.com/",
     OWA_URL,
 ]
@@ -43,12 +44,14 @@ BROWSER_DATA_DIR = OUTLOOK_SHARE_DIR / "browser-data"
 BROWSER_LOCK_FILE = OUTLOOK_SHARE_DIR / "browser.lock"
 TOKEN_FILE = SHARE_DIR / "graph-token.json"
 TOKEN_LOCK_FILE = SHARE_DIR / "graph-token.lock"
+OUTLOOK_TOKEN_FILE = OUTLOOK_SHARE_DIR / "token.json"
 ID_MAP_FILE = SHARE_DIR / "id_map.json"
 DELTA_TOKEN_FILE = SHARE_DIR / "delta_link.txt"
 ID_MAP_MAX = 3000
 
 SELECT_ITEM_LIST = "id,name,folder,file,size,webUrl,lastModifiedDateTime,parentReference,createdBy,lastModifiedBy"
 SELECT_ITEM_FULL = SELECT_ITEM_LIST + ",createdDateTime,description,eTag,cTag,shared,remoteItem,specialFolder"
+TOKEN_REFRESH_TIMEOUT = int(os.environ.get("ONEDRIVE_TOKEN_REFRESH_TIMEOUT", "15"))
 
 
 def _find_chromium() -> str:
@@ -86,14 +89,35 @@ def _decode_claims(token: str) -> dict:
         return {}
 
 
-def _token_valid(tok: dict) -> bool:
+def _infer_account_email() -> str | None:
+    explicit = os.environ.get("MICROSOFT_ACCOUNT_EMAIL") or os.environ.get("ONEDRIVE_ACCOUNT_EMAIL")
+    if explicit:
+        return explicit
     try:
-        if time.time() >= int(tok.get("expiresOn", 0)) - 120:
-            return False
+        token = json.loads(OUTLOOK_TOKEN_FILE.read_text())
+        for key in ("username", "login_hint"):
+            value = token.get(key)
+            if value and "@" in value:
+                return value
+        claims = _decode_claims(token.get("secret", ""))
+        for key in ("preferred_username", "upn", "email", "unique_name"):
+            value = claims.get(key)
+            if value and "@" in value:
+                return value
+    except Exception:
+        pass
+    return None
+
+
+def _token_valid(tok: dict) -> bool:
+    claims = _decode_claims(tok.get("secret", ""))
+    if claims.get("aud") != "https://graph.microsoft.com":
+        return False
+    try:
+        exp = int(claims.get("exp") or tok.get("expiresOn", 0))
+        return time.time() < exp - 120
     except Exception:
         return False
-    claims = _decode_claims(tok.get("secret", ""))
-    return claims.get("aud") == "https://graph.microsoft.com"
 
 
 def _load_cached_token() -> dict | None:
@@ -111,7 +135,7 @@ def _save_token(tok: dict) -> None:
     TOKEN_FILE.write_text(json.dumps(tok))
 
 
-def _acquire_lock(timeout: int = 90) -> int:
+def _acquire_lock(timeout: int = 10) -> int:
     SHARE_DIR.mkdir(parents=True, exist_ok=True)
     deadline = time.time() + timeout
     while True:
@@ -139,7 +163,7 @@ def _release_lock(fd: int) -> None:
             pass
 
 
-def _acquire_browser_lock(timeout: int = 90) -> int:
+def _acquire_browser_lock(timeout: int = 10) -> int:
     BROWSER_LOCK_FILE.parent.mkdir(parents=True, exist_ok=True)
     deadline = time.time() + timeout
     while True:
@@ -167,10 +191,130 @@ def _release_browser_lock(fd: int) -> None:
             pass
 
 
+def _browser_open_visible() -> None:
+    """Open the shared Microsoft profile in a visible browser for OneDrive bootstrap."""
+    import subprocess
+
+    BROWSER_DATA_DIR.mkdir(parents=True, exist_ok=True)
+    args = [
+        _find_chromium(),
+        "--new-window",
+        "--ozone-platform-hint=auto",
+        f"--user-data-dir={BROWSER_DATA_DIR}",
+        "https://www.office.com/launch/onedrive",
+    ]
+    if sys.platform.startswith("win"):
+        subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=subprocess.DETACHED_PROCESS)
+    else:
+        subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+
+
 async def _fetch_graph_token_from_browser() -> dict:
     from playwright.async_api import async_playwright
 
     BROWSER_DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+    async def click_first_visible(page, labels: list[str], timeout: int = 800) -> bool:
+        deadline = time.time() + (timeout / 1000)
+        for label in labels:
+            locators = [
+                page.get_by_role("button", name=re.compile(label, re.I)).first,
+                page.get_by_role("link", name=re.compile(label, re.I)).first,
+                page.locator("input[type=submit]").first,
+                page.get_by_text(re.compile(label, re.I)).first,
+            ]
+            for locator in locators:
+                remaining = max(100, int((deadline - time.time()) * 1000))
+                if remaining <= 100:
+                    return False
+                try:
+                    await locator.wait_for(state="visible", timeout=min(remaining, 500))
+                    await locator.click()
+                    await page.wait_for_load_state("domcontentloaded", timeout=1000)
+                    return True
+                except Exception:
+                    pass
+        return False
+
+    async def submit_if_visible(page, timeout: int = 800) -> bool:
+        for selector in ("input[type=submit]", "button[type=submit]", "#idSIButton9"):
+            try:
+                btn = page.locator(selector).first
+                await btn.wait_for(state="visible", timeout=timeout)
+                await btn.click()
+                await page.wait_for_load_state("domcontentloaded", timeout=1000)
+                return True
+            except Exception:
+                pass
+        return False
+
+    async def fill_email_if_needed(page) -> bool:
+        for selector in ("input[type=email]", "input[name=loginfmt]"):
+            try:
+                field = page.locator(selector).first
+                await field.wait_for(state="visible", timeout=600)
+                value = await field.input_value()
+                if not value:
+                    account_email = _infer_account_email()
+                    if not account_email:
+                        return False
+                    await field.fill(account_email)
+                return await submit_if_visible(page) or await click_first_visible(page, [r"next", r"siguiente"], timeout=600)
+            except Exception:
+                pass
+        return False
+
+    async def submit_password_if_autofilled(page) -> bool:
+        try:
+            field = page.locator("input[type=password]").first
+            await field.wait_for(state="visible", timeout=600)
+            value = await field.input_value()
+            if value:
+                return await submit_if_visible(page) or await field.press("Enter")
+        except Exception:
+            pass
+        return False
+
+    async def extract_graph_token(page) -> dict | None:
+        try:
+            return await page.evaluate("""() => {
+                const decodePayload = (secret) => {
+                    try {
+                        const part = secret.split('.')[1];
+                        return JSON.parse(atob(part.replace(/-/g, '+').replace(/_/g, '/')));
+                    } catch { return {}; }
+                };
+                const fresh = (v) => {
+                    if (!v.secret) return false;
+                    const claims = decodePayload(v.secret);
+                    const exp = Number(claims.exp || v.expiresOn || 0);
+                    return exp && exp > Math.floor(Date.now() / 1000) + 120;
+                };
+                const tokens = [];
+                for (const store of [localStorage, sessionStorage]) {
+                    for (let i = 0; i < store.length; i++) {
+                        const k = store.key(i);
+                        if (!k || !k.startsWith('msal.') || !k.toLowerCase().includes('accesstoken')) continue;
+                        try {
+                            const v = JSON.parse(store.getItem(k));
+                            const target = (v.target || '').toLowerCase();
+                            const claims = decodePayload(v.secret || '');
+                            if (fresh(v) && claims.aud === 'https://graph.microsoft.com') {
+                                tokens.push({token: v, target});
+                            }
+                        } catch {}
+                    }
+                }
+                tokens.sort((a, b) => {
+                    const af = a.target.includes('files.readwrite') || a.target.includes('files.read');
+                    const bf = b.target.includes('files.readwrite') || b.target.includes('files.read');
+                    return Number(bf) - Number(af);
+                });
+                return tokens[0]?.token || null;
+            }""")
+        except Exception:
+            return None
+
     pw = await async_playwright().start()
     browser = None
     try:
@@ -183,47 +327,28 @@ async def _fetch_graph_token_from_browser() -> dict:
         page = browser.pages[0] if browser.pages else await browser.new_page()
 
         for url in TOKEN_BOOTSTRAP_URLS:
-            await page.goto(url, timeout=30000)
+            await page.goto(url, timeout=10000)
             try:
-                await page.wait_for_load_state("domcontentloaded", timeout=15000)
+                await page.wait_for_load_state("domcontentloaded", timeout=5000)
             except Exception:
                 pass
-            await asyncio.sleep(2)
+            await asyncio.sleep(1)
 
-            for _ in range(12):
-                try:
-                    tok = await page.evaluate("""() => {
-                const now = Math.floor(Date.now() / 1000);
-                const fresh = (v) => {
-                    const exp = Number(v.expiresOn || 0);
-                    return v.secret && exp && exp > now + 120;
-                };
-                for (let i = 0; i < localStorage.length; i++) {
-                    const k = localStorage.key(i);
-                    if (!k || !k.startsWith('msal.') || !k.toLowerCase().includes('accesstoken')) continue;
-                    try {
-                        const v = JSON.parse(localStorage.getItem(k));
-                        const target = (v.target || '').toLowerCase();
-                        if (fresh(v) && target.includes('https://graph.microsoft.com/') && target.includes('files.readwrite')) return v;
-                    } catch {}
-                }
-                for (let i = 0; i < localStorage.length; i++) {
-                    const k = localStorage.key(i);
-                    if (!k || !k.startsWith('msal.') || !k.toLowerCase().includes('accesstoken')) continue;
-                    try {
-                        const v = JSON.parse(localStorage.getItem(k));
-                        const target = (v.target || '').toLowerCase();
-                        if (fresh(v) && target.includes('https://graph.microsoft.com/')) return v;
-                    } catch {}
-                }
-                return null;
-            }""")
-                except Exception:
-                    tok = None
+            for _ in range(8):
+                tok = await extract_graph_token(page)
                 if tok and tok.get("secret"):
                     return tok
+                await fill_email_if_needed(page)
+                await submit_password_if_autofilled(page)
+                await click_first_visible(page, [r"sign in", r"iniciar sesi[oó]n", r"siguiente", r"next", r"continuar", r"continue"], timeout=400)
+                await submit_if_visible(page, timeout=400)
+                await click_first_visible(page, [r"yes", r"s[ií]", r"mantener.*sesi[oó]n", r"stay signed in"], timeout=400)
                 await asyncio.sleep(1)
-        raise RuntimeError("Could not extract Microsoft Graph token from browser MSAL cache")
+        raise RuntimeError(
+            "Could not extract Microsoft Graph token from browser MSAL cache. "
+            "Open `onedrive login` in a visible browser, let OneDrive/Office load, "
+            "close that browser, then retry."
+        )
     finally:
         if browser is not None:
             await browser.close()
@@ -242,7 +367,15 @@ def get_token() -> str:
         print("Refreshing OneDrive Graph token...", file=sys.stderr)
         browser_fd = _acquire_browser_lock()
         try:
-            tok = asyncio.run(_fetch_graph_token_from_browser())
+            try:
+                tok = asyncio.run(asyncio.wait_for(_fetch_graph_token_from_browser(), timeout=TOKEN_REFRESH_TIMEOUT))
+            except asyncio.TimeoutError as exc:
+                raise RuntimeError(
+                    "OneDrive Graph token refresh timed out after "
+                    f"{TOKEN_REFRESH_TIMEOUT}s. Run `onedrive login` in a visible "
+                    "browser, let OneDrive or Office load, close that browser, "
+                    "then retry the command."
+                ) from exc
             _save_token(tok)
             return tok["secret"]
         finally:
@@ -563,6 +696,13 @@ def cmd_raw(args):
     return graph_get(args.path, params)
 
 
+def cmd_login(args):
+    _browser_open_visible()
+    print("Sign in to Microsoft/Office in the opened Chromium window.")
+    print("Let OneDrive or Office load completely, then close that browser before using headless onedrive commands.")
+    return None
+
+
 def cmd_token(args):
     tok = get_token()
     claims = _decode_claims(tok)
@@ -699,6 +839,8 @@ def build_parser():
     p.add_argument("--json", action="store_true", help="Raw JSON output")
     sub = p.add_subparsers(dest="command", required=True)
 
+    sub.add_parser("login", help="Open visible helper browser for OneDrive / Office token bootstrap")
+
     sub.add_parser("profile", help="Current Microsoft Graph user profile")
     sub.add_parser("drive", help="Current OneDrive drive metadata")
 
@@ -763,6 +905,7 @@ def build_parser():
 def main():
     args = build_parser().parse_args()
     handlers = {
+        "login": (cmd_login, lambda _: None),
         "profile": (cmd_profile, lambda r: print(json.dumps(r, indent=2, ensure_ascii=False))),
         "drive": (cmd_drive, print_drive),
         "ls": (cmd_ls, print_items),
@@ -782,7 +925,14 @@ def main():
         "token": (cmd_token, lambda _: None),
     }
     fn, formatter = handlers[args.command]
-    result = fn(args)
+    try:
+        result = fn(args)
+    except RuntimeError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
     if args.json and result is not None:
         print(json.dumps(result, indent=2, ensure_ascii=False))
     elif result is not None:
