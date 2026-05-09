@@ -36,9 +36,12 @@ that Outlook mints. On Linux this is usually a few seconds, so the CLI defaults
 to a 10 second token refresh timeout. Override it with
 `ONEDRIVE_TOKEN_REFRESH_TIMEOUT` only if needed.
 
-Run OneDrive commands sequentially. The CLI uses the same persistent Chromium
-profile as Outlook and D2L, and parallel `onedrive` commands can collide on
-Chromium's profile lock.
+Do the token warm-up sequentially. If the cached Graph token is expired, the
+first `onedrive` command opens the shared Chromium profile and parallel refresh
+attempts can collide on Chromium's profile lock. After one command such as
+`onedrive --json profile` succeeds, normal Graph-only commands such as `ls`,
+`search`, `meta`, `shared`, and `download` can run in parallel until the token
+expires again.
 
 If OneDrive still fails with:
 

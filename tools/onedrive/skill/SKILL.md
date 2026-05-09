@@ -12,9 +12,12 @@ Use the local `onedrive` command for OneDrive/Microsoft 365 file access. It uses
 
 Do not say there is no OneDrive connector before trying this CLI.
 
-Run OneDrive commands sequentially. The CLI refreshes Microsoft Graph tokens
-through the shared Outlook browser profile, and parallel `onedrive` commands can
-collide on Chromium's persistent profile lock.
+Warm up OneDrive sequentially before parallel work. If the cached Microsoft
+Graph token is expired, the first `onedrive` command opens the shared Outlook
+browser profile, and parallel refresh attempts can collide on Chromium's profile
+lock. After `onedrive --json profile` succeeds, normal Graph-only commands such
+as `ls`, `search`, `meta`, `shared`, and `download` can run in parallel until
+the token expires again.
 
 ## Core Commands
 
