@@ -76,12 +76,34 @@ else:
 BROWSER_DATA_DIR = Path(os.environ.get("D2L_BROWSER_DATA_DIR", str(DEFAULT_BROWSER_DATA_DIR)))
 BROWSER_LOCK_FILE = BROWSER_DATA_DIR.parent / "browser.lock"
 OUTLOOK_TOKEN_FILE = BROWSER_DATA_DIR.parent / "token.json"
+CONFIG_FILE = Path(os.environ.get("AI_ASSISTANT_TOOLS_MICROSOFT_ENV", str(Path.home() / ".config/ai-assistant-tools/microsoft.env")))
 
 _chrome_proc = None
 
 
+def _load_local_config() -> dict[str, str]:
+    values: dict[str, str] = {}
+    try:
+        for raw in CONFIG_FILE.read_text().splitlines():
+            line = raw.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            value = value.strip().strip('"').strip("'")
+            values[key.strip()] = value
+    except Exception:
+        pass
+    return values
+
+
 def _infer_account_email() -> str | None:
-    explicit = os.environ.get("MICROSOFT_ACCOUNT_EMAIL") or os.environ.get("D2L_ACCOUNT_EMAIL")
+    config = _load_local_config()
+    explicit = (
+        os.environ.get("MICROSOFT_ACCOUNT_EMAIL")
+        or os.environ.get("D2L_ACCOUNT_EMAIL")
+        or config.get("MICROSOFT_ACCOUNT_EMAIL")
+        or config.get("D2L_ACCOUNT_EMAIL")
+    )
     if explicit:
         return explicit
     try:
@@ -102,6 +124,16 @@ def _infer_account_email() -> str | None:
     except Exception:
         pass
     return None
+
+
+def _infer_account_password() -> str | None:
+    config = _load_local_config()
+    return (
+        os.environ.get("MICROSOFT_ACCOUNT_PASSWORD")
+        or os.environ.get("D2L_ACCOUNT_PASSWORD")
+        or config.get("MICROSOFT_ACCOUNT_PASSWORD")
+        or config.get("D2L_ACCOUNT_PASSWORD")
+    )
 
 
 def _find_chromium() -> str:
@@ -282,6 +314,11 @@ async def _auto_login_async() -> bool:
             field = page.locator("input[type=password]").first
             await field.wait_for(state="visible", timeout=800)
             value = await field.input_value()
+            if not value:
+                password = _infer_account_password()
+                if password:
+                    await field.fill(password)
+                    value = password
             if value:
                 return await submit_if_visible(page) or await field.press("Enter")
         except Exception:

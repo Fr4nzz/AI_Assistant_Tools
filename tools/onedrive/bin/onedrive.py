@@ -45,6 +45,7 @@ BROWSER_LOCK_FILE = OUTLOOK_SHARE_DIR / "browser.lock"
 TOKEN_FILE = SHARE_DIR / "graph-token.json"
 TOKEN_LOCK_FILE = SHARE_DIR / "graph-token.lock"
 OUTLOOK_TOKEN_FILE = OUTLOOK_SHARE_DIR / "token.json"
+CONFIG_FILE = Path(os.environ.get("AI_ASSISTANT_TOOLS_MICROSOFT_ENV", str(Path.home() / ".config/ai-assistant-tools/microsoft.env")))
 ID_MAP_FILE = SHARE_DIR / "id_map.json"
 DELTA_TOKEN_FILE = SHARE_DIR / "delta_link.txt"
 ID_MAP_MAX = 3000
@@ -89,8 +90,29 @@ def _decode_claims(token: str) -> dict:
         return {}
 
 
+def _load_local_config() -> dict[str, str]:
+    values: dict[str, str] = {}
+    try:
+        for raw in CONFIG_FILE.read_text().splitlines():
+            line = raw.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            value = value.strip().strip('"').strip("'")
+            values[key.strip()] = value
+    except Exception:
+        pass
+    return values
+
+
 def _infer_account_email() -> str | None:
-    explicit = os.environ.get("MICROSOFT_ACCOUNT_EMAIL") or os.environ.get("ONEDRIVE_ACCOUNT_EMAIL")
+    config = _load_local_config()
+    explicit = (
+        os.environ.get("MICROSOFT_ACCOUNT_EMAIL")
+        or os.environ.get("ONEDRIVE_ACCOUNT_EMAIL")
+        or config.get("MICROSOFT_ACCOUNT_EMAIL")
+        or config.get("ONEDRIVE_ACCOUNT_EMAIL")
+    )
     if explicit:
         return explicit
     try:
@@ -107,6 +129,16 @@ def _infer_account_email() -> str | None:
     except Exception:
         pass
     return None
+
+
+def _infer_account_password() -> str | None:
+    config = _load_local_config()
+    return (
+        os.environ.get("MICROSOFT_ACCOUNT_PASSWORD")
+        or os.environ.get("ONEDRIVE_ACCOUNT_PASSWORD")
+        or config.get("MICROSOFT_ACCOUNT_PASSWORD")
+        or config.get("ONEDRIVE_ACCOUNT_PASSWORD")
+    )
 
 
 def _token_valid(tok: dict) -> bool:
@@ -269,6 +301,11 @@ async def _fetch_graph_token_from_browser() -> dict:
             field = page.locator("input[type=password]").first
             await field.wait_for(state="visible", timeout=600)
             value = await field.input_value()
+            if not value:
+                password = _infer_account_password()
+                if password:
+                    await field.fill(password)
+                    value = password
             if value:
                 return await submit_if_visible(page) or await field.press("Enter")
         except Exception:

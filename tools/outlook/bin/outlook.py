@@ -45,6 +45,7 @@ TOKEN_FILE = SHARE_DIR / "token.json"
 TOKEN_LOCK_FILE = SHARE_DIR / "token.lock"
 BROWSER_LOCK_FILE = SHARE_DIR / "browser.lock"
 ID_MAP_FILE = SHARE_DIR / "id_map.json"
+CONFIG_FILE = Path(os.environ.get("AI_ASSISTANT_TOOLS_MICROSOFT_ENV", str(Path.home() / ".config/ai-assistant-tools/microsoft.env")))
 ID_MAP_MAX = 2000
 
 # User's local timezone (USFQ is in Ecuador)
@@ -264,6 +265,61 @@ def _token_matches_target(tok: dict, needle: str) -> bool:
     return needle.lower() in (tok.get("target") or "").lower()
 
 
+def _load_local_config() -> dict[str, str]:
+    values: dict[str, str] = {}
+    try:
+        for raw in CONFIG_FILE.read_text().splitlines():
+            line = raw.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            value = value.strip().strip('"').strip("'")
+            values[key.strip()] = value
+    except Exception:
+        pass
+    return values
+
+
+def _infer_account_email() -> str | None:
+    config = _load_local_config()
+    explicit = (
+        os.environ.get("MICROSOFT_ACCOUNT_EMAIL")
+        or os.environ.get("OUTLOOK_ACCOUNT_EMAIL")
+        or config.get("MICROSOFT_ACCOUNT_EMAIL")
+        or config.get("OUTLOOK_ACCOUNT_EMAIL")
+    )
+    if explicit:
+        return explicit
+    try:
+        token = json.loads(TOKEN_FILE.read_text())
+        for key in ("username", "login_hint"):
+            value = token.get(key)
+            if value and "@" in value:
+                return value
+        secret = token.get("secret") or ""
+        if secret.count(".") >= 2:
+            payload = secret.split(".")[1]
+            payload += "=" * (-len(payload) % 4)
+            claims = json.loads(base64.urlsafe_b64decode(payload))
+            for key in ("preferred_username", "upn", "email", "unique_name"):
+                value = claims.get(key)
+                if value and "@" in value:
+                    return value
+    except Exception:
+        pass
+    return None
+
+
+def _infer_account_password() -> str | None:
+    config = _load_local_config()
+    return (
+        os.environ.get("MICROSOFT_ACCOUNT_PASSWORD")
+        or os.environ.get("OUTLOOK_ACCOUNT_PASSWORD")
+        or config.get("MICROSOFT_ACCOUNT_PASSWORD")
+        or config.get("OUTLOOK_ACCOUNT_PASSWORD")
+    )
+
+
 def _token_jwt_exp(tok: dict) -> int | None:
     secret = tok.get("secret") or ""
     if secret.count(".") < 2:
@@ -406,6 +462,50 @@ async def _fetch_token_from_browser() -> dict:
                     pass
         return False
 
+    async def submit_if_visible(page, timeout: int = 800) -> bool:
+        for selector in ("input[type=submit]", "button[type=submit]", "#idSIButton9"):
+            try:
+                btn = page.locator(selector).first
+                await btn.wait_for(state="visible", timeout=timeout)
+                await btn.click()
+                await page.wait_for_load_state("domcontentloaded", timeout=1000)
+                return True
+            except Exception:
+                pass
+        return False
+
+    async def fill_email_if_needed(page) -> bool:
+        for selector in ("input[type=email]", "input[name=loginfmt]"):
+            try:
+                field = page.locator(selector).first
+                await field.wait_for(state="visible", timeout=600)
+                value = await field.input_value()
+                if not value:
+                    account_email = _infer_account_email()
+                    if not account_email:
+                        return False
+                    await field.fill(account_email)
+                return await submit_if_visible(page) or await click_first_visible(page, [r"next", r"siguiente"], timeout=600)
+            except Exception:
+                pass
+        return False
+
+    async def submit_password_if_available(page) -> bool:
+        try:
+            field = page.locator("input[type=password]").first
+            await field.wait_for(state="visible", timeout=600)
+            value = await field.input_value()
+            if not value:
+                password = _infer_account_password()
+                if password:
+                    await field.fill(password)
+                    value = password
+            if value:
+                return await submit_if_visible(page) or await field.press("Enter")
+        except Exception:
+            pass
+        return False
+
     async def extract_outlook_token(page) -> dict | None:
         try:
             return await page.evaluate("""() => {
@@ -458,7 +558,10 @@ async def _fetch_token_from_browser() -> dict:
             await click_first_visible(page, [r"estud\.usfq\.edu\.ec", r"franz\.chandi", r"use another account", r"usar otra cuenta"], timeout=1500)
             for _ in range(2):
                 clicked = False
+                clicked |= await fill_email_if_needed(page)
+                clicked |= await submit_password_if_available(page)
                 clicked |= await click_first_visible(page, [r"sign in", r"iniciar sesi[oó]n", r"siguiente", r"next", r"continuar", r"continue"], timeout=1500)
+                clicked |= await submit_if_visible(page, timeout=800)
                 clicked |= await click_first_visible(page, [r"yes", r"s[ií]", r"mantener.*sesi[oó]n", r"stay signed in"], timeout=1500)
                 if not clicked:
                     break
@@ -473,7 +576,10 @@ async def _fetch_token_from_browser() -> dict:
             if tok and tok.get("secret"):
                 return tok
             if "outlook.office.com" not in page.url and "outlook.cloud.microsoft" not in page.url:
+                await fill_email_if_needed(page)
+                await submit_password_if_available(page)
                 await click_first_visible(page, [r"sign in", r"iniciar sesi[oó]n", r"siguiente", r"next", r"yes", r"s[ií]", r"continuar", r"continue"], timeout=1000)
+                await submit_if_visible(page, timeout=800)
             await asyncio.sleep(1)
 
         raise RuntimeError(

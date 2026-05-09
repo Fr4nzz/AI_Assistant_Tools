@@ -27,11 +27,12 @@ Expected agent flow:
 5. Run the installer for the selected tools. The installer is safe to rerun if
    a prerequisite fails partway through.
 6. Guide browser logins, OAuth consent, QR pairing, or institutional sign-in one tool at a time.
-   When installing `outlook`, `onedrive`, or `d2l`, ask the user for their
-   Microsoft/institutional email address and configure it as
-   `MICROSOFT_ACCOUNT_EMAIL`. This is not a secret; it lets headless login
-   fill the email screen, after which the saved browser password can autofill
-   the password field if Chromium has it saved.
+   For Microsoft/USFQ logins, ask whether the user wants manual login or
+   optional headless autologin. Manual login is the default. If the user chooses
+   autologin, explain that their Microsoft email/password will be saved only on
+   this computer in a local private env file, then ask for the email and
+   password and write them to the local `microsoft.env` file. Never commit this
+   file, print the password, echo it to logs, or place it in shared docs.
    For Microsoft/USFQ logins, explicitly remind the user to choose
    "Mantener mi sesion iniciada" / "Stay signed in" when prompted.
    This is what makes later headless commands reuse the same session.
@@ -138,14 +139,26 @@ Windows login notes:
 
 - Outlook, OneDrive, and D2L share the browser profile at
   `%LOCALAPPDATA%\outlook-cli\browser-data`.
-- Optional but recommended: set the Microsoft account email once so Outlook,
-  OneDrive, and D2L can autofill blank Microsoft login screens:
+- Manual login is the default. For visible/manual login, leave the email field
+  empty and select the browser's saved email suggestion if that is what triggers
+  password autofill.
+- Optional headless autologin: if the user explicitly wants login without
+  interaction, save their Microsoft email/password in a local env file that is
+  never committed:
 
 ```powershell
-[Environment]::SetEnvironmentVariable('MICROSOFT_ACCOUNT_EMAIL', 'you@school.edu', 'User')
+$dir = "$HOME\.config\ai-assistant-tools"
+New-Item -ItemType Directory -Force -Path $dir | Out-Null
+@'
+MICROSOFT_ACCOUNT_EMAIL=you@school.edu
+MICROSOFT_ACCOUNT_PASSWORD=your-password
+'@ | Set-Content "$dir\microsoft.env"
 ```
 
-  Restart Codex Desktop or the terminal after setting it.
+  Restart Codex Desktop or the terminal after setting it. The CLIs also accept
+  `MICROSOFT_ACCOUNT_EMAIL` and `MICROSOFT_ACCOUNT_PASSWORD` from the process
+  environment, but the local env file is preferred over persistent global
+  password environment variables.
 - Run `outlook login` and `d2l login` in visible browser windows the first time.
   Choose "Mantener mi sesion iniciada" / "Stay signed in" if Microsoft asks.
 - Close those visible browser windows before testing commands such as
@@ -236,15 +249,26 @@ Linux login notes:
 
 - D2L, Outlook, and OneDrive share the Chromium profile at
   `~/.local/share/outlook-cli/browser-data`.
-- Optional but recommended: set the Microsoft account email once so Outlook,
-  OneDrive, and D2L can autofill blank Microsoft login screens:
+- Manual login is the default. For visible/manual login, leave the email field
+  empty and select the browser's saved email suggestion if that is what triggers
+  password autofill.
+- Optional headless autologin: if the user explicitly wants login without
+  interaction, save their Microsoft email/password in a local env file with
+  user-only permissions:
 
 ```bash
-printf '\nexport MICROSOFT_ACCOUNT_EMAIL="you@school.edu"\n' >> ~/.profile
-export MICROSOFT_ACCOUNT_EMAIL="you@school.edu"
+mkdir -p ~/.config/ai-assistant-tools
+chmod 700 ~/.config/ai-assistant-tools
+cat > ~/.config/ai-assistant-tools/microsoft.env <<'EOF'
+MICROSOFT_ACCOUNT_EMAIL=you@school.edu
+MICROSOFT_ACCOUNT_PASSWORD=your-password
+EOF
+chmod 600 ~/.config/ai-assistant-tools/microsoft.env
 ```
 
-  Restart Codex Desktop or the terminal after setting it.
+  The CLIs also accept `MICROSOFT_ACCOUNT_EMAIL` and
+  `MICROSOFT_ACCOUNT_PASSWORD` from the process environment, but the local env
+  file is preferred over exporting the password globally.
 - If installing D2L and Outlook together, open both headed login flows during
   initial setup: `d2l login` for Brightspace and `outlook login` for Outlook
   Web. They share Microsoft SSO state, but a second visible login or service
