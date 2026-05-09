@@ -12,6 +12,7 @@ import argparse
 import asyncio
 import json
 import os
+import re
 import sys
 import textwrap
 import urllib.parse
@@ -34,6 +35,7 @@ D2L_BASE = "https://miusfv.usfq.edu.ec"
 # hard-coded port accepts TCP but does not serve Chrome DevTools, so d2l thinks
 # the browser is dead and then cannot start Chromium on the occupied port.
 CDP_PORT = int(os.environ.get("D2L_CDP_PORT", "18801"))
+AUTO_LOGIN_TIMEOUT = int(os.environ.get("D2L_AUTO_LOGIN_TIMEOUT", "3"))
 LP_VER = "1.47"  # Learning Platform API version
 LE_VER = "1.80"  # Learning Environment API version
 
@@ -103,7 +105,7 @@ def _find_chromium() -> str:
     raise RuntimeError("No Chromium/Chrome binary found. Install playwright: python -m playwright install chromium")
 
 
-def _acquire_browser_lock(timeout: int = 90) -> int:
+def _acquire_browser_lock(timeout: int = 10) -> int:
     import time
     SHARE_DIR.mkdir(parents=True, exist_ok=True)
     deadline = time.time() + timeout
@@ -198,6 +200,28 @@ def _auto_login() -> bool:
 async def _auto_login_async() -> bool:
     from playwright.async_api import async_playwright
 
+    async def click_first_visible(page, labels: list[str], timeout: int = 2500) -> bool:
+        import time
+        deadline = time.time() + (timeout / 1000)
+        for label in labels:
+            locators = [
+                page.get_by_role("button", name=re.compile(label, re.I)).first,
+                page.get_by_role("link", name=re.compile(label, re.I)).first,
+                page.get_by_text(re.compile(label, re.I)).first,
+            ]
+            for locator in locators:
+                remaining = max(100, int((deadline - time.time()) * 1000))
+                if remaining <= 100:
+                    return False
+                try:
+                    await locator.wait_for(state="visible", timeout=min(remaining, 500))
+                    await locator.click()
+                    await page.wait_for_load_state("domcontentloaded", timeout=1000)
+                    return True
+                except Exception:
+                    pass
+        return False
+
     pw = await async_playwright().start()
     browser = None
     try:
@@ -208,40 +232,28 @@ async def _auto_login_async() -> bool:
         page = await context.new_page()
 
         try:
-            await page.goto(f"{D2L_BASE}/d2l/home", wait_until="domcontentloaded", timeout=15000)
+            await page.goto(f"{D2L_BASE}/d2l/home", wait_until="domcontentloaded", timeout=3000)
 
             # Already on D2L?
             if "/d2l/" in page.url and "logout" not in page.url and "login" not in page.url:
                 print("Auto-login successful.", file=sys.stderr)
                 return True
 
-            # Step 1: "Pick an account" — click USFQ account
-            try:
-                btn = page.get_by_text("estud.usfq.edu.ec").first
-                await btn.wait_for(state="visible", timeout=5000)
-                await btn.click()
-            except Exception:
-                pass
-
-            # Step 2: "Enter password" — wait for autofill, click Sign in
-            try:
-                sign_in = page.get_by_role("button", name="Sign in")
-                await sign_in.wait_for(state="visible", timeout=5000)
-                await sign_in.click()
-            except Exception:
-                pass
-
-            # Step 3: "Stay signed in?" — click Yes
-            try:
-                yes_btn = page.get_by_role("button", name="Yes")
-                await yes_btn.wait_for(state="visible", timeout=5000)
-                await yes_btn.click()
-            except Exception:
-                pass
+            # Follow Microsoft SSO prompts that can appear with cached accounts.
+            await click_first_visible(page, [r"estud\.usfq\.edu\.ec", r"franz\.chandi", r"use another account", r"usar otra cuenta"], timeout=800)
+            for _ in range(1):
+                if "/d2l/" in page.url and "logout" not in page.url and "login" not in page.url:
+                    print("Auto-login successful.", file=sys.stderr)
+                    return True
+                clicked = False
+                clicked |= await click_first_visible(page, [r"sign in", r"iniciar sesi[oó]n", r"siguiente", r"next", r"continuar", r"continue"], timeout=800)
+                clicked |= await click_first_visible(page, [r"yes", r"s[ií]", r"mantener.*sesi[oó]n", r"stay signed in"], timeout=800)
+                if not clicked:
+                    break
 
             # Wait for D2L to load
             try:
-                await page.wait_for_url("**/d2l/**", timeout=8000)
+                await page.wait_for_url("**/d2l/**", timeout=1000)
             except Exception:
                 pass
 
@@ -274,7 +286,7 @@ def _ensure_browser(locked: bool = False) -> bool:
     import time
     try:
         req = urllib.request.Request(f"http://localhost:{CDP_PORT}/json")
-        with urllib.request.urlopen(req, timeout=3) as resp:
+        with urllib.request.urlopen(req, timeout=1) as resp:
             tabs = json.loads(resp.read())
         if tabs:
             return True
@@ -286,16 +298,16 @@ def _ensure_browser(locked: bool = False) -> bool:
     try:
         try:
             req = urllib.request.Request(f"http://localhost:{CDP_PORT}/json")
-            with urllib.request.urlopen(req, timeout=3) as resp:
+            with urllib.request.urlopen(req, timeout=1) as resp:
                 if json.loads(resp.read()):
                     return True
         except Exception:
             pass
         _browser_start()
-        for _ in range(15):
+        for _ in range(3):
             try:
                 req = urllib.request.Request(f"http://localhost:{CDP_PORT}/json")
-                with urllib.request.urlopen(req, timeout=3) as resp:
+                with urllib.request.urlopen(req, timeout=1) as resp:
                     if json.loads(resp.read()):
                         return True
             except Exception:

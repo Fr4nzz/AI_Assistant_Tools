@@ -49,6 +49,7 @@ ID_MAP_MAX = 2000
 
 # User's local timezone (USFQ is in Ecuador)
 DEFAULT_TIMEZONE = os.environ.get("OUTLOOK_TIMEZONE", "America/Guayaquil")
+TOKEN_REFRESH_TIMEOUT = int(os.environ.get("OUTLOOK_TOKEN_REFRESH_TIMEOUT", "10"))
 
 # Common $select field sets
 SELECT_MSG_LIST = "Subject,From,ReceivedDateTime,BodyPreview,IsRead,HasAttachments,Importance,Id,ConversationId,InferenceClassification"
@@ -281,7 +282,7 @@ def _save_token(tok: dict) -> None:
     TOKEN_FILE.write_text(json.dumps(tok))
 
 
-def _acquire_token_lock(timeout: int = 90) -> int:
+def _acquire_token_lock(timeout: int = 10) -> int:
     TOKEN_LOCK_FILE.parent.mkdir(parents=True, exist_ok=True)
     deadline = time.time() + timeout
     while True:
@@ -309,7 +310,7 @@ def _release_token_lock(fd: int) -> None:
             pass
 
 
-def _acquire_browser_lock(timeout: int = 90) -> int:
+def _acquire_browser_lock(timeout: int = 10) -> int:
     BROWSER_LOCK_FILE.parent.mkdir(parents=True, exist_ok=True)
     deadline = time.time() + timeout
     while True:
@@ -360,6 +361,47 @@ async def _fetch_token_from_browser() -> dict:
 
     BROWSER_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
+    async def click_first_visible(page, labels: list[str], timeout: int = 2500) -> bool:
+        deadline = time.time() + (timeout / 1000)
+        for label in labels:
+            locators = [
+                page.get_by_role("button", name=re.compile(label, re.I)).first,
+                page.get_by_role("link", name=re.compile(label, re.I)).first,
+                page.get_by_text(re.compile(label, re.I)).first,
+            ]
+            for locator in locators:
+                remaining = max(100, int((deadline - time.time()) * 1000))
+                if remaining <= 100:
+                    return False
+                try:
+                    await locator.wait_for(state="visible", timeout=min(remaining, 500))
+                    await locator.click()
+                    await page.wait_for_load_state("domcontentloaded", timeout=1000)
+                    return True
+                except Exception:
+                    pass
+        return False
+
+    async def extract_outlook_token(page) -> dict | None:
+        try:
+            return await page.evaluate("""() => {
+                const stores = [localStorage, sessionStorage];
+                for (const store of stores) {
+                    for (let i = 0; i < store.length; i++) {
+                        const k = store.key(i);
+                        if (k.startsWith('msal.') && k.includes('accesstoken')) {
+                            try {
+                                const v = JSON.parse(store.getItem(k));
+                                if (v.target && v.target.includes('outlook.office.com')) return v;
+                            } catch {}
+                        }
+                    }
+                }
+                return null;
+            }""")
+        except Exception:
+            return None
+
     pw = await async_playwright().start()
     browser = None
     try:
@@ -370,7 +412,7 @@ async def _fetch_token_from_browser() -> dict:
         )
         page = browser.pages[0] if browser.pages else await browser.new_page()
 
-        await page.goto(OWA_URL, timeout=30000)
+        await page.goto(OWA_URL, timeout=10000)
         try:
             await page.wait_for_load_state("domcontentloaded", timeout=15000)
         except Exception:
@@ -379,49 +421,33 @@ async def _fetch_token_from_browser() -> dict:
 
         if "login.microsoftonline.com" in page.url:
             print("Session expired. Logging in via Microsoft SSO...", file=sys.stderr)
-            for attempt in ["estud.usfq.edu.ec"]:
-                try:
-                    btn = page.get_by_text(attempt).first
-                    await btn.wait_for(state="visible", timeout=5000)
-                    await btn.click()
+            await click_first_visible(page, [r"estud\.usfq\.edu\.ec", r"franz\.chandi", r"use another account", r"usar otra cuenta"], timeout=1500)
+            for _ in range(2):
+                clicked = False
+                clicked |= await click_first_visible(page, [r"sign in", r"iniciar sesi[oó]n", r"siguiente", r"next", r"continuar", r"continue"], timeout=1500)
+                clicked |= await click_first_visible(page, [r"yes", r"s[ií]", r"mantener.*sesi[oó]n", r"stay signed in"], timeout=1500)
+                if not clicked:
                     break
-                except Exception:
-                    pass
+                await asyncio.sleep(1)
             try:
-                sign_in = page.get_by_role("button", name="Sign in")
-                await sign_in.wait_for(state="visible", timeout=5000)
-                await sign_in.click()
-            except Exception:
-                pass
-            try:
-                yes_btn = page.get_by_role("button", name="Yes")
-                await yes_btn.wait_for(state="visible", timeout=5000)
-                await yes_btn.click()
-            except Exception:
-                pass
-            try:
-                await page.wait_for_url("**outlook.cloud.microsoft**", timeout=30000)
+                await page.wait_for_url("**outlook.cloud.microsoft**", timeout=5000)
             except Exception:
                 pass
 
-        for _ in range(30):
-            tok = await page.evaluate("""() => {
-                for (let i = 0; i < localStorage.length; i++) {
-                    const k = localStorage.key(i);
-                    if (k.startsWith('msal.') && k.includes('accesstoken')) {
-                        try {
-                            const v = JSON.parse(localStorage.getItem(k));
-                            if (v.target && v.target.includes('outlook.office.com')) return v;
-                        } catch {}
-                    }
-                }
-                return null;
-            }""")
+        for _ in range(10):
+            tok = await extract_outlook_token(page)
             if tok and tok.get("secret"):
                 return tok
+            if "outlook.office.com" not in page.url and "outlook.cloud.microsoft" not in page.url:
+                await click_first_visible(page, [r"sign in", r"iniciar sesi[oó]n", r"siguiente", r"next", r"yes", r"s[ií]", r"continuar", r"continue"], timeout=1000)
             await asyncio.sleep(1)
 
-        raise RuntimeError("Could not extract Outlook token from MSAL cache after 30s")
+        raise RuntimeError(
+            "Could not extract Outlook token from MSAL cache after 10s; "
+            f"last page was {page.url}. Run `outlook login` in a visible "
+            "browser, choose Stay signed in if prompted, close that browser, "
+            "then retry the read-only command."
+        )
     finally:
         if browser is not None:
             await browser.close()
@@ -440,7 +466,15 @@ def get_token() -> str:
         print("Refreshing Outlook token...", file=sys.stderr)
         browser_fd = _acquire_browser_lock()
         try:
-            tok = asyncio.run(_fetch_token_from_browser())
+            try:
+                tok = asyncio.run(asyncio.wait_for(_fetch_token_from_browser(), timeout=TOKEN_REFRESH_TIMEOUT))
+            except asyncio.TimeoutError as exc:
+                raise RuntimeError(
+                    "Outlook token refresh timed out after "
+                    f"{TOKEN_REFRESH_TIMEOUT}s. Run `outlook login` in a visible "
+                    "browser, choose Stay signed in if prompted, close that "
+                    "browser, then retry the read-only command."
+                ) from exc
             _save_token(tok)
             return tok["secret"]
         finally:
@@ -1404,7 +1438,14 @@ def main():
     }
 
     fn, formatter = handlers[args.command]
-    result = fn(args)
+    try:
+        result = fn(args)
+    except RuntimeError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
 
     if args.json:
         print(json.dumps(result, indent=2, ensure_ascii=False, default=str))
