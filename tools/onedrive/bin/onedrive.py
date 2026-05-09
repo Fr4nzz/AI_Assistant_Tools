@@ -27,10 +27,11 @@ if sys.platform.startswith("win"):
 GRAPH_BASE = "https://graph.microsoft.com/v1.0"
 OWA_URL = "https://outlook.cloud.microsoft/mail/"
 TOKEN_BOOTSTRAP_URLS = [
+    OWA_URL,
     "https://www.office.com/launch/onedrive",
+    "https://estudusfqedu-my.sharepoint.com/_layouts/15/onedrive.aspx",
     "https://onedrive.live.com/",
     "https://www.office.com/",
-    OWA_URL,
 ]
 
 if sys.platform.startswith("win"):
@@ -252,7 +253,7 @@ async def _fetch_graph_token_from_browser() -> dict:
             locators = [
                 page.get_by_role("button", name=re.compile(label, re.I)).first,
                 page.get_by_role("link", name=re.compile(label, re.I)).first,
-                page.locator("input[type=submit]").first,
+                page.locator("input[type=submit][value]", has_text=re.compile(label, re.I)).first,
                 page.get_by_text(re.compile(label, re.I)).first,
             ]
             for locator in locators:
@@ -284,14 +285,14 @@ async def _fetch_graph_token_from_browser() -> dict:
         for selector in ("input[type=email]", "input[name=loginfmt]"):
             try:
                 field = page.locator(selector).first
-                await field.wait_for(state="visible", timeout=600)
+                await field.wait_for(state="visible", timeout=1500)
                 value = await field.input_value()
                 if not value:
                     account_email = _infer_account_email()
                     if not account_email:
                         return False
                     await field.fill(account_email)
-                return await submit_if_visible(page) or await click_first_visible(page, [r"next", r"siguiente"], timeout=600)
+                return await submit_if_visible(page, timeout=1200) or await click_first_visible(page, [r"next", r"siguiente"], timeout=1200)
             except Exception:
                 pass
         return False
@@ -377,9 +378,8 @@ async def _fetch_graph_token_from_browser() -> dict:
                     return tok
                 await fill_email_if_needed(page)
                 await submit_password_if_autofilled(page)
-                await click_first_visible(page, [r"sign in", r"iniciar sesi[oó]n", r"siguiente", r"next", r"continuar", r"continue"], timeout=400)
-                await submit_if_visible(page, timeout=400)
-                await click_first_visible(page, [r"yes", r"s[ií]", r"mantener.*sesi[oó]n", r"stay signed in"], timeout=400)
+                await click_first_visible(page, [r"sign in", r"iniciar sesi[oó]n", r"siguiente", r"next", r"continuar", r"continue"], timeout=900)
+                await click_first_visible(page, [r"yes", r"s[ií]", r"mantener.*sesi[oó]n", r"stay signed in"], timeout=900)
                 await asyncio.sleep(1)
         raise RuntimeError(
             "Could not extract Microsoft Graph token from browser MSAL cache. "
