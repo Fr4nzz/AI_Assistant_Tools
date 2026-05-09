@@ -13,7 +13,7 @@ REPO_RAW_BASE="${REPO_RAW_BASE:-https://raw.githubusercontent.com/Fr4nzz/AI_Assi
 
 usage() {
   cat <<'EOF'
-Usage: scripts/install-linux.sh [all|gogcli|outlook|onedrive|d2l|humanizer|paper-fetch|academic-research|superpowers]
+Usage: scripts/install-linux.sh [all|gogcli|outlook|onedrive|d2l|whatsapp|humanizer|paper-fetch|academic-research|superpowers]
 
 Environment overrides:
   INSTALL_ROOT   Default: $HOME/.ai-assistant-tools
@@ -27,7 +27,7 @@ EOF
 }
 
 case "$TOOL" in
-  all|gogcli|outlook|onedrive|d2l|humanizer|paper-fetch|academic-research|superpowers) ;;
+  all|gogcli|outlook|onedrive|d2l|whatsapp|humanizer|paper-fetch|academic-research|superpowers) ;;
   -h|--help) usage; exit 0 ;;
   *) usage >&2; exit 2 ;;
 esac
@@ -163,6 +163,30 @@ install_gogcli() {
   echo "Installed gog to $LOCAL_BIN/gog"
 }
 
+install_whatsapp() {
+  local tmp
+  local arch
+  tmp="$(mktemp -d)"
+  arch="$(uname -m)"
+  case "$arch" in
+    x86_64|amd64) arch="amd64" ;;
+    aarch64|arm64) arch="arm64" ;;
+    *) echo "Unsupported architecture for wacli: $arch" >&2; exit 1 ;;
+  esac
+
+  local release_json asset_url
+  release_json="$(curl -fsSL https://api.github.com/repos/openclaw/wacli/releases/latest)"
+  asset_url="$(printf '%s' "$release_json" | python -c "import json,sys; data=json.load(sys.stdin); assets=data.get('assets', []); name='wacli-linux-${arch}.tar.gz'; print(next(a['browser_download_url'] for a in assets if a.get('name') == name))")"
+  download "$asset_url" "$tmp/wacli.tar.gz"
+  tar -xzf "$tmp/wacli.tar.gz" -C "$tmp"
+  install -m 0755 "$(find "$tmp" -type f -name wacli | head -n 1)" "$LOCAL_BIN/wacli"
+  install_skill "whatsapp" "whatsapp"
+  install_hermes_skill "whatsapp" "whatsapp"
+  echo "Installed wacli to $LOCAL_BIN/wacli"
+  echo "Pair with: wacli auth"
+  echo "Then test with: wacli --json doctor"
+}
+
 install_humanizer() {
   install_skill "humanizer" "humanizer"
   install_hermes_skill "humanizer" "humanizer"
@@ -255,7 +279,7 @@ EOF
 
 selected_tools() {
   if [ "$TOOL" = "all" ]; then
-    printf '%s\n' gogcli outlook onedrive d2l humanizer paper-fetch academic-research superpowers
+    printf '%s\n' gogcli outlook onedrive d2l whatsapp humanizer paper-fetch academic-research superpowers
   else
     printf '%s\n' "$TOOL"
   fi
@@ -264,6 +288,7 @@ selected_tools() {
 while IFS= read -r item; do
   case "$item" in
     gogcli) install_gogcli ;;
+    whatsapp) install_whatsapp ;;
     outlook|onedrive|d2l) install_python_cli "$item" ;;
     humanizer) install_humanizer ;;
     paper-fetch) install_paper_fetch; ensure_global_agents_note ;;

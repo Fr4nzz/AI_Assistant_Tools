@@ -1,28 +1,96 @@
-# WhatsApp via Whasapo + wha CLI
+# WhatsApp
 
-WhatsApp access for Codex Desktop through Whasapo pairing plus a local `wha` CLI.
+WhatsApp access for Codex Desktop.
 
-Codex should use the CLI for normal work, not a Codex MCP registration or raw MCP tools. The CLI reads Whasapo's SQLite cache for fast search and only uses a live Whasapo connection for downloads and sending.
+- Linux/CachyOS: use [`openclaw/wacli`](https://github.com/openclaw/wacli).
+- Windows: keep using Whasapo plus the local `wha` wrapper for now.
 
-## Why This Replaced The MCP-First Setup
+`wacli` is also published for Windows (`wacli-windows-amd64.zip` in the
+upstream releases), so replacing the Windows Whasapo flow is possible later.
+The current repo keeps Windows on Whasapo because that path has already been
+tested end to end in Codex Desktop on Windows.
 
-The earlier WhatsApp approach did not sync historical messages reliably and MCP tool visibility in new Codex chats was inconsistent. Whasapo's local SQLite database plus `wha` gives faster cached search, group/direct chat lookup, media discovery, and fewer stream conflicts.
+## Linux / CachyOS
 
-## Install
+Install:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) whatsapp
+```
+
+The Linux installer downloads the latest `openclaw/wacli` release binary for
+the current architecture, installs it as `~/.local/bin/wacli`, and installs the
+Codex `whatsapp` skill.
+
+Pair:
+
+```bash
+wacli auth
+```
+
+This prints a QR code in the terminal and performs a first bootstrap sync after
+pairing. Scan the QR code from:
+
+```text
+WhatsApp phone app > Settings > Linked Devices > Link a Device
+```
+
+Check status:
+
+```bash
+wacli --json doctor
+wacli --json auth status
+```
+
+Sync:
+
+```bash
+wacli sync --once
+nohup wacli sync --follow >/tmp/wacli-sync.log 2>&1 &
+```
+
+Search:
+
+```bash
+wacli --json messages search "field report" --limit 20
+wacli --json chats list --limit 50
+wacli --json contacts search "Manuel"
+```
+
+Send only when the user gives the exact recipient and exact message/file:
+
+```bash
+wacli send text --to 593991978514 --message "Exact message text"
+wacli send file --to 593991978514 --file ./report.pdf --caption "Exact caption"
+```
+
+Notes:
+
+- Default Linux store: `~/.local/state/wacli`.
+- Use `--account NAME` for multiple WhatsApp identities.
+- `wacli sync` stores what WhatsApp Web provides. Older history is best-effort;
+  after a normal sync, use `wacli history coverage` and
+  `wacli history backfill` when older messages are needed.
+- Prefer `--json` for agent parsing.
+
+## Windows
+
+Install:
 
 ```powershell
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool whatsapp
 ```
 
-The installer downloads:
+The Windows installer downloads:
 
 - `tools/whatsapp/bin/wha.py`
 - `tools/whatsapp/bin/wha.cmd`
 - `tools/whatsapp/skill/`
 
-It also runs the upstream Whasapo installer unless `-SkipDependencies` is passed.
+It also runs the upstream Whasapo installer unless `-SkipDependencies` is
+passed.
 
-## Pair
+Pair:
 
 ```powershell
 whasapo pair
@@ -76,18 +144,7 @@ search-heavy tasks:
 wha sync
 ```
 
-The local database is a cache, so it can be stale if Whasapo has not been
-running since the phone received new messages. `wha sync` starts `whasapo serve`
-in the background if needed, reports current cache counts, and returns
-immediately. If results look stale or the user needs messages from the last few
-minutes, run `wha doctor` or repeat `wha sync` after a short sleep. Use a
-foreground wait such as `wha sync --wait 10` only when waiting is acceptable.
-
-Whasapo does not expose an exact "messages left to sync" total through this
-cache. The practical progress indicators are `messages`, `whatsmeow_contacts`,
-`size_bytes`, and `modified_age_seconds` from `wha sync` or `wha doctor`.
-
-## Test
+Test:
 
 ```powershell
 wha doctor
@@ -98,13 +155,3 @@ wha media --query .pdf -n 20
 ```
 
 Use `--json` when Codex needs structured parsing.
-
-## Sending
-
-Never send unless the user gives the exact recipient and exact message/file.
-
-```powershell
-wha send-message --to CHAT_JID --message "Exact message text"
-wha send-file --to CHAT_JID --path "C:\path\to\file.pdf"
-```
-

@@ -38,9 +38,9 @@ Expected agent flow:
 7. Close visible Chromium, Chrome, or Edge windows that were opened with the
    shared tool profile before running headless commands. A visible browser can
    lock the profile and make headless Outlook, OneDrive, or D2L tests fail.
-8. If pairing WhatsApp from Codex Desktop, open `whasapo pair` in an external
-   visible terminal window. The QR code is printed to the terminal; if it runs
-   inside an agent-only console, the user cannot scan it.
+8. If pairing WhatsApp from Codex Desktop, use a visible terminal. On Linux run
+   `wacli auth`; on Windows run `whasapo pair`. The QR code is printed to the
+   terminal; if it runs inside an agent-only console, the user cannot scan it.
 9. Restart Codex Desktop when skills are installed.
 10. Test each installed tool with a safe read-only command. For CLIs with a
     global JSON flag, put `--json` before the subcommand, for example
@@ -54,7 +54,7 @@ Expected agent flow:
 | `outlook` | Outlook / Microsoft 365 | Institutional Outlook mail and calendar | Built for an institutional Microsoft account where third-party Graph app/API permissions were restricted. Uses a headed/headless Outlook Web browser profile and the Outlook Web token path that works for mail/calendar. |
 | `onedrive` | OneDrive / Microsoft 365 files | OneDrive and shared Microsoft files | Uses Microsoft Graph file APIs from the signed-in Microsoft web session. Graph file access worked, while Graph mail/calendar scopes did not. |
 | `d2l` | D2L / Brightspace | Course, assignment, deadline, grade, announcement, and LMS file context | Uses browser-backed institutional login because simple API-token setup was not reliable for this environment. |
-| `whatsapp` | WhatsApp / Whasapo + wha CLI | WhatsApp chats, search, groups, media discovery/download, explicit sending | Uses Whasapo pairing plus a local `wha` CLI. We moved away from the previous MCP-first approach because historical message sync/tool visibility was inconsistent; `wha` reads Whasapo's SQLite cache directly. |
+| `whatsapp` | WhatsApp | WhatsApp chats, search, groups, media discovery/download, explicit sending | Linux/CachyOS uses `openclaw/wacli` from release binaries. Windows keeps the tested Whasapo + `wha` wrapper path for now, although `wacli` also publishes a Windows binary and can be evaluated later as a replacement. |
 | `humanizer` | Humanizer skill | Natural-language rewrite and prose polishing for drafts, docs, emails, PR descriptions, and similar text | Vendors the MIT-licensed Hermes Agent humanizer skill so Codex can apply a focused style pass without any external account setup. Also works natively in Hermes. |
 | `paper-fetch` | Paper Search / Paper Fetch | Download and read known academic paper PDFs by DOI or source-specific ID | Installs `paper-search` from the `Fr4nzz/paper-search-mcp` fork. Use normal search/web tools for discovery first; DOI downloads use source-native paths, Unpaywall, open repositories, and optional discovered academic mirrors. Compatible with Codex and Hermes. |
 | `academic-research` | Academic research skill | Literature discovery, multi-paper reading, synthesis, appraisal, Zotero/citation workflows, and scientific writing | Merges the previous literature-search, literature-review, citation-zotero, scientific-writing, and literature-appraisal skills into one coherent workflow. It uses native search, Parallel when configured, and paper-search as complementary discovery routes, then uses `paper-fetch` for known DOI metadata/PDF retrieval. Compatible with Codex and Hermes. |
@@ -168,6 +168,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/ma
 bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) onedrive
 bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) d2l
 bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) gogcli
+bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) whatsapp
 bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) humanizer
 bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) paper-fetch
 bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) academic-research
@@ -187,6 +188,16 @@ Requirements:
 - `python`, `python-venv` support, `curl`, and `tar`
 - Chromium or Chrome on PATH. CachyOS/Arch usually works with `chromium`.
 - `~/.local/bin` on PATH
+
+Linux WhatsApp notes:
+
+- The Linux installer uses `openclaw/wacli`, installed as `~/.local/bin/wacli`.
+- Pair in a visible terminal with `wacli auth`, then scan the QR code from
+  WhatsApp phone app > Settings > Linked Devices > Link a Device.
+- Test with `wacli --json doctor` and `wacli --json auth status`.
+- For normal use, run `wacli sync --once` for a refresh or keep it running with
+  `nohup wacli sync --follow >/tmp/wacli-sync.log 2>&1 &`.
+- Search with `wacli --json messages search "query" --limit 20`.
 
 Installed custom CLIs are placed under:
 

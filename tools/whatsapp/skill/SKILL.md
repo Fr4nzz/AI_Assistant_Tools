@@ -1,26 +1,94 @@
 ---
 name: whatsapp
-description: Use this skill whenever the user asks to search WhatsApp chats, inspect WhatsApp history, find WhatsApp context, list WhatsApp chats, find/download WhatsApp media, or work with WhatsApp data. Use the local `wha` CLI backed by Whasapo's SQLite cache.
+description: Use this skill whenever the user asks to search WhatsApp chats, inspect WhatsApp history, find WhatsApp context, list WhatsApp chats, find/download WhatsApp media, or work with WhatsApp data. On Linux prefer `wacli`; on Windows use the local `wha` CLI backed by Whasapo.
 metadata:
-  requires:
-    bins: ["wha"]
+  optional_bins: ["wacli", "wha"]
 ---
 
 # WhatsApp
 
-Use the local `wha` CLI for WhatsApp search, context gathering, message history, chat lookup, and media-message lookup. It reads Whasapo's SQLite cache at `%LOCALAPPDATA%\whasapo\session.db` and does not open a new WhatsApp Web connection.
-
-Do not rely on a Codex `whatsapp-whasapo` MCP tool. This setup is CLI-first so new chats can use WhatsApp without MCP tool visibility or connection conflicts.
-
-Use first-class `wha` commands, not Codex MCP tools. `wha download`, `wha send-message`, and `wha send-file` are the only commands that use the live Whasapo connection; all search/context commands read SQLite directly.
+Use the local WhatsApp CLI. Prefer `wacli` when available, especially on Linux.
+On Windows, this repo currently installs `wha`, a wrapper around Whasapo's
+SQLite cache and live tools.
 
 ## Safety
 
 - Never send unless the user explicitly provides the exact recipient and exact message/file.
-- Treat `wha` output as local cache data. If the cache has not synced a message yet, say that clearly.
+- Treat local CLI output as cached/synced data. If a message has not synced yet, say that clearly.
 - Do not dump private chats unnecessarily. Summarize only what is needed.
+- Prefer JSON output for parsing.
 
-## Read-Only CLI
+## Linux / wacli
+
+Check status:
+
+```bash
+wacli --json doctor
+wacli --json auth status
+```
+
+First-time pairing:
+
+```bash
+wacli auth
+```
+
+This prints a QR code in the terminal and bootstraps sync after pairing. The
+user scans it from WhatsApp phone app > Settings > Linked Devices > Link a
+Device.
+
+For normal context/search requests:
+
+1. Start or refresh sync.
+
+```bash
+wacli sync --once
+```
+
+For a longer background sync:
+
+```bash
+nohup wacli sync --follow >/tmp/wacli-sync.log 2>&1 &
+```
+
+2. Inspect status if needed.
+
+```bash
+wacli --json doctor
+```
+
+3. Search/list local data.
+
+```bash
+wacli --json messages search "field report" --limit 20
+wacli --json messages search "field report" --chat CHAT_JID --limit 50
+wacli --json chats list --limit 50
+wacli --json contacts search "Manuel"
+wacli --json messages search ".pdf" --chat CHAT_JID --has-media --limit 20
+```
+
+4. If older messages are missing, check coverage and backfill only when useful.
+
+```bash
+wacli history coverage --include-blocked
+wacli history fill --dry-run --limit 20
+wacli history backfill --chat CHAT_JID --requests 10 --count 50
+```
+
+For sending, only after the user gives the exact recipient and exact content:
+
+```bash
+wacli send text --to RECIPIENT --message "Exact message text"
+wacli send file --to RECIPIENT --file ./file.pdf --caption "Exact caption"
+```
+
+## Windows / wha + Whasapo
+
+Use first-class `wha` commands, not Codex MCP tools. `wha download`,
+`wha send-message`, and `wha send-file` are the only commands that use the live
+Whasapo connection; all search/context commands read SQLite directly.
+
+Read-only commands:
 
 ```powershell
 wha doctor
@@ -46,61 +114,48 @@ wha search intillacta -n 50 --json
 wha media --chat 120363405350719367@g.us --query .m4a --json
 ```
 
-## Workflow
+Workflow:
 
-For context/search requests:
-
-1. Start sync without blocking the chat:
+1. Start sync without blocking the chat.
 
 ```powershell
 wha sync
 ```
 
-This starts `whasapo serve` in the background if needed, reports current cache counts, and returns immediately.
-
-If the AI needs to explicitly launch it as a detached process and continue without even reading sync status, use this on Windows:
+If the AI needs to explicitly launch it detached:
 
 ```powershell
 Start-Process -WindowStyle Hidden -FilePath wha -ArgumentList 'sync'
 ```
 
-Or this on Linux/macOS:
-
-```bash
-nohup wha sync >/dev/null 2>&1 &
-```
-
-Use `wha sync --wait 10` or longer only during first-time setup or when the user explicitly needs the newest messages and accepts waiting.
-
-2. Run `wha doctor` if you need to inspect current cache counts or database modified time.
+2. Run `wha doctor` if you need cache counts or database modified time.
 3. Run broad `wha search` terms.
 4. Identify relevant chat JIDs.
-5. If `wha chats --query "Name"` misses a known chat/group, do not stop. Search distinctive message text, participant names, filenames, or screenshots anchors with `wha search`, then map the discovered chat JID back to the requested name.
-6. If Whasapo lacks a contact/display name, run `wha alias import-recent-groups -n 25` for recent groups, `wha alias import-recent-directs -n 50` for recent direct chats, `wha alias import-live` for broad live chat names, or add a local alias with `wha alias set CHAT_JID "Name"` so future searches can find it by name.
+5. If `wha chats --query "Name"` misses a known chat/group, search distinctive
+   message text, participant names, filenames, or screenshot anchors with
+   `wha search`, then map the discovered chat JID back to the requested name.
+6. Use aliases when Whasapo lacks a contact/display name.
 7. Use `wha chat CHAT_JID --asc` to inspect surrounding context.
-8. Summarize concise findings with dates, chat names/JIDs when useful, and any media/document names.
 
 For media:
 
-1. Use `wha media` or `wha search` to find the media message ID, chat JID, media type, and visible filename/caption.
-2. If the user asks to download media, run `wha download --chat CHAT_JID --message-id MESSAGE_ID`.
-3. If a file already exists under `%LOCALAPPDATA%\whasapo\media`, copy it to `%USERPROFILE%\Downloads` with a readable filename before giving the user a link.
+1. Use `wha media` or `wha search` to find the media message ID, chat JID,
+   media type, and visible filename/caption.
+2. If the user asks to download media, run
+   `wha download --chat CHAT_JID --message-id MESSAGE_ID`.
+3. If a file already exists under `%LOCALAPPDATA%\whasapo\media`, copy it to
+   `%USERPROFILE%\Downloads` with a readable filename before giving the user a
+   link.
 
 For sending:
 
-1. Confirm exact recipient JID/phone and exact message/file.
-2. Use `wha send-message --to CHAT_JID --message "text"` or `wha send-file --to CHAT_JID --path "file"`. Never send from cached search commands.
+```powershell
+wha send-message --to CHAT_JID --message "Exact message text"
+wha send-file --to CHAT_JID --path "C:\path\to\file.pdf"
+```
 
 ## Notes
 
-Whasapo's SQLite cache improves as Whasapo runs and syncs messages. If a search returns no results, the message may not be cached yet.
-
-The cache can be stale if Whasapo has not been running recently. Run `wha sync` at the start of WhatsApp tasks so Whasapo can refresh the cache while searches run. If results look stale or the user needs messages from the last few minutes, run `wha doctor`, sleep briefly, rerun `wha sync`, or consider a foreground `wha sync --wait 10`.
-
-Whasapo does not expose an exact "messages left to sync" total through this cache. Use `messages`, `whatsmeow_contacts`, `size_bytes`, and `modified_age_seconds` from `wha sync` or `wha doctor` as practical progress indicators.
-
-SQLite-backed commands are fast and parallel-safe. Live commands (`wha download`, `wha send-message`, `wha send-file`, and alias imports that explicitly need live data) use a local lock so parallel calls from different assistants queue instead of opening multiple WhatsApp Web streams at once.
-
-Direct one-to-one WhatsApp display names are less reliable than group names in Whasapo. `import-recent-directs` uses the local contacts table by default and stays fast; use `--live` only when explicitly troubleshooting because live direct lookups usually return only phone/JID. If it reports `no-name`, use manual aliases for important contacts.
-
-`wha live` exists only as a debugging escape hatch for raw Whasapo MCP tools. Do not use it for normal research.
+`wacli` and Whasapo both rely on WhatsApp Web-style linked-device behavior.
+Sync completeness can vary. If search returns no results, the message may not
+be cached yet, or older history may need a best-effort backfill.
