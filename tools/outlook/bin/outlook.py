@@ -264,13 +264,37 @@ def _token_matches_target(tok: dict, needle: str) -> bool:
     return needle.lower() in (tok.get("target") or "").lower()
 
 
+def _token_jwt_exp(tok: dict) -> int | None:
+    secret = tok.get("secret") or ""
+    if secret.count(".") < 2:
+        return None
+    try:
+        payload = secret.split(".")[1]
+        payload += "=" * (-len(payload) % 4)
+        claims = json.loads(base64.urlsafe_b64decode(payload))
+        exp = claims.get("exp")
+        return int(exp) if exp else None
+    except Exception:
+        return None
+
+
+def _token_is_fresh(tok: dict) -> bool:
+    jwt_exp = _token_jwt_exp(tok)
+    if jwt_exp is not None:
+        return time.time() < jwt_exp - 120
+    expires = tok.get("expiresOn", 0)
+    try:
+        return time.time() < int(expires) - 120
+    except Exception:
+        return False
+
+
 def _load_cached_token(target: str = "outlook.office.com") -> dict | None:
     if not TOKEN_FILE.exists():
         return None
     try:
         data = json.loads(TOKEN_FILE.read_text())
-        expires = data.get("expiresOn", 0)
-        if time.time() < int(expires) - 120 and _token_matches_target(data, target):
+        if _token_is_fresh(data) and _token_matches_target(data, target):
             return data
     except Exception:
         pass
@@ -392,7 +416,17 @@ async def _fetch_token_from_browser() -> dict:
                         if (k.startsWith('msal.') && k.includes('accesstoken')) {
                             try {
                                 const v = JSON.parse(store.getItem(k));
-                                if (v.target && v.target.includes('outlook.office.com')) return v;
+                            if (v.target && v.target.includes('outlook.office.com')) {
+                                const secret = v.secret || '';
+                                const parts = secret.split('.');
+                                if (parts.length >= 3) {
+                                    try {
+                                        const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+                                        if (payload.exp && Date.now() / 1000 > payload.exp - 120) continue;
+                                    } catch {}
+                                }
+                                return v;
+                            }
                             } catch {}
                         }
                     }

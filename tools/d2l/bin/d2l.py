@@ -36,6 +36,7 @@ D2L_BASE = "https://miusfv.usfq.edu.ec"
 # the browser is dead and then cannot start Chromium on the occupied port.
 CDP_PORT = int(os.environ.get("D2L_CDP_PORT", "18801"))
 AUTO_LOGIN_TIMEOUT = int(os.environ.get("D2L_AUTO_LOGIN_TIMEOUT", "3"))
+D2L_ACCOUNT_EMAIL = os.environ.get("D2L_ACCOUNT_EMAIL", "fchandi@estud.usfq.edu.ec")
 LP_VER = "1.47"  # Learning Platform API version
 LE_VER = "1.80"  # Learning Environment API version
 
@@ -207,6 +208,7 @@ async def _auto_login_async() -> bool:
             locators = [
                 page.get_by_role("button", name=re.compile(label, re.I)).first,
                 page.get_by_role("link", name=re.compile(label, re.I)).first,
+                page.locator("input[type=submit]", has_text=re.compile(label, re.I)).first,
                 page.get_by_text(re.compile(label, re.I)).first,
             ]
             for locator in locators:
@@ -220,6 +222,42 @@ async def _auto_login_async() -> bool:
                     return True
                 except Exception:
                     pass
+        return False
+
+    async def submit_if_visible(page, timeout: int = 800) -> bool:
+        for selector in ("input[type=submit]", "button[type=submit]", "#idSIButton9"):
+            try:
+                btn = page.locator(selector).first
+                await btn.wait_for(state="visible", timeout=timeout)
+                await btn.click()
+                await page.wait_for_load_state("domcontentloaded", timeout=1000)
+                return True
+            except Exception:
+                pass
+        return False
+
+    async def fill_email_if_needed(page) -> bool:
+        for selector in ("input[type=email]", "input[name=loginfmt]"):
+            try:
+                field = page.locator(selector).first
+                await field.wait_for(state="visible", timeout=800)
+                value = await field.input_value()
+                if not value:
+                    await field.fill(D2L_ACCOUNT_EMAIL)
+                return await submit_if_visible(page) or await click_first_visible(page, [r"next", r"siguiente"], timeout=800)
+            except Exception:
+                pass
+        return False
+
+    async def submit_password_if_autofilled(page) -> bool:
+        try:
+            field = page.locator("input[type=password]").first
+            await field.wait_for(state="visible", timeout=800)
+            value = await field.input_value()
+            if value:
+                return await submit_if_visible(page) or await field.press("Enter")
+        except Exception:
+            pass
         return False
 
     pw = await async_playwright().start()
@@ -241,15 +279,19 @@ async def _auto_login_async() -> bool:
 
             # Follow Microsoft SSO prompts that can appear with cached accounts.
             await click_first_visible(page, [r"estud\.usfq\.edu\.ec", r"franz\.chandi", r"use another account", r"usar otra cuenta"], timeout=800)
-            for _ in range(1):
+            for _ in range(4):
                 if "/d2l/" in page.url and "logout" not in page.url and "login" not in page.url:
                     print("Auto-login successful.", file=sys.stderr)
                     return True
                 clicked = False
+                clicked |= await fill_email_if_needed(page)
+                clicked |= await submit_password_if_autofilled(page)
                 clicked |= await click_first_visible(page, [r"sign in", r"iniciar sesi[oó]n", r"siguiente", r"next", r"continuar", r"continue"], timeout=800)
+                clicked |= await submit_if_visible(page)
                 clicked |= await click_first_visible(page, [r"yes", r"s[ií]", r"mantener.*sesi[oó]n", r"stay signed in"], timeout=800)
                 if not clicked:
                     break
+                await asyncio.sleep(0.5)
 
             # Wait for D2L to load
             try:
