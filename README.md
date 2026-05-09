@@ -27,13 +27,9 @@ Expected agent flow:
 5. Run the installer for the selected tools. The installer is safe to rerun if
    a prerequisite fails partway through.
 6. Guide browser logins, OAuth consent, QR pairing, or institutional sign-in one tool at a time.
-   For Microsoft/USFQ logins, ask whether the user wants manual login or
-   optional headless autologin. Manual login is the default. If the user chooses
-   autologin, explain that their Microsoft email/password will be saved only on
-   this computer in a local private env file, then ask for the email and
-   password and write them to the local `microsoft.env` file. Never commit this
-   file, print the password, echo it to logs, or place it in shared docs.
-   For Microsoft/USFQ logins, explicitly remind the user to choose
+   Use a visible browser for the first Microsoft/USFQ login and let the tools
+   reuse the saved Chromium session afterward. For Microsoft/USFQ logins,
+   explicitly remind the user to choose
    "Mantener mi sesion iniciada" / "Stay signed in" when prompted.
    This is what makes later headless commands reuse the same session.
    Always do first-time logins in visible browser windows before trying read-only
@@ -139,26 +135,10 @@ Windows login notes:
 
 - Outlook, OneDrive, and D2L share the browser profile at
   `%LOCALAPPDATA%\outlook-cli\browser-data`.
-- Manual login is the default. For visible/manual login, leave the email field
-  empty and select the browser's saved email suggestion if that is what triggers
-  password autofill.
-- Optional headless autologin: if the user explicitly wants login without
-  interaction, save their Microsoft email/password in a local env file that is
-  never committed:
-
-```powershell
-$dir = "$HOME\.config\ai-assistant-tools"
-New-Item -ItemType Directory -Force -Path $dir | Out-Null
-@'
-MICROSOFT_ACCOUNT_EMAIL=you@school.edu
-MICROSOFT_ACCOUNT_PASSWORD=your-password
-'@ | Set-Content "$dir\microsoft.env"
-```
-
-  Restart Codex Desktop or the terminal after setting it. The CLIs also accept
-  `MICROSOFT_ACCOUNT_EMAIL` and `MICROSOFT_ACCOUNT_PASSWORD` from the process
-  environment, but the local env file is preferred over persistent global
-  password environment variables.
+- Use the visible browser login once, then let headless commands reuse the saved
+  Chromium session.
+- For visible/manual login, leave the email field empty and select the browser's
+  saved email suggestion if that is what triggers password autofill.
 - Run `outlook login` and `d2l login` in visible browser windows the first time.
   Choose "Mantener mi sesion iniciada" / "Stay signed in" if Microsoft asks.
 - Close those visible browser windows before testing commands such as
@@ -252,26 +232,10 @@ Linux login notes:
 - D2L starts its helper browser through Chrome DevTools Protocol and uses
   modern Chromium headless by default (`--headless=new`). If an older Chromium
   build fails to start, set `D2L_HEADLESS_ARG=--headless`.
-- Manual login is the default. For visible/manual login, leave the email field
-  empty and select the browser's saved email suggestion if that is what triggers
-  password autofill.
-- Optional headless autologin: if the user explicitly wants login without
-  interaction, save their Microsoft email/password in a local env file with
-  user-only permissions:
-
-```bash
-mkdir -p ~/.config/ai-assistant-tools
-chmod 700 ~/.config/ai-assistant-tools
-cat > ~/.config/ai-assistant-tools/microsoft.env <<'EOF'
-MICROSOFT_ACCOUNT_EMAIL=you@school.edu
-MICROSOFT_ACCOUNT_PASSWORD=your-password
-EOF
-chmod 600 ~/.config/ai-assistant-tools/microsoft.env
-```
-
-  The CLIs also accept `MICROSOFT_ACCOUNT_EMAIL` and
-  `MICROSOFT_ACCOUNT_PASSWORD` from the process environment, but the local env
-  file is preferred over exporting the password globally.
+- Use the visible browser login once, then let headless commands reuse the saved
+  Chromium session.
+- For visible/manual login, leave the email field empty and select the browser's
+  saved email suggestion if that is what triggers password autofill.
 - If installing D2L and Outlook together, open both headed login flows during
   initial setup: `d2l login` for Brightspace and `outlook login` for Outlook
   Web. They share Microsoft SSO state, but a second visible login or service
