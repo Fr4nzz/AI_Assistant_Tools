@@ -37,6 +37,7 @@ D2L_BASE = "https://miusfv.usfq.edu.ec"
 # the browser is dead and then cannot start Chromium on the occupied port.
 CDP_PORT = int(os.environ.get("D2L_CDP_PORT", "18801"))
 AUTO_LOGIN_TIMEOUT = int(os.environ.get("D2L_AUTO_LOGIN_TIMEOUT", "3"))
+D2L_HEADLESS_ARG = os.environ.get("D2L_HEADLESS_ARG", "--headless=new")
 LP_VER = "1.47"  # Learning Platform API version
 LE_VER = "1.80"  # Learning Environment API version
 
@@ -198,12 +199,20 @@ def _browser_start():
     import subprocess
     os.makedirs(str(BROWSER_DATA_DIR), exist_ok=True)
     chrome = _find_chromium()
+    args = [
+        chrome,
+        "--no-sandbox",
+        "--disable-gpu",
+        "--disable-dev-shm-usage",
+        "--disable-software-rasterizer",
+        f"--remote-debugging-port={CDP_PORT}",
+        f"--user-data-dir={BROWSER_DATA_DIR}",
+        "about:blank",
+    ]
+    if D2L_HEADLESS_ARG:
+        args.insert(1, D2L_HEADLESS_ARG)
     _chrome_proc = subprocess.Popen(
-        [chrome, "--headless", "--no-sandbox", "--disable-gpu",
-         "--disable-dev-shm-usage", "--disable-software-rasterizer",
-         f"--remote-debugging-port={CDP_PORT}",
-         f"--user-data-dir={BROWSER_DATA_DIR}",
-         "about:blank"],
+        args,
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
     )
 

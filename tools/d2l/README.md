@@ -34,6 +34,13 @@ initial setup: `d2l login` for Brightspace and `outlook login` for Outlook Web.
 They share Microsoft SSO state, but each service may still need its own
 first-time web load, cookies, or token bootstrap.
 
+Under the hood, D2L starts a headless Chromium on a local DevTools port, reuses
+the shared profile, connects with Playwright over CDP, completes the Microsoft
+SSO clicks, extracts Brightspace cookies, and then calls the read-only D2L
+Valence API. Modern Chromium headless is used by default (`--headless=new`).
+If a machine has an older Chromium build, set `D2L_HEADLESS_ARG=--headless`
+before running commands.
+
 Then run:
 
 ```bash

@@ -249,6 +249,9 @@ Linux login notes:
 
 - D2L, Outlook, and OneDrive share the Chromium profile at
   `~/.local/share/outlook-cli/browser-data`.
+- D2L starts its helper browser through Chrome DevTools Protocol and uses
+  modern Chromium headless by default (`--headless=new`). If an older Chromium
+  build fails to start, set `D2L_HEADLESS_ARG=--headless`.
 - Manual login is the default. For visible/manual login, leave the email field
   empty and select the browser's saved email suggestion if that is what triggers
   password autofill.
