@@ -53,7 +53,7 @@ ID_MAP_MAX = 3000
 
 SELECT_ITEM_LIST = "id,name,folder,file,size,webUrl,lastModifiedDateTime,parentReference,createdBy,lastModifiedBy"
 SELECT_ITEM_FULL = SELECT_ITEM_LIST + ",createdDateTime,description,eTag,cTag,shared,remoteItem,specialFolder"
-TOKEN_REFRESH_TIMEOUT = int(os.environ.get("ONEDRIVE_TOKEN_REFRESH_TIMEOUT", "15"))
+TOKEN_REFRESH_TIMEOUT = int(os.environ.get("ONEDRIVE_TOKEN_REFRESH_TIMEOUT", "10"))
 
 
 def _find_chromium() -> str:

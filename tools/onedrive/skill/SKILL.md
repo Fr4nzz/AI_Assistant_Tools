@@ -12,6 +12,10 @@ Use the local `onedrive` command for OneDrive/Microsoft 365 file access. It uses
 
 Do not say there is no OneDrive connector before trying this CLI.
 
+Run OneDrive commands sequentially. The CLI refreshes Microsoft Graph tokens
+through the shared Outlook browser profile, and parallel `onedrive` commands can
+collide on Chromium's persistent profile lock.
+
 ## Core Commands
 
 ```powershell

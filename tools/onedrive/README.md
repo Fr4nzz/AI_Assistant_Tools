@@ -31,6 +31,14 @@ If D2L was the first login and OneDrive does not work immediately, open Outlook
 once with `outlook login` before testing OneDrive again. This gives the shared
 Microsoft profile a chance to finish the Office / Outlook token bootstrap path.
 Close visible Chromium windows before running headless `onedrive` commands.
+Headless OneDrive refresh now opens Outlook Web first and reuses the Graph token
+that Outlook mints. On Linux this is usually a few seconds, so the CLI defaults
+to a 10 second token refresh timeout. Override it with
+`ONEDRIVE_TOKEN_REFRESH_TIMEOUT` only if needed.
+
+Run OneDrive commands sequentially. The CLI uses the same persistent Chromium
+profile as Outlook and D2L, and parallel `onedrive` commands can collide on
+Chromium's profile lock.
 
 If OneDrive still fails with:
 
