@@ -10,6 +10,7 @@ Talks directly to the D2L Valence REST API.
 
 import argparse
 import asyncio
+import base64
 import json
 import os
 import re
@@ -36,7 +37,6 @@ D2L_BASE = "https://miusfv.usfq.edu.ec"
 # the browser is dead and then cannot start Chromium on the occupied port.
 CDP_PORT = int(os.environ.get("D2L_CDP_PORT", "18801"))
 AUTO_LOGIN_TIMEOUT = int(os.environ.get("D2L_AUTO_LOGIN_TIMEOUT", "3"))
-D2L_ACCOUNT_EMAIL = os.environ.get("D2L_ACCOUNT_EMAIL", "fchandi@estud.usfq.edu.ec")
 LP_VER = "1.47"  # Learning Platform API version
 LE_VER = "1.80"  # Learning Environment API version
 
@@ -75,8 +75,33 @@ else:
     DEFAULT_BROWSER_DATA_DIR = Path.home() / ".local/share/outlook-cli/browser-data"
 BROWSER_DATA_DIR = Path(os.environ.get("D2L_BROWSER_DATA_DIR", str(DEFAULT_BROWSER_DATA_DIR)))
 BROWSER_LOCK_FILE = BROWSER_DATA_DIR.parent / "browser.lock"
+OUTLOOK_TOKEN_FILE = BROWSER_DATA_DIR.parent / "token.json"
 
 _chrome_proc = None
+
+
+def _infer_account_email() -> str | None:
+    explicit = os.environ.get("D2L_ACCOUNT_EMAIL")
+    if explicit:
+        return explicit
+    try:
+        token = json.loads(OUTLOOK_TOKEN_FILE.read_text())
+        for key in ("username", "login_hint"):
+            value = token.get(key)
+            if value and "@" in value:
+                return value
+        secret = token.get("secret") or ""
+        if secret.count(".") >= 2:
+            payload = secret.split(".")[1]
+            payload += "=" * (-len(payload) % 4)
+            claims = json.loads(base64.urlsafe_b64decode(payload))
+            for key in ("preferred_username", "upn", "email", "unique_name"):
+                value = claims.get(key)
+                if value and "@" in value:
+                    return value
+    except Exception:
+        pass
+    return None
 
 
 def _find_chromium() -> str:
@@ -243,7 +268,10 @@ async def _auto_login_async() -> bool:
                 await field.wait_for(state="visible", timeout=800)
                 value = await field.input_value()
                 if not value:
-                    await field.fill(D2L_ACCOUNT_EMAIL)
+                    account_email = _infer_account_email()
+                    if not account_email:
+                        return False
+                    await field.fill(account_email)
                 return await submit_if_visible(page) or await click_first_visible(page, [r"next", r"siguiente"], timeout=800)
             except Exception:
                 pass
