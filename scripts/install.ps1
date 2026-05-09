@@ -91,6 +91,26 @@ For scientific research and literature-review tasks, prefer the AI_Assistant_Too
   }
 }
 
+function Ensure-WhatsAppAgentsNote {
+  $agents = Join-Path $HOME '.codex\AGENTS.md'
+  $marker = 'AI_ASSISTANT_TOOLS_WHATSAPP'
+  New-Item -ItemType Directory -Force -Path (Split-Path -Parent $agents) | Out-Null
+  $block = @'
+
+<!-- AI_ASSISTANT_TOOLS_WHATSAPP -->
+For WhatsApp requests, use the global `whatsapp` skill when installed. On Linux prefer the local `wacli` CLI; on Windows use the local `wha` CLI backed by Whasapo. Never send unless I explicitly provide the exact recipient and exact message/file.
+<!-- /AI_ASSISTANT_TOOLS_WHATSAPP -->
+'@
+  if ((Test-Path -LiteralPath $agents) -and (Select-String -LiteralPath $agents -SimpleMatch $marker -Quiet)) {
+    $text = Get-Content -Raw -LiteralPath $agents
+    $pattern = '(?s)\r?\n?<!-- AI_ASSISTANT_TOOLS_WHATSAPP -->.*?<!-- /AI_ASSISTANT_TOOLS_WHATSAPP -->'
+    $text = [regex]::Replace($text, $pattern, "`n$($block.Trim())")
+    Set-Content -LiteralPath $agents -Value $text -Encoding UTF8
+  } else {
+    Add-Content -LiteralPath $agents -Value $block
+  }
+}
+
 function Install-CliTool {
   param(
     [string] $Name,
@@ -174,12 +194,7 @@ function Install-WhatsApp {
   }
 
   Install-WhaCli
-
-  $agents = Join-Path $HOME '.codex\AGENTS.md'
-  $line = 'For WhatsApp requests, use the global `whatsapp` skill and local `wha` CLI backed by Whasapo; never send unless I explicitly provide the exact recipient and message/file.'
-  if (-not (Test-Path $agents) -or -not (Select-String -LiteralPath $agents -SimpleMatch $line -Quiet)) {
-    Add-Content -LiteralPath $agents -Value $line
-  }
+  Ensure-WhatsAppAgentsNote
 
   if (-not $SkipWhasapoMcp) {
     Write-Host 'MCP registration is no longer required for normal WhatsApp use. Use wha CLI commands.'

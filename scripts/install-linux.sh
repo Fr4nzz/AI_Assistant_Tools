@@ -118,6 +118,37 @@ PY
   fi
 }
 
+ensure_whatsapp_agents_note() {
+  local agents="$CODEX_HOME/AGENTS.md"
+  local marker="AI_ASSISTANT_TOOLS_WHATSAPP"
+  mkdir -p "$(dirname "$agents")"
+  local block
+  block="$(cat <<'EOF'
+
+<!-- AI_ASSISTANT_TOOLS_WHATSAPP -->
+For WhatsApp requests, use the global `whatsapp` skill when installed. On Linux prefer the local `wacli` CLI; on Windows use the local `wha` CLI backed by Whasapo. Never send unless I explicitly provide the exact recipient and exact message/file.
+<!-- /AI_ASSISTANT_TOOLS_WHATSAPP -->
+EOF
+)"
+  if [ -f "$agents" ] && grep -q "$marker" "$agents"; then
+    BLOCK="$block" python - "$agents" <<'PY'
+from pathlib import Path
+import os
+import re
+import sys
+
+path = Path(sys.argv[1]).expanduser()
+text = path.read_text()
+block = os.environ["BLOCK"].strip("\n")
+pattern = re.compile(r"\n?<!-- AI_ASSISTANT_TOOLS_WHATSAPP -->.*?<!-- /AI_ASSISTANT_TOOLS_WHATSAPP -->", re.S)
+text = pattern.sub("\n" + block, text)
+path.write_text(text)
+PY
+  else
+    printf '%s\n' "$block" >> "$agents"
+  fi
+}
+
 ensure_venv() {
   if [ ! -x "$INSTALL_ROOT/venv/bin/python" ]; then
     python -m venv "$INSTALL_ROOT/venv"
@@ -182,6 +213,7 @@ install_whatsapp() {
   install -m 0755 "$(find "$tmp" -type f -name wacli | head -n 1)" "$LOCAL_BIN/wacli"
   install_skill "whatsapp" "whatsapp"
   install_hermes_skill "whatsapp" "whatsapp"
+  ensure_whatsapp_agents_note
   echo "Installed wacli to $LOCAL_BIN/wacli"
   echo "Pair with: wacli auth"
   echo "Then test with: wacli --json doctor"
