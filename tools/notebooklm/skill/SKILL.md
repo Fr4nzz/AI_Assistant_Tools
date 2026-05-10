@@ -1,6 +1,6 @@
 ---
 name: notebooklm
-description: Use this skill whenever the user asks to use Google NotebookLM from Codex, automate NotebookLM notebooks, add sources, query notebook content, generate or download NotebookLM audio/video/slide/quiz/flashcard/mind-map/data-table artifacts, manage NotebookLM profiles/auth, or troubleshoot the local `notebooklm` CLI.
+description: Use this skill whenever the user asks to use Google NotebookLM, automate NotebookLM notebooks, add sources, query notebook content, generate or download NotebookLM audio/video/slide/quiz/flashcard/mind-map/data-table artifacts, manage NotebookLM profiles/auth, or troubleshoot the local `notebooklm` CLI.
 metadata:
   requires:
     bins: ["notebooklm"]
@@ -26,7 +26,7 @@ Windows:
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool notebooklm
 ```
 
-Restart Codex Desktop after installing the skill.
+Restart your agent session (Codex Desktop or Hermes) so new skills are loaded.
 
 ## First-Time Auth
 
@@ -87,7 +87,7 @@ notebooklm generate mind-map
 notebooklm generate data-table "compare key concepts"
 ```
 
-For long-running audio/video generation, prefer the artifact workflow so Codex
+For long-running audio/video generation, prefer the artifact workflow so the agent
 can show progress and recover cleanly if the generation command is interrupted:
 
 ```bash
@@ -119,7 +119,7 @@ ls -lh ~/Downloads/summary.mp3
 Show bundled agent guidance when needed:
 
 ```bash
-notebooklm agent show codex
+notebooklm agent show
 notebooklm skill status
 ```
 

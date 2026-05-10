@@ -1,9 +1,9 @@
 # NotebookLM
 
-NotebookLM access for Codex Desktop through
+NotebookLM access for Codex Desktop and Hermes Agent through
 [`teng-lin/notebooklm-py`](https://github.com/teng-lin/notebooklm-py).
 
-This installs the `notebooklm` CLI and the Codex `notebooklm` skill.
+This installs the `notebooklm` CLI and the agent skill.
 
 ## Linux / CachyOS
 
