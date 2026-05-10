@@ -13,7 +13,7 @@ REPO_RAW_BASE="${REPO_RAW_BASE:-https://raw.githubusercontent.com/Fr4nzz/AI_Assi
 
 usage() {
   cat <<'EOF'
-Usage: scripts/install-linux.sh [all|gogcli|outlook|onedrive|d2l|whatsapp|humanizer|paper-fetch|academic-research|superpowers]
+Usage: scripts/install-linux.sh [all|gogcli|outlook|onedrive|d2l|whatsapp|humanizer|paper-fetch|academic-research|notebooklm|superpowers]
 
 Environment overrides:
   INSTALL_ROOT   Default: $HOME/.ai-assistant-tools
@@ -27,7 +27,7 @@ EOF
 }
 
 case "$TOOL" in
-  all|gogcli|outlook|onedrive|d2l|whatsapp|humanizer|paper-fetch|academic-research|superpowers) ;;
+  all|gogcli|outlook|onedrive|d2l|whatsapp|humanizer|paper-fetch|academic-research|notebooklm|superpowers) ;;
   -h|--help) usage; exit 0 ;;
   *) usage >&2; exit 2 ;;
 esac
@@ -309,9 +309,35 @@ EOF
   echo "Installed PATH shim to $LOCAL_BIN/paper-search"
 }
 
+install_notebooklm() {
+  if command -v uv >/dev/null 2>&1; then
+    uv tool install --upgrade "notebooklm-py[browser]"
+    install_skill "notebooklm" "notebooklm"
+    install_hermes_skill "notebooklm" "notebooklm"
+    echo "Installed notebooklm-py with uv tool."
+    echo "Update later with: uv tool upgrade notebooklm-py"
+    echo "Run first-time auth with: notebooklm login"
+    return 0
+  fi
+
+  ensure_venv
+  "$INSTALL_ROOT/venv/bin/python" -m pip install --upgrade "notebooklm-py[browser]"
+  cat > "$LOCAL_BIN/notebooklm" <<EOF
+#!/usr/bin/env bash
+exec "$INSTALL_ROOT/venv/bin/notebooklm" "\$@"
+EOF
+  chmod +x "$LOCAL_BIN/notebooklm"
+  install_skill "notebooklm" "notebooklm"
+  install_hermes_skill "notebooklm" "notebooklm"
+  echo "Installed notebooklm-py to $INSTALL_ROOT/venv"
+  echo "Installed PATH shim to $LOCAL_BIN/notebooklm"
+  echo "Update later by rerunning this installer."
+  echo "Run first-time auth with: notebooklm login"
+}
+
 selected_tools() {
   if [ "$TOOL" = "all" ]; then
-    printf '%s\n' gogcli outlook onedrive d2l whatsapp humanizer paper-fetch academic-research superpowers
+    printf '%s\n' gogcli outlook onedrive d2l whatsapp humanizer paper-fetch academic-research notebooklm superpowers
   else
     printf '%s\n' "$TOOL"
   fi
@@ -325,6 +351,7 @@ while IFS= read -r item; do
     humanizer) install_humanizer ;;
     paper-fetch) install_paper_fetch; ensure_global_agents_note ;;
     academic-research) install_academic_research ;;
+    notebooklm) install_notebooklm ;;
     superpowers) install_superpowers ;;
   esac
 done < <(selected_tools)

@@ -1,5 +1,5 @@
 param(
-  [ValidateSet('all', 'gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer', 'paper-fetch', 'academic-research', 'superpowers')]
+  [ValidateSet('all', 'gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer', 'paper-fetch', 'academic-research', 'notebooklm', 'superpowers')]
   [string] $Tool = 'all',
 
   [string] $InstallRoot = (Join-Path $HOME '.ai-assistant-tools'),
@@ -295,8 +295,28 @@ PAPER_SEARCH_MCP_SCIHUB_MIRROR_PROBE_WORKERS=8
   Write-Host "Installed PATH shim to $shim"
 }
 
+function Install-NotebookLM {
+  Install-Skill 'notebooklm' 'notebooklm'
+  Install-HermesSkill 'notebooklm' 'notebooklm'
+
+  $localBin = Join-Path $HOME '.local\bin'
+  New-Item -ItemType Directory -Force -Path $localBin | Out-Null
+
+  if (-not $SkipDependencies) {
+    python -m pip install --user --upgrade 'notebooklm-py[browser]'
+  }
+
+  $shim = Join-Path $localBin 'notebooklm.cmd'
+  "@echo off`r`npython -c `"from notebooklm.notebooklm_cli import main; raise SystemExit(main())`" %*`r`n" | Set-Content -LiteralPath $shim -Encoding ASCII
+
+  Write-Host 'Installed notebooklm-py and the NotebookLM Codex skill.'
+  Write-Host "Installed PATH shim to $shim"
+  Write-Host 'Run first-time auth with: notebooklm login'
+  Write-Host 'If commands that used to work stop working, rerun this installer to update.'
+}
+
 $selected = if ($Tool -eq 'all') {
-  @('gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer', 'paper-fetch', 'academic-research', 'superpowers')
+  @('gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer', 'paper-fetch', 'academic-research', 'notebooklm', 'superpowers')
 } else {
   @($Tool)
 }
@@ -311,6 +331,7 @@ foreach ($item in $selected) {
     'humanizer' { Install-Humanizer }
     'paper-fetch' { Install-PaperFetch; Ensure-GlobalAgentsNote }
     'academic-research' { Install-AcademicResearch }
+    'notebooklm' { Install-NotebookLM }
     'superpowers' { Install-Superpowers }
   }
 }

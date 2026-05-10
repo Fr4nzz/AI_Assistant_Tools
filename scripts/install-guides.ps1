@@ -1,5 +1,5 @@
 param(
-  [ValidateSet('all', 'gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp')]
+  [ValidateSet('all', 'gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer', 'paper-fetch', 'academic-research', 'notebooklm', 'superpowers')]
   [string] $Tool = 'all'
 )
 

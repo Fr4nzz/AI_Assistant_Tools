@@ -1,0 +1,9 @@
+name: notebooklm
+description: Use Google NotebookLM through the local notebooklm CLI.
+interface:
+  display_name: "NotebookLM"
+  short_description: "Automate NotebookLM"
+  default_prompt: "Use $notebooklm to work with my NotebookLM notebooks."
+
+policy:
+  allow_implicit_invocation: true
