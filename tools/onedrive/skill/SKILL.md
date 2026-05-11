@@ -19,6 +19,10 @@ lock. After `onedrive --json profile` succeeds, normal Graph-only commands such
 as `ls`, `search`, `meta`, `shared`, and `download` can run in parallel until
 the token expires again.
 
+Do not force Microsoft login with `prompt=login` on the real shared profile for
+demos or debugging. That can invalidate the saved "Stay signed in" path and make
+headless refresh require a visible `outlook login` again.
+
 ## Core Commands
 
 ```powershell

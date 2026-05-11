@@ -32,9 +32,15 @@ once with `outlook login` before testing OneDrive again. This gives the shared
 Microsoft profile a chance to finish the Office / Outlook token bootstrap path.
 Close visible Chromium windows before running headless `onedrive` commands.
 Headless OneDrive refresh now opens Outlook Web first and reuses the Graph token
-that Outlook mints. On Linux this is usually a few seconds, so the CLI defaults
-to a 10 second token refresh timeout. Override it with
+that Outlook mints. On Linux this is often a few seconds when the saved session
+is already warm, but the first refresh after a manual relogin can take longer,
+so the CLI defaults to a 30 second token refresh timeout. Override it with
 `ONEDRIVE_TOKEN_REFRESH_TIMEOUT` only if needed.
+
+Do not use `prompt=login` or forced-login demo URLs with the real shared
+profile. They can put the profile back into a password-required state, which
+breaks headless refresh until the user completes `outlook login` visibly again
+and chooses "Stay signed in".
 
 Do the token warm-up sequentially. If the cached Graph token is expired, the
 first `onedrive` command opens the shared Chromium profile and parallel refresh
