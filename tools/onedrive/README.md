@@ -36,6 +36,8 @@ that Outlook mints. On Linux this is often a few seconds when the saved session
 is already warm, but the first refresh after a manual relogin can take longer,
 so the CLI defaults to a 30 second token refresh timeout. Override it with
 `ONEDRIVE_TOKEN_REFRESH_TIMEOUT` only if needed.
+The refresh loop polls for a token quickly and only interacts with Microsoft
+login controls when the page is actually on `login.microsoftonline.com`.
 
 Do not use `prompt=login` or forced-login demo URLs with the real shared
 profile. They can put the profile back into a password-required state, which

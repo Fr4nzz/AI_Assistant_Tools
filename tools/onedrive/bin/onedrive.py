@@ -370,17 +370,19 @@ async def _fetch_graph_token_from_browser() -> dict:
                 await page.wait_for_load_state("domcontentloaded", timeout=5000)
             except Exception:
                 pass
-            await asyncio.sleep(1)
 
-            for _ in range(8):
+            for _ in range(40):
                 tok = await extract_graph_token(page)
                 if tok and tok.get("secret"):
                     return tok
-                await fill_email_if_needed(page)
-                await submit_password_if_autofilled(page)
-                await click_first_visible(page, [r"sign in", r"iniciar sesi[oó]n", r"siguiente", r"next", r"continuar", r"continue"], timeout=900)
-                await click_first_visible(page, [r"yes", r"s[ií]", r"mantener.*sesi[oó]n", r"stay signed in"], timeout=900)
-                await asyncio.sleep(1)
+                if "login.microsoftonline.com" in page.url:
+                    await fill_email_if_needed(page)
+                    await submit_password_if_autofilled(page)
+                    await click_first_visible(page, [r"sign in", r"iniciar sesi[oó]n", r"siguiente", r"next", r"continuar", r"continue"], timeout=700)
+                    await click_first_visible(page, [r"yes", r"s[ií]", r"mantener.*sesi[oó]n", r"stay signed in"], timeout=700)
+                else:
+                    await click_first_visible(page, [r"yes", r"s[ií]", r"mantener.*sesi[oó]n", r"stay signed in", r"continue", r"continuar"], timeout=250)
+                await asyncio.sleep(0.25)
         raise RuntimeError(
             "Could not extract Microsoft Graph token from browser MSAL cache. "
             "Open `onedrive login` in a visible browser, let OneDrive/Office load, "
