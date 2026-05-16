@@ -1,0 +1,9 @@
+name: ytfetcher
+description: Use YTFetcher through the local ytfetcher CLI for YouTube transcript text and metadata datasets.
+interface:
+  display_name: "YTFetcher"
+  short_description: "Fetch YouTube transcripts and metadata"
+  default_prompt: "Use $ytfetcher to fetch YouTube transcripts and metadata."
+
+policy:
+  allow_implicit_invocation: true

@@ -1,5 +1,5 @@
 param(
-  [ValidateSet('all', 'gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer', 'paper-fetch', 'academic-research', 'notebooklm', 'superpowers')]
+  [ValidateSet('all', 'gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer', 'paper-fetch', 'academic-research', 'notebooklm', 'ytfetcher', 'tubescrape', 'hyperframes', 'superpowers')]
   [string] $Tool = 'all',
 
   [string] $InstallRoot = (Join-Path $HOME '.ai-assistant-tools'),
@@ -140,6 +140,60 @@ function Install-CliTool {
   Write-Host "Installed PATH shim to $shim"
 }
 
+function Get-YTFetcherPython {
+  $candidates = @()
+  if ($env:YTFETCHER_PYTHON) { $candidates += @($env:YTFETCHER_PYTHON) }
+  $candidates += @('py -3.13', 'py -3.12', 'py -3.11', 'python')
+
+  foreach ($candidate in $candidates) {
+    $parts = $candidate -split ' ', 2
+    $exe = $parts[0]
+    $args = if ($parts.Count -gt 1) { $parts[1] } else { '' }
+    $versionCheck = 'import sys; raise SystemExit(not ((3, 11) <= sys.version_info < (3, 14)))'
+    try {
+      if ($args) {
+        $process = Start-Process -FilePath $exe -ArgumentList @($args, '-c', $versionCheck) -Wait -PassThru -WindowStyle Hidden -ErrorAction Stop
+      } else {
+        $process = Start-Process -FilePath $exe -ArgumentList @('-c', $versionCheck) -Wait -PassThru -WindowStyle Hidden -ErrorAction Stop
+      }
+      if ($process.ExitCode -eq 0) {
+        return @{ Exe = $exe; Args = $args }
+      }
+    } catch {
+      continue
+    }
+  }
+
+  throw 'YTFetcher requires Python 3.11, 3.12, or 3.13. Set YTFETCHER_PYTHON to a compatible python.exe if needed.'
+}
+
+function Get-TubeScrapePython {
+  $candidates = @()
+  if ($env:TUBESCRAPE_PYTHON) { $candidates += @($env:TUBESCRAPE_PYTHON) }
+  $candidates += @('py -3.13', 'py -3.12', 'py -3.11', 'py -3.10', 'python')
+
+  foreach ($candidate in $candidates) {
+    $parts = $candidate -split ' ', 2
+    $exe = $parts[0]
+    $args = if ($parts.Count -gt 1) { $parts[1] } else { '' }
+    $versionCheck = 'import sys; raise SystemExit(not ((3, 10) <= sys.version_info < (3, 14)))'
+    try {
+      if ($args) {
+        $process = Start-Process -FilePath $exe -ArgumentList @($args, '-c', $versionCheck) -Wait -PassThru -WindowStyle Hidden -ErrorAction Stop
+      } else {
+        $process = Start-Process -FilePath $exe -ArgumentList @('-c', $versionCheck) -Wait -PassThru -WindowStyle Hidden -ErrorAction Stop
+      }
+      if ($process.ExitCode -eq 0) {
+        return @{ Exe = $exe; Args = $args }
+      }
+    } catch {
+      continue
+    }
+  }
+
+  throw 'TubeScrape requires Python 3.10, 3.11, 3.12, or 3.13. Set TUBESCRAPE_PYTHON to a compatible python.exe if needed.'
+}
+
 function Install-WhaCli {
   $toolDir = Join-Path $InstallRoot 'whatsapp'
   New-Item -ItemType Directory -Force -Path $toolDir | Out-Null
@@ -224,6 +278,35 @@ function Install-SkillOnly {
   Install-Skill $Name $Name
   Install-HermesSkill $Name $Name
   Write-Host "Installed $Name Codex skill."
+}
+
+function Install-Hyperframes {
+  Install-Skill 'hyperframes-helper' 'hyperframes'
+  $config = Join-Path $HOME '.codex\config.toml'
+  New-Item -ItemType Directory -Force -Path (Split-Path -Parent $config) | Out-Null
+  $header = '[plugins."hyperframes@openai-curated"]'
+  $text = if (Test-Path -LiteralPath $config) { Get-Content -Raw -LiteralPath $config } else { '' }
+
+  if ($text.Contains($header)) {
+    $pattern = '(?s)(\[plugins\."hyperframes@openai-curated"\]\r?\n)(.*?)(?=\r?\n\[|\z)'
+    $text = [regex]::Replace($text, $pattern, {
+      param($m)
+      $body = $m.Groups[2].Value
+      if ($body -match '(?m)^enabled\s*=') {
+        $body = [regex]::Replace($body, '(?m)^enabled\s*=.*$', 'enabled = true')
+      } else {
+        $body = "enabled = true`n$body"
+      }
+      $m.Groups[1].Value + $body.TrimEnd() + "`n"
+    })
+  } else {
+    if ($text -and -not $text.EndsWith("`n")) { $text += "`n" }
+    $text += "`n[plugins.`"hyperframes@openai-curated`"]`nenabled = true`n"
+  }
+
+  Set-Content -LiteralPath $config -Value $text -Encoding UTF8
+  Write-Host "Enabled HyperFrames plugin in $config"
+  Write-Host 'Restart Codex Desktop. If the plugin does not appear, install HyperFrames from the Plugins UI.'
 }
 
 function Install-Superpowers {
@@ -315,8 +398,67 @@ function Install-NotebookLM {
   Write-Host 'If commands that used to work stop working, rerun this installer to update.'
 }
 
+function Install-YTFetcher {
+  Install-Skill 'ytfetcher' 'ytfetcher'
+  Install-HermesSkill 'ytfetcher' 'ytfetcher'
+
+  $localBin = Join-Path $HOME '.local\bin'
+  New-Item -ItemType Directory -Force -Path $localBin | Out-Null
+  $venv = Join-Path $InstallRoot 'ytfetcher-venv'
+  $venvPython = Join-Path $venv 'Scripts\python.exe'
+
+  if (-not $SkipDependencies) {
+    $python = Get-YTFetcherPython
+    if (-not (Test-Path -LiteralPath $venvPython)) {
+      if ($python.Args) {
+        & $python.Exe $python.Args -m venv $venv
+      } else {
+        & $python.Exe -m venv $venv
+      }
+    }
+    & $venvPython -m pip install --upgrade pip
+    & $venvPython -m pip install --upgrade ytfetcher
+  }
+
+  $shim = Join-Path $localBin 'ytfetcher.cmd'
+  "@echo off`r`n`"$venvPython`" -c `"from ytfetcher._cli import main; raise SystemExit(main())`" %*`r`n" | Set-Content -LiteralPath $shim -Encoding ASCII
+
+  Write-Host 'Installed ytfetcher and the YTFetcher Codex skill.'
+  Write-Host "Installed PATH shim to $shim"
+}
+
+function Install-TubeScrape {
+  Install-Skill 'tubescrape' 'tubescrape'
+  Install-HermesSkill 'tubescrape' 'tubescrape'
+
+  $localBin = Join-Path $HOME '.local\bin'
+  New-Item -ItemType Directory -Force -Path $localBin | Out-Null
+  $venv = Join-Path $InstallRoot 'tubescrape-venv'
+  $venvPython = Join-Path $venv 'Scripts\python.exe'
+
+  if (-not $SkipDependencies) {
+    $python = Get-TubeScrapePython
+    if (-not (Test-Path -LiteralPath $venvPython)) {
+      if ($python.Args) {
+        & $python.Exe $python.Args -m venv $venv
+      } else {
+        & $python.Exe -m venv $venv
+      }
+    }
+    & $venvPython -m pip install --upgrade pip
+    & $venvPython -m pip install --upgrade 'tubescrape[cli]'
+  }
+
+  $shim = Join-Path $localBin 'tubescrape.cmd'
+  $cli = Join-Path $venv 'Scripts\tubescrape.exe'
+  "@echo off`r`n`"$cli`" %*`r`n" | Set-Content -LiteralPath $shim -Encoding ASCII
+
+  Write-Host 'Installed tubescrape and the TubeScrape Codex skill.'
+  Write-Host "Installed PATH shim to $shim"
+}
+
 $selected = if ($Tool -eq 'all') {
-  @('gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer', 'paper-fetch', 'academic-research', 'notebooklm', 'superpowers')
+  @('gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer', 'paper-fetch', 'academic-research', 'notebooklm', 'ytfetcher', 'tubescrape', 'hyperframes', 'superpowers')
 } else {
   @($Tool)
 }
@@ -332,6 +474,9 @@ foreach ($item in $selected) {
     'paper-fetch' { Install-PaperFetch; Ensure-GlobalAgentsNote }
     'academic-research' { Install-AcademicResearch }
     'notebooklm' { Install-NotebookLM }
+    'ytfetcher' { Install-YTFetcher }
+    'tubescrape' { Install-TubeScrape }
+    'hyperframes' { Install-Hyperframes }
     'superpowers' { Install-Superpowers }
   }
 }

@@ -17,7 +17,7 @@ Primero lee el README del repo. Luego dime que herramientas puedo instalar, enum
 Expected agent flow:
 
 1. Read this README and the relevant `tools/<name>/README.md` files.
-2. Ask which tools to install: `gogcli`, `outlook`, `onedrive`, `d2l`, `whatsapp`, `humanizer`, `paper-fetch`, `academic-research`, `notebooklm`, `superpowers`, or `all`.
+2. Ask which tools to install: `gogcli`, `outlook`, `onedrive`, `d2l`, `whatsapp`, `humanizer`, `paper-fetch`, `academic-research`, `notebooklm`, `ytfetcher`, `tubescrape`, `hyperframes`, `superpowers`, or `all`.
 3. Detect the OS and use the Windows or Linux install path below.
 4. On Windows, check prerequisites before running the installer:
    `python --version`, `py --version`, and whether `~\.local\bin` is on the
@@ -61,6 +61,9 @@ Expected agent flow:
 | `paper-fetch` | Paper Search / Paper Fetch | Download and read known academic paper PDFs by DOI or source-specific ID | Installs `paper-search` from the `Fr4nzz/paper-search-mcp` fork. Use normal search/web tools for discovery first; DOI downloads use source-native paths, Unpaywall, open repositories, and optional discovered academic mirrors. Compatible with Codex and Hermes. |
 | `academic-research` | Academic research skill | Literature discovery, multi-paper reading, synthesis, appraisal, Zotero/citation workflows, and scientific writing | Merges the previous literature-search, literature-review, citation-zotero, scientific-writing, and literature-appraisal skills into one coherent workflow. It uses native search, Parallel when configured, and paper-search as complementary discovery routes, then uses `paper-fetch` for known DOI metadata/PDF retrieval. Compatible with Codex and Hermes. |
 | `notebooklm` | Google NotebookLM | NotebookLM notebooks, sources, grounded Q&A, and artifact generation/downloads through the `notebooklm` CLI | Installs `notebooklm-py[browser]` plus an agent skill. The skill tells agents to update only if commands that used to work stop working and auth/profile/network checks do not explain the failure. |
+| `ytfetcher` | YTFetcher | YouTube channel, playlist, video, and search transcript text plus metadata through the `ytfetcher` CLI | Installs `kaya70875/ytfetcher` from PyPI plus a Codex skill. Best for transcript-first JSON/CSV/TXT datasets, cacheable transcript runs, and optional comments. Use TubeScrape for fast whole-channel popularity inventories or native `.srt`/`.vtt` subtitle files. |
+| `tubescrape` | TubeScrape | Fast YouTube channel inventories, popularity sorting, subtitle files, and search filters through the `tubescrape` CLI | Installs `zaidkx37/tubescrape` from PyPI plus a Codex skill. Best for quickly listing a channel with view counts, sorting videos by popularity, downloading transcripts as SRT/VTT/JSON/text, and searching with YouTube filters. Keep YTFetcher for comments and cacheable transcript dataset exports. |
+| `hyperframes` | HyperFrames plugin helper | HTML-to-video composition, rendering, captions, TTS, transcription, and animation workflows | Enables `[plugins."hyperframes@openai-curated"]` in Codex config and installs a tiny helper skill. Restart Codex Desktop afterward; if the marketplace cache is missing, finish from the Plugins UI. Codex only. |
 | `superpowers` | Codex Superpowers plugin helper | Brainstorming, planning, verification, and subagent workflow skills | Enables `[plugins."superpowers@openai-curated"]` in Codex config and installs a tiny helper skill. Restart Codex Desktop afterward; if the official marketplace cache is missing, finish from the Plugins UI. Codex only. |
 
 ## Quick Install - Windows
@@ -68,7 +71,10 @@ Expected agent flow:
 Requirements:
 
 - Python 3.10+ with `pip` available as `python` on PATH for `outlook`,
-  `onedrive`, and `d2l`.
+  `onedrive`, and `d2l`. `ytfetcher` requires Python 3.11, 3.12, or 3.13.
+  `tubescrape` requires Python 3.10, 3.11, 3.12, or 3.13.
+  `hyperframes` requires Codex plugin support plus Node.js 22+, npm/npx, and
+  FFmpeg for actual video work.
 - Internet access for GitHub downloads, pip packages, and Playwright Chromium.
 - `~\.local\bin` on the user PATH after installation. The installer creates
   shims there, but a running terminal or Codex session may need PATH refreshed
@@ -92,6 +98,9 @@ Install only one tool:
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool paper-fetch
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool academic-research
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool notebooklm
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool ytfetcher
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool tubescrape
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool hyperframes
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool superpowers
 ```
 
@@ -181,6 +190,9 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/ma
 bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) paper-fetch
 bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) academic-research
 bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) notebooklm
+bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) ytfetcher
+bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) tubescrape
+bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) hyperframes
 bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) superpowers
 ```
 

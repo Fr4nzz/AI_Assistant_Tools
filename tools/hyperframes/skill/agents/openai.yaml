@@ -1,0 +1,7 @@
+interface:
+  display_name: "HyperFrames Helper"
+  short_description: "Enable and explain the HyperFrames video plugin"
+  default_prompt: "Help me install and use the HyperFrames plugin in Codex."
+
+policy:
+  allow_implicit_invocation: true

@@ -13,7 +13,7 @@ REPO_RAW_BASE="${REPO_RAW_BASE:-https://raw.githubusercontent.com/Fr4nzz/AI_Assi
 
 usage() {
   cat <<'EOF'
-Usage: scripts/install-linux.sh [all|gogcli|outlook|onedrive|d2l|whatsapp|humanizer|paper-fetch|academic-research|notebooklm|superpowers]
+Usage: scripts/install-linux.sh [all|gogcli|outlook|onedrive|d2l|whatsapp|humanizer|paper-fetch|academic-research|notebooklm|ytfetcher|tubescrape|hyperframes|superpowers]
 
 Environment overrides:
   INSTALL_ROOT   Default: $HOME/.ai-assistant-tools
@@ -27,7 +27,7 @@ EOF
 }
 
 case "$TOOL" in
-  all|gogcli|outlook|onedrive|d2l|whatsapp|humanizer|paper-fetch|academic-research|notebooklm|superpowers) ;;
+  all|gogcli|outlook|onedrive|d2l|whatsapp|humanizer|paper-fetch|academic-research|notebooklm|ytfetcher|tubescrape|hyperframes|superpowers) ;;
   -h|--help) usage; exit 0 ;;
   *) usage >&2; exit 2 ;;
 esac
@@ -157,6 +157,60 @@ ensure_venv() {
   "$INSTALL_ROOT/venv/bin/python" -m pip install playwright websockets
 }
 
+find_ytfetcher_python() {
+  local candidate
+  for candidate in "${YTFETCHER_PYTHON:-}" python3.13 python3.12 python3.11 python; do
+    if [ -z "$candidate" ] || ! command -v "$candidate" >/dev/null 2>&1; then
+      continue
+    fi
+    if "$candidate" - <<'PY' >/dev/null 2>&1
+import sys
+raise SystemExit(not ((3, 11) <= sys.version_info < (3, 14)))
+PY
+    then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+  if command -v uv >/dev/null 2>&1; then
+    for candidate in "$(uv python find 3.13 2>/dev/null || true)" "$(uv python find 3.12 2>/dev/null || true)" "$(uv python find 3.11 2>/dev/null || true)"; do
+      if [ -n "$candidate" ] && [ -x "$candidate" ]; then
+        printf '%s\n' "$candidate"
+        return 0
+      fi
+    done
+  fi
+  echo "YTFetcher requires Python 3.11, 3.12, or 3.13. Set YTFETCHER_PYTHON=/path/to/python if needed." >&2
+  return 1
+}
+
+find_tubescrape_python() {
+  local candidate
+  for candidate in "${TUBESCRAPE_PYTHON:-}" python3.13 python3.12 python3.11 python3.10 python; do
+    if [ -z "$candidate" ] || ! command -v "$candidate" >/dev/null 2>&1; then
+      continue
+    fi
+    if "$candidate" - <<'PY' >/dev/null 2>&1
+import sys
+raise SystemExit(not ((3, 10) <= sys.version_info < (3, 14)))
+PY
+    then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+  if command -v uv >/dev/null 2>&1; then
+    for candidate in "$(uv python find 3.13 2>/dev/null || true)" "$(uv python find 3.12 2>/dev/null || true)" "$(uv python find 3.11 2>/dev/null || true)" "$(uv python find 3.10 2>/dev/null || true)"; do
+      if [ -n "$candidate" ] && [ -x "$candidate" ]; then
+        printf '%s\n' "$candidate"
+        return 0
+      fi
+    done
+  fi
+  echo "TubeScrape requires Python 3.10, 3.11, 3.12, or 3.13. Set TUBESCRAPE_PYTHON=/path/to/python if needed." >&2
+  return 1
+}
+
 install_python_cli() {
   local name="$1"
   ensure_venv
@@ -240,6 +294,39 @@ install_skill_only() {
   install_skill "$name" "$name"
   install_hermes_skill "$name" "$name"
   echo "Installed $name Codex skill."
+}
+
+install_hyperframes() {
+  install_skill "hyperframes-helper" "hyperframes"
+  mkdir -p "$(dirname "$CODEX_CONFIG")"
+  python - "$CODEX_CONFIG" <<'PY'
+from pathlib import Path
+import re
+import sys
+
+path = Path(sys.argv[1]).expanduser()
+text = path.read_text() if path.exists() else ""
+header = '[plugins."hyperframes@openai-curated"]'
+
+if header in text:
+    pattern = re.compile(r'(\[plugins\."hyperframes@openai-curated"\]\n)(.*?)(?=\n\[|\Z)', re.S)
+    def repl(match):
+        body = match.group(2)
+        if re.search(r'(?m)^enabled\s*=', body):
+            body = re.sub(r'(?m)^enabled\s*=.*$', 'enabled = true', body)
+        else:
+            body = 'enabled = true\n' + body
+        return match.group(1) + body.rstrip() + "\n"
+    text = pattern.sub(repl, text)
+else:
+    if text and not text.endswith("\n"):
+        text += "\n"
+    text += '\n[plugins."hyperframes@openai-curated"]\nenabled = true\n'
+
+path.write_text(text)
+PY
+  echo "Enabled HyperFrames plugin in $CODEX_CONFIG"
+  echo "Restart Codex Desktop. If the plugin does not appear, install HyperFrames from the Plugins UI."
 }
 
 install_superpowers() {
@@ -335,9 +422,47 @@ EOF
   echo "Run first-time auth with: notebooklm login"
 }
 
+install_ytfetcher() {
+  local ytfetcher_python
+  ytfetcher_python="$(find_ytfetcher_python)"
+  if [ ! -x "$INSTALL_ROOT/ytfetcher-venv/bin/python" ]; then
+    "$ytfetcher_python" -m venv "$INSTALL_ROOT/ytfetcher-venv"
+  fi
+  "$INSTALL_ROOT/ytfetcher-venv/bin/python" -m pip install --upgrade pip
+  "$INSTALL_ROOT/ytfetcher-venv/bin/python" -m pip install --upgrade ytfetcher
+  cat > "$LOCAL_BIN/ytfetcher" <<EOF
+#!/usr/bin/env bash
+exec "$INSTALL_ROOT/ytfetcher-venv/bin/ytfetcher" "\$@"
+EOF
+  chmod +x "$LOCAL_BIN/ytfetcher"
+  install_skill "ytfetcher" "ytfetcher"
+  install_hermes_skill "ytfetcher" "ytfetcher"
+  echo "Installed ytfetcher to $INSTALL_ROOT/ytfetcher-venv"
+  echo "Installed PATH shim to $LOCAL_BIN/ytfetcher"
+}
+
+install_tubescrape() {
+  local tubescrape_python
+  tubescrape_python="$(find_tubescrape_python)"
+  if [ ! -x "$INSTALL_ROOT/tubescrape-venv/bin/python" ]; then
+    "$tubescrape_python" -m venv "$INSTALL_ROOT/tubescrape-venv"
+  fi
+  "$INSTALL_ROOT/tubescrape-venv/bin/python" -m pip install --upgrade pip
+  "$INSTALL_ROOT/tubescrape-venv/bin/python" -m pip install --upgrade "tubescrape[cli]"
+  cat > "$LOCAL_BIN/tubescrape" <<EOF
+#!/usr/bin/env bash
+exec "$INSTALL_ROOT/tubescrape-venv/bin/tubescrape" "\$@"
+EOF
+  chmod +x "$LOCAL_BIN/tubescrape"
+  install_skill "tubescrape" "tubescrape"
+  install_hermes_skill "tubescrape" "tubescrape"
+  echo "Installed tubescrape to $INSTALL_ROOT/tubescrape-venv"
+  echo "Installed PATH shim to $LOCAL_BIN/tubescrape"
+}
+
 selected_tools() {
   if [ "$TOOL" = "all" ]; then
-    printf '%s\n' gogcli outlook onedrive d2l whatsapp humanizer paper-fetch academic-research notebooklm superpowers
+    printf '%s\n' gogcli outlook onedrive d2l whatsapp humanizer paper-fetch academic-research notebooklm ytfetcher tubescrape hyperframes superpowers
   else
     printf '%s\n' "$TOOL"
   fi
@@ -352,6 +477,9 @@ while IFS= read -r item; do
     paper-fetch) install_paper_fetch; ensure_global_agents_note ;;
     academic-research) install_academic_research ;;
     notebooklm) install_notebooklm ;;
+    ytfetcher) install_ytfetcher ;;
+    tubescrape) install_tubescrape ;;
+    hyperframes) install_hyperframes ;;
     superpowers) install_superpowers ;;
   esac
 done < <(selected_tools)

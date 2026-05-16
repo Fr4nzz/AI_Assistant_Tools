@@ -1,0 +1,6 @@
+name: tubescrape
+description: Use TubeScrape through the local tubescrape CLI for fast YouTube channel inventories, popularity sorting, transcript files, and search workflows.
+version: 0.1.0
+targets:
+  codex:
+    default_prompt: "Use $tubescrape to inspect YouTube channels, sort videos by popularity, and download transcripts or subtitle files."
