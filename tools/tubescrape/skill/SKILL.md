@@ -89,6 +89,20 @@ tubescrape search "keto carnivore interview" --sort-by view_count --json
 tubescrape search "keto carnivore interview" --upload-date month --duration long --json
 ```
 
+Use a proxy when YouTube rate-limits, blocks the current IP, or the user
+explicitly asks to route traffic through another machine:
+
+```bash
+tubescrape --proxy http://127.0.0.1:8080 channel -n 20 --json @nicknorwitzMDPhD
+tubescrape --proxy http://user:pass@proxy.example.com:8080 search "keto carnivore" --json
+tubescrape --proxy http://127.0.0.1:8080 transcript VIDEO_ID --format srt --save transcript.srt
+```
+
+`--proxy` is a global TubeScrape option, so place it before the subcommand
+(`channel`, `search`, `transcript`, etc.). The CLI help describes it as an HTTP
+proxy URL; use an HTTP proxy endpoint unless `tubescrape --help` on the target
+machine confirms support for another scheme.
+
 ## Workflow For Agents
 
 1. Use `tubescrape` first for channel video listings, view counts, popularity
@@ -102,13 +116,18 @@ tubescrape search "keto carnivore interview" --upload-date month --duration long
    another format.
 6. Use `tubescrape transcript --list-languages` when transcript language
    availability matters.
-7. Use `ytfetcher` instead when comments, cache controls, or transcript-first
+7. If repeated requests fail with rate limits, temporary blocks, or unusual
+   network errors, retry once with `--proxy <http-proxy-url>` if the user has
+   provided an approved proxy. Do not invent or use public proxy lists.
+8. Use `ytfetcher` instead when comments, cache controls, or transcript-first
    dataset exports are the main task.
 
 ## Notes
 
 - YouTube can change internal endpoints and may rate-limit scraping. Start
   bounded when testing a new channel.
+- Proxy use can move YouTube traffic to another IP, but it does not remove
+  YouTube terms/rate-limit obligations. Keep runs bounded and polite.
 - Channel `view_count` values are human-readable strings. Parse them before
   numerical comparisons.
 - Search sorting uses YouTube search semantics; channel popularity ranking

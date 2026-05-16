@@ -89,6 +89,18 @@ Search YouTube by popularity:
 tubescrape search "keto carnivore interview" --sort-by view_count --json
 ```
 
+Use an HTTP proxy by placing `--proxy` before the subcommand:
+
+```bash
+tubescrape --proxy http://127.0.0.1:8080 channel -n 20 --json @nicknorwitzMDPhD
+tubescrape --proxy http://user:pass@proxy.example.com:8080 search "keto carnivore" --json
+tubescrape --proxy http://127.0.0.1:8080 transcript VIDEO_ID --format srt --save video.srt
+```
+
+Proxy use is mainly for approved alternate networks when YouTube rate-limits or
+temporarily blocks the current IP. Keep scraping bounded and avoid public proxy
+lists.
+
 ## Updating
 
 Linux:
