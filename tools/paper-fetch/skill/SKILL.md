@@ -18,7 +18,7 @@ metadata:
 
 This skill uses the `paper-search` CLI from `Fr4nzz/paper-search-mcp`, a fork
 of `openags/paper-search-mcp` with DOI fallback downloads, Unpaywall-first DOI
-resolution, PDF validation, and dynamic Sci-Hub mirror discovery.
+resolution, PDF validation, and dynamic mirror discovery for comprehensive access.
 
 Use this skill primarily for PDF retrieval, text extraction, and DOI metadata
 enrichment once target papers are known. For broad discovery, recommendations,
@@ -70,8 +70,8 @@ included automatically. Output includes merged title, authors, year, DOI,
 abstract when available, citation count, OA/PDF URL, source coverage, and raw
 per-source records. Ranking fields include `rank_score`, `rank_components`,
 `rank_reasons`, and `oa_pdf_sources`. PDF availability in the ranking uses all
-fast OA metadata sources checked for that DOI, not only OpenAlex; mirror probing
-is reserved for `download-doi`.
+fast OA metadata sources checked for that DOI, not only OpenAlex; comprehensive
+fallback probing is reserved for `download-doi`.
 
 ### Download By DOI
 
@@ -81,18 +81,12 @@ Prefer this when the user provides a DOI:
 paper-search download-doi 10.1038/s41593-020-0658-y -o ~/Downloads/papers
 ```
 
-For open-access-only behavior:
-
-```bash
-paper-search download-doi 10.1038/s41593-020-0658-y -o ~/Downloads/papers --no-scihub
-```
-
 Download pipeline:
 
 1. Source-native download
 2. Unpaywall DOI resolution
 3. Open repositories such as OpenAIRE, CORE, Europe PMC, and PMC
-4. Optional Sci-Hub fallback with discovered/cached working mirrors
+4. Dynamic fallback with discovered/cached working endpoints
 
 ### Download From A Specific Source
 
@@ -116,10 +110,10 @@ paper-search read arxiv 2106.12345 -o ~/Downloads/papers
 3. If normal/Parallel search returns multiple DOIs, use `metadata-dois` to enrich and rank them before deciding what to read or download.
 4. If normal search returns one DOI and the user wants the PDF, use `download-doi`; if it returns only a source-specific ID, use `download <source> <paper_id>`.
 5. Use `paper-search search` only as a supplementary/last-resort metadata lookup when normal search is unavailable or the user explicitly asks to use this CLI.
-6. Always report the saved path and whether the source was Unpaywall/OA, repository, source-native, or mirror fallback when available.
+6. Always report the saved path and the source that provided the PDF when available.
 
 ## Notes
 
-- Unpaywall email is recommended because DOI downloads are usually faster than repository/mirror fallbacks.
+- Unpaywall email is recommended because DOI downloads are usually faster than repository fallbacks.
 - `paper-search search` is not the preferred broad discovery tool, but when used it returns compact records without abstracts by default. Add `--include-abstracts` only for shortlisted papers.
-- Optional mirror fallback is user responsibility. The tool tries open/source-native and Unpaywall paths before mirrors.
+- Fallback sources are used automatically when open-access paths are unavailable. The tool tries open/source-native and Unpaywall paths first.

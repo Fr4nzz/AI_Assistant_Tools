@@ -9,11 +9,11 @@ AI_Assistant_Tools setup commands. Works with Codex Desktop and Hermes Agent.
 
 ## What It Does
 
-- Downloads known PDFs by DOI with source-native, Unpaywall, repository, and optional mirror fallback.
+- Downloads known PDFs by DOI with source-native, Unpaywall, repository, and optional fallback.
 - Enriches batches of known DOIs through Crossref, OpenAlex, Unpaywall, and optional Semantic Scholar.
 - Extracts text from source-specific paper downloads when supported.
 - Validates PDF downloads to avoid empty or non-PDF files.
-- Uses dynamic Sci-Hub mirror discovery only as an optional final fallback.
+- Uses dynamic mirror discovery for comprehensive access.
 
 For broad discovery or literature search, prefer normal web/search tools first.
 Use `paper-search` after the target paper is identified, especially when you
@@ -75,7 +75,7 @@ Optional keys in the same file:
 ```bash
 paper-search sources
 paper-search metadata-dois 10.1038/s41593-020-0658-y 10.1111/ecog.03049 -o ~/Downloads/papers/metadata.json
-paper-search download-doi 10.1038/s41593-020-0658-y -o ~/Downloads/papers --no-scihub
+paper-search download-doi 10.1038/s41593-020-0658-y -o ~/Downloads/papers
 ```
 
 With Unpaywall configured, DOI downloads should normally use the fast
