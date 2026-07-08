@@ -78,6 +78,7 @@ BROWSER_DATA_DIR = Path(os.environ.get("D2L_BROWSER_DATA_DIR", str(DEFAULT_BROWS
 BROWSER_LOCK_FILE = BROWSER_DATA_DIR.parent / "browser.lock"
 OUTLOOK_TOKEN_FILE = BROWSER_DATA_DIR.parent / "token.json"
 CONFIG_FILE = Path(os.environ.get("AI_ASSISTANT_TOOLS_MICROSOFT_ENV", str(Path.home() / ".config/ai-assistant-tools/microsoft.env")))
+D2L_COOKIE_FILE = SHARE_DIR / "cookies.json"
 
 _chrome_proc = None
 
@@ -237,18 +238,40 @@ def _browser_stop():
 def _browser_open_visible():
     """Open the D2L helper profile in a visible Chromium for manual login."""
     import subprocess
+    import time
     os.makedirs(str(BROWSER_DATA_DIR), exist_ok=True)
     chrome = _find_chromium()
     args = [
         chrome,
+        "--new-window",
+        "--start-maximized",
+        "--no-first-run",
+        "--disable-background-mode",
         f"--remote-debugging-port={CDP_PORT}",
         f"--user-data-dir={BROWSER_DATA_DIR}",
         f"{D2L_BASE}/d2l/home",
     ]
     if sys.platform.startswith("win"):
-        subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=subprocess.DETACHED_PROCESS)
+        proc = subprocess.Popen(
+            args,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            creationflags=subprocess.DETACHED_PROCESS,
+        )
     else:
-        subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        proc = subprocess.Popen(
+            args,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+    time.sleep(2)
+    if proc.poll() is not None:
+        raise RuntimeError(
+            "The D2L helper browser exited immediately. Close any other helper "
+            "browser using this profile and try `d2l login` again."
+        )
+    return proc
 
 
 # ---------------------------------------------------------------------------
@@ -266,9 +289,9 @@ def _auto_login() -> bool:
 
 async def _auto_login_async() -> bool:
     from playwright.async_api import async_playwright
+    import time
 
     async def click_first_visible(page, labels: list[str], timeout: int = 2500) -> bool:
-        import time
         deadline = time.time() + (timeout / 1000)
         for label in labels:
             locators = [
@@ -302,18 +325,58 @@ async def _auto_login_async() -> bool:
                 pass
         return False
 
+    async def submit_saml_form_if_present(page) -> bool:
+        """Submit an IdP SAML handoff form when the browser lands on one."""
+        try:
+            form_count = await page.locator("form").count()
+            saml_count = await page.locator("input[name=SAMLResponse], input[name=SAMLRequest]").count()
+            if not form_count and not saml_count:
+                return False
+            clicked = await submit_if_visible(page, timeout=600)
+            if not clicked:
+                await page.evaluate("""() => {
+                    const form = document.querySelector('form');
+                    if (form) form.submit();
+                }""")
+            await page.wait_for_load_state("domcontentloaded", timeout=3000)
+            return True
+        except Exception:
+            return False
+
+    async def wait_for_d2l(page, timeout: int = 12000) -> bool:
+        deadline = time.time() + (timeout / 1000)
+        while time.time() < deadline:
+            if "/d2l/" in page.url and "logout" not in page.url and "login" not in page.url:
+                return True
+            if "saml" in page.url.lower() or "SAML" in page.url:
+                await submit_saml_form_if_present(page)
+            await asyncio.sleep(0.5)
+        return "/d2l/" in page.url and "logout" not in page.url and "login" not in page.url
+
     async def fill_email_if_needed(page) -> bool:
-        for selector in ("input[type=email]", "input[name=loginfmt]"):
+        for selector in ("#i0116", "input[name=loginfmt]", "input[type=email]", "input[autocomplete*=username]", "input[type=text]"):
             try:
                 field = page.locator(selector).first
-                await field.wait_for(state="visible", timeout=800)
+                await field.wait_for(state="visible", timeout=2500)
                 value = await field.input_value()
                 if not value:
                     account_email = _infer_account_email()
                     if not account_email:
                         return False
                     await field.fill(account_email)
-                return await submit_if_visible(page) or await click_first_visible(page, [r"next", r"siguiente"], timeout=800)
+                    value = await field.input_value()
+                    if value != account_email:
+                        await page.evaluate("""([selector, value]) => {
+                            const el = document.querySelector(selector);
+                            if (!el) return;
+                            el.focus();
+                            el.value = value;
+                            el.dispatchEvent(new Event('input', { bubbles: true }));
+                            el.dispatchEvent(new Event('change', { bubbles: true }));
+                        }""", [selector, account_email])
+                        value = await field.input_value()
+                if value:
+                    return await submit_if_visible(page) or await click_first_visible(page, [r"next", r"siguiente"], timeout=1200)
             except Exception:
                 pass
         return False
@@ -344,17 +407,17 @@ async def _auto_login_async() -> bool:
         page = await context.new_page()
 
         try:
-            await page.goto(f"{D2L_BASE}/d2l/home", wait_until="domcontentloaded", timeout=3000)
+            await page.goto(f"{D2L_BASE}/d2l/home", wait_until="domcontentloaded", timeout=10000)
 
             # Already on D2L?
-            if "/d2l/" in page.url and "logout" not in page.url and "login" not in page.url:
+            if await wait_for_d2l(page, timeout=3000):
                 print("Auto-login successful.", file=sys.stderr)
                 return True
 
             # Follow Microsoft SSO prompts that can appear with cached accounts.
             await click_first_visible(page, [r"estud\.usfq\.edu\.ec", r"franz\.chandi", r"use another account", r"usar otra cuenta"], timeout=800)
-            for _ in range(4):
-                if "/d2l/" in page.url and "logout" not in page.url and "login" not in page.url:
+            for _ in range(12):
+                if await wait_for_d2l(page, timeout=1000):
                     print("Auto-login successful.", file=sys.stderr)
                     return True
                 clicked = False
@@ -363,17 +426,14 @@ async def _auto_login_async() -> bool:
                 clicked |= await click_first_visible(page, [r"sign in", r"iniciar sesi[oó]n", r"siguiente", r"next", r"continuar", r"continue"], timeout=800)
                 clicked |= await submit_if_visible(page)
                 clicked |= await click_first_visible(page, [r"yes", r"s[ií]", r"mantener.*sesi[oó]n", r"stay signed in"], timeout=800)
+                clicked |= await submit_saml_form_if_present(page)
                 if not clicked:
-                    break
+                    await asyncio.sleep(1)
+                    continue
                 await asyncio.sleep(0.5)
 
             # Wait for D2L to load
-            try:
-                await page.wait_for_url("**/d2l/**", timeout=1000)
-            except Exception:
-                pass
-
-            if "/d2l/" in page.url and "logout" not in page.url:
+            if await wait_for_d2l(page, timeout=10000):
                 print("Auto-login successful.", file=sys.stderr)
                 return True
 
@@ -445,6 +505,10 @@ def _get_cookies_sync() -> dict[str, str]:
 
 
 def _get_cookies_sync_locked() -> dict[str, str]:
+    cookies = _load_cached_d2l_cookies()
+    if cookies and _test_cookies(cookies):
+        return cookies
+
     # Ensure browser is running first
     if not _ensure_browser(locked=True):
         raise RuntimeError("Could not start browser on CDP port " + str(CDP_PORT))
@@ -453,13 +517,23 @@ def _get_cookies_sync_locked() -> dict[str, str]:
     if cookies:
         # Verify cookies are still valid with a quick API probe
         if _test_cookies(cookies):
+            _save_d2l_cookies(cookies)
             _browser_stop()
             return cookies
+
+    # Prefer Playwright's persistent context. On some hosts Chromium can reuse
+    # the profile cleanly this way even when the CDP debugging port path fails.
+    cookies = _get_cookies_via_playwright()
+    if cookies and _test_cookies(cookies):
+        _save_d2l_cookies(cookies)
+        _browser_stop()
+        return cookies
 
     # Cookies missing or expired — try auto-login
     if _auto_login():
         cookies = _try_get_cookies()
         if cookies:
+            _save_d2l_cookies(cookies)
             _browser_stop()
             return cookies
 
@@ -468,6 +542,94 @@ def _get_cookies_sync_locked() -> dict[str, str]:
         "No D2L cookies found. Auto-login failed. "
         "Please log in manually in the D2L helper browser."
     )
+
+
+def _load_cached_d2l_cookies() -> dict[str, str] | None:
+    try:
+        data = json.loads(D2L_COOKIE_FILE.read_text())
+        cookies = data.get("cookies")
+        if isinstance(cookies, dict) and cookies:
+            return {str(k): str(v) for k, v in cookies.items()}
+    except Exception:
+        pass
+    return None
+
+
+def _save_d2l_cookies(cookies: dict[str, str]) -> None:
+    try:
+        SHARE_DIR.mkdir(parents=True, exist_ok=True)
+        os.chmod(SHARE_DIR, 0o700)
+        D2L_COOKIE_FILE.write_text(json.dumps({
+            "saved_at": datetime.now(timezone.utc).isoformat(),
+            "base_url": D2L_BASE,
+            "cookies": cookies,
+        }, indent=2))
+        os.chmod(D2L_COOKIE_FILE, 0o600)
+    except Exception as exc:
+        print(f"Warning: could not save D2L cookies: {exc}", file=sys.stderr)
+
+
+def _get_cookies_via_playwright() -> dict[str, str] | None:
+    """Get D2L cookies using a Playwright persistent context, without CDP."""
+    try:
+        return asyncio.run(_get_cookies_via_playwright_async())
+    except Exception as exc:
+        print(f"Playwright D2L cookie fetch failed: {exc}", file=sys.stderr)
+        return None
+
+
+async def _get_cookies_via_playwright_async() -> dict[str, str] | None:
+    from playwright.async_api import async_playwright
+
+    os.makedirs(str(BROWSER_DATA_DIR), exist_ok=True)
+    pw = await async_playwright().start()
+    context = None
+    try:
+        context = await pw.chromium.launch_persistent_context(
+            user_data_dir=str(BROWSER_DATA_DIR),
+            headless=True,
+            executable_path=_find_chromium(),
+            args=["--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage"],
+        )
+        page = context.pages[0] if context.pages else await context.new_page()
+        await page.goto(f"{D2L_BASE}/d2l/home", wait_until="domcontentloaded", timeout=30000)
+
+        # If Microsoft SSO asks to pick the USFQ account, select it.
+        try:
+            btn = page.get_by_text("estud.usfq.edu.ec").first
+            await btn.wait_for(state="visible", timeout=5000)
+            await btn.click()
+            await page.wait_for_load_state("domcontentloaded", timeout=5000)
+        except Exception:
+            pass
+
+        # If the profile already has Microsoft session state, click through
+        # sign-in and stay-signed-in prompts without requiring a visible browser.
+        for label in ("Sign in", "Iniciar sesión", "Yes", "Sí"):
+            try:
+                btn = page.get_by_role("button", name=label).first
+                await btn.wait_for(state="visible", timeout=2500)
+                await btn.click()
+                await page.wait_for_load_state("domcontentloaded", timeout=5000)
+            except Exception:
+                pass
+
+        try:
+            await page.wait_for_url("**/d2l/**", timeout=20000)
+        except Exception:
+            pass
+
+        raw = await context.cookies(D2L_BASE)
+        cookies = {
+            c["name"]: c["value"]
+            for c in raw
+            if "miusfv.usfq.edu.ec" in c.get("domain", "")
+        }
+        return cookies or None
+    finally:
+        if context is not None:
+            await context.close()
+        await pw.stop()
 
 
 def _try_get_cookies() -> dict[str, str] | None:
@@ -1539,9 +1701,26 @@ def cmd_unread(args):
 
 
 def cmd_login(args):
-    _browser_open_visible()
+    import time
+
+    proc = _browser_open_visible()
     print("Opened the D2L helper browser.")
-    print("Sign in to D2L/Microsoft, choose Stay signed in if prompted, wait for D2L to load, then close that browser before using headless d2l commands.")
+    print("Sign in to D2L/Microsoft and choose Stay signed in if prompted.")
+    print("Waiting for D2L to finish loading so the session can be saved...")
+    deadline = time.time() + int(os.environ.get("D2L_LOGIN_CAPTURE_TIMEOUT", "600"))
+    while time.time() < deadline:
+        cookies = _try_get_cookies()
+        if cookies and _test_cookies(cookies):
+            _save_d2l_cookies(cookies)
+            print("D2L session saved. You can close the helper browser now.")
+            return
+        if proc.poll() is not None:
+            break
+        time.sleep(2)
+    raise RuntimeError(
+        "Could not capture a valid D2L session. Keep the helper browser open "
+        "until the D2L home page fully loads, then try `d2l login` again."
+    )
 
 
 # ---------------------------------------------------------------------------

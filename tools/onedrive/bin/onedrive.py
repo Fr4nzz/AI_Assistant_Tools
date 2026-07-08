@@ -166,6 +166,11 @@ def _load_cached_token() -> dict | None:
 def _save_token(tok: dict) -> None:
     SHARE_DIR.mkdir(parents=True, exist_ok=True)
     TOKEN_FILE.write_text(json.dumps(tok))
+    try:
+        SHARE_DIR.chmod(0o700)
+        TOKEN_FILE.chmod(0o600)
+    except Exception:
+        pass
 
 
 def _acquire_lock(timeout: int = 10) -> int:
@@ -224,11 +229,123 @@ def _release_browser_lock(fd: int) -> None:
             pass
 
 
-def _browser_open_visible() -> None:
+def _iter_browser_storage_files():
+    roots = [
+        BROWSER_DATA_DIR / "Default" / "Local Storage" / "leveldb",
+        BROWSER_DATA_DIR / "Default" / "Session Storage",
+        BROWSER_DATA_DIR / "Default" / "IndexedDB",
+    ]
+    for root in roots:
+        if not root.exists():
+            continue
+        for path in root.rglob("*"):
+            if path.is_file():
+                yield path
+
+
+def _load_cached_refresh_token() -> str | None:
+    """Best-effort read of a fresh MSAL SPA refresh token from Chromium storage."""
+    pattern = re.compile(r'\{[^{}]*"credentialType":"RefreshToken"[^{}]*\}')
+    candidates: list[tuple[int, str]] = []
+    for path in _iter_browser_storage_files():
+        try:
+            text = path.read_bytes().replace(b"\x00", b"").decode("utf-8", errors="ignore")
+        except Exception:
+            continue
+        for m in pattern.finditer(text):
+            try:
+                item = json.loads(m.group(0))
+            except Exception:
+                continue
+            if item.get("credentialType") != "RefreshToken":
+                continue
+            if item.get("clientId") != "9199bf20-a13f-4107-85dc-02114787ef48":
+                continue
+            secret = item.get("secret")
+            if not secret:
+                continue
+            try:
+                expires = int(item.get("expiresOn") or 0)
+            except Exception:
+                expires = 0
+            if expires <= int(time.time()) + 120:
+                continue
+            candidates.append((expires, secret))
+    if not candidates:
+        return None
+    candidates.sort(reverse=True)
+    return candidates[0][1]
+
+
+def _exchange_refresh_token_for_graph(refresh_token: str) -> dict | None:
+    payload = urllib.parse.urlencode({
+        "client_id": "9199bf20-a13f-4107-85dc-02114787ef48",
+        "grant_type": "refresh_token",
+        "refresh_token": refresh_token,
+        "scope": "https://graph.microsoft.com/Files.ReadWrite.All https://graph.microsoft.com/User.Read openid profile offline_access",
+    }).encode("utf-8")
+    req = urllib.request.Request(
+        "https://login.microsoftonline.com/organizations/oauth2/v2.0/token",
+        data=payload,
+        method="POST",
+        headers={
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Accept": "application/json",
+            "Origin": "https://outlook.cloud.microsoft",
+        },
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            data = json.loads(resp.read())
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
+        try:
+            err = json.loads(body)
+        except Exception:
+            err = {"error_description": body}
+        desc = err.get("error_description") or err.get("error") or body
+        if "AADSTS700084" in desc:
+            raise RuntimeError(
+                "The saved Microsoft SPA refresh token is expired (AADSTS700084). "
+                "Run `onedrive login`, complete a fresh interactive Microsoft sign-in in the visible browser, "
+                "then retry."
+            ) from exc
+        if "interaction_required" in desc or "invalid_grant" in desc:
+            raise RuntimeError(
+                "Microsoft requires an interactive sign-in before a new OneDrive Graph token can be issued: " + desc
+            ) from exc
+        return None
+    access_token = data.get("access_token")
+    if not access_token:
+        return None
+    claims = _decode_claims(access_token)
+    now = int(time.time())
+    return {
+        "homeAccountId": claims.get("oid", "") + "." + claims.get("tid", ""),
+        "credentialType": "AccessToken",
+        "secret": access_token,
+        "cachedAt": str(now),
+        "expiresOn": str(claims.get("exp") or int(data.get("expires_in", 0)) + now),
+        "extendedExpiresOn": str(claims.get("exp") or int(data.get("expires_in", 0)) + now),
+        "environment": "login.microsoftonline.com",
+        "clientId": "9199bf20-a13f-4107-85dc-02114787ef48",
+        "realm": claims.get("tid", ""),
+        "target": "https://graph.microsoft.com/Files.ReadWrite.All https://graph.microsoft.com/User.Read openid profile offline_access",
+        "tokenType": data.get("token_type", "Bearer"),
+        "lastUpdatedAt": str(now * 1000),
+    }
+
+
+def _browser_open_visible():
     """Open the shared Microsoft profile in a visible browser for OneDrive bootstrap."""
     import subprocess
 
     BROWSER_DATA_DIR.mkdir(parents=True, exist_ok=True)
+    try:
+        OUTLOOK_SHARE_DIR.chmod(0o700)
+        BROWSER_DATA_DIR.chmod(0o700)
+    except Exception:
+        pass
     args = [
         _find_chromium(),
         "--new-window",
@@ -237,9 +354,19 @@ def _browser_open_visible() -> None:
         "https://www.office.com/launch/onedrive",
     ]
     if sys.platform.startswith("win"):
-        subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=subprocess.DETACHED_PROCESS)
-    else:
-        subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+        return subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=subprocess.DETACHED_PROCESS)
+    return subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+
+
+def _prime_token_from_browser_cache() -> dict | None:
+    refresh_token = _load_cached_refresh_token()
+    if not refresh_token:
+        return None
+    tok = _exchange_refresh_token_for_graph(refresh_token)
+    if tok and _token_valid(tok):
+        _save_token(tok)
+        return tok
+    return None
 
 
 async def _fetch_graph_token_from_browser() -> dict:
@@ -403,6 +530,15 @@ def get_token() -> str:
         cached = _load_cached_token()
         if cached:
             return cached["secret"]
+        if _load_cached_refresh_token():
+            try:
+                tok = _prime_token_from_browser_cache()
+                if tok:
+                    return tok["secret"]
+            except RuntimeError:
+                raise
+            except Exception:
+                pass
         print("Refreshing OneDrive Graph token...", file=sys.stderr)
         browser_fd = _acquire_browser_lock()
         try:
@@ -736,9 +872,30 @@ def cmd_raw(args):
 
 
 def cmd_login(args):
-    _browser_open_visible()
+    proc = _browser_open_visible()
     print("Sign in to Microsoft/Office in the opened Chromium window.")
-    print("Let OneDrive or Office load completely, then close that browser before using headless onedrive commands.")
+    print("Let OneDrive or Office load completely, then close that browser.")
+    print("After it closes, this command will save a Graph token for future automatic refreshes.")
+    proc.wait()
+
+    try:
+        tok = _prime_token_from_browser_cache()
+    except Exception as exc:
+        raise RuntimeError(
+            "Sign-in browser closed, but the saved Microsoft session could not be converted "
+            f"into a OneDrive Graph token: {exc}"
+        ) from exc
+    if tok:
+        expires = int(tok.get("expiresOn", 0))
+        remaining = max(0, expires - int(time.time()))
+        print(f"OneDrive CLI login saved. Token expires in {remaining // 60}m {remaining % 60}s and can refresh automatically.")
+        return None
+
+    raise RuntimeError(
+        "Sign-in browser closed, but no Microsoft refresh token was found in the shared Office profile. "
+        "Open `onedrive login` again, make sure OneDrive or Office fully loads, choose Stay signed in if prompted, "
+        "then close the browser window."
+    )
     return None
 
 

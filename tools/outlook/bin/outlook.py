@@ -262,7 +262,11 @@ def _find_chromium() -> str:
 # Token management (MSAL cache in localStorage -> Bearer token)
 # ---------------------------------------------------------------------------
 def _token_matches_target(tok: dict, needle: str) -> bool:
-    return needle.lower() in (tok.get("target") or "").lower()
+    needle_l = needle.lower()
+    if needle_l in (tok.get("target") or "").lower():
+        return True
+    claims = _decode_jwt_claims(tok.get("secret") or "")
+    return needle_l in str(claims.get("aud") or "").lower()
 
 
 def _load_local_config() -> dict[str, str]:
@@ -334,6 +338,17 @@ def _token_jwt_exp(tok: dict) -> int | None:
         return None
 
 
+def _decode_jwt_claims(secret: str) -> dict:
+    if not secret or secret.count(".") < 2:
+        return {}
+    try:
+        payload = secret.split(".")[1]
+        payload += "=" * (-len(payload) % 4)
+        return json.loads(base64.urlsafe_b64decode(payload.encode()))
+    except Exception:
+        return {}
+
+
 def _token_is_fresh(tok: dict) -> bool:
     jwt_exp = _token_jwt_exp(tok)
     if jwt_exp is not None:
@@ -360,6 +375,118 @@ def _load_cached_token(target: str = "outlook.office.com") -> dict | None:
 def _save_token(tok: dict) -> None:
     TOKEN_FILE.parent.mkdir(parents=True, exist_ok=True)
     TOKEN_FILE.write_text(json.dumps(tok))
+    try:
+        TOKEN_FILE.chmod(0o600)
+    except Exception:
+        pass
+
+
+def _iter_browser_storage_files():
+    roots = [
+        BROWSER_DATA_DIR / "Default" / "Local Storage" / "leveldb",
+        BROWSER_DATA_DIR / "Default" / "Session Storage",
+        BROWSER_DATA_DIR / "Default" / "IndexedDB",
+    ]
+    for root in roots:
+        if not root.exists():
+            continue
+        for path in root.rglob("*"):
+            if path.is_file():
+                yield path
+
+
+def _load_cached_refresh_token() -> tuple[str, str] | None:
+    """Best-effort read of a fresh MSAL SPA refresh token from Chromium storage."""
+    pattern = re.compile(r'\{[^{}]*"credentialType":"RefreshToken"[^{}]*\}')
+    candidates: list[tuple[int, str, str]] = []
+    for path in _iter_browser_storage_files():
+        try:
+            text = path.read_bytes().replace(b"\x00", b"").decode("utf-8", errors="ignore")
+        except Exception:
+            continue
+        for m in pattern.finditer(text):
+            try:
+                item = json.loads(m.group(0))
+            except Exception:
+                continue
+            if item.get("credentialType") != "RefreshToken":
+                continue
+            secret = item.get("secret")
+            client_id = item.get("clientId") or "9199bf20-a13f-4107-85dc-02114787ef48"
+            if not secret:
+                continue
+            try:
+                expires = int(item.get("expiresOn") or 0)
+            except Exception:
+                expires = 0
+            if expires <= int(time.time()) + 120:
+                continue
+            candidates.append((expires, client_id, secret))
+    if not candidates:
+        return None
+    candidates.sort(reverse=True)
+    _, client_id, secret = candidates[0]
+    return client_id, secret
+
+
+def _exchange_refresh_token_for_outlook(client_id: str, refresh_token: str) -> dict | None:
+    payload = urllib.parse.urlencode({
+        "client_id": client_id,
+        "grant_type": "refresh_token",
+        "refresh_token": refresh_token,
+        "scope": "https://outlook.office.com/.default openid profile offline_access",
+    }).encode("utf-8")
+    req = urllib.request.Request(
+        "https://login.microsoftonline.com/organizations/oauth2/v2.0/token",
+        data=payload,
+        method="POST",
+        headers={
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Accept": "application/json",
+            "Origin": "https://outlook.cloud.microsoft",
+        },
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            data = json.loads(resp.read())
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
+        try:
+            err = json.loads(body)
+        except Exception:
+            err = {"error_description": body}
+        desc = err.get("error_description") or err.get("error") or body
+        if "AADSTS700084" in desc:
+            raise RuntimeError(
+                "The saved Microsoft SPA refresh token is expired (AADSTS700084). "
+                "Run `outlook login`, complete a fresh interactive Microsoft sign-in, "
+                "choose Stay signed in if prompted, close that browser, then retry."
+            ) from exc
+        if "interaction_required" in desc or "invalid_grant" in desc:
+            raise RuntimeError(
+                "Microsoft requires an interactive sign-in before a new Outlook token can be issued: " + desc
+            ) from exc
+        return None
+    access_token = data.get("access_token")
+    if not access_token:
+        return None
+    claims = _decode_jwt_claims(access_token)
+    now = int(time.time())
+    return {
+        "homeAccountId": claims.get("oid", "") + "." + claims.get("tid", ""),
+        "credentialType": "AccessToken",
+        "secret": access_token,
+        "cachedAt": str(now),
+        "expiresOn": str(claims.get("exp") or int(data.get("expires_in", 0)) + now),
+        "extendedExpiresOn": str(claims.get("exp") or int(data.get("expires_in", 0)) + now),
+        "environment": "login.microsoftonline.com",
+        "clientId": client_id,
+        "realm": claims.get("tid", ""),
+        "target": claims.get("scp") or "https://outlook.office.com/.default",
+        "tokenType": data.get("token_type", "Bearer"),
+        "lastUpdatedAt": str(now * 1000),
+        "username": claims.get("preferred_username") or claims.get("upn") or claims.get("email"),
+    }
 
 
 def _acquire_token_lock(timeout: int = 10) -> int:
@@ -418,11 +545,16 @@ def _release_browser_lock(fd: int) -> None:
             pass
 
 
-def _browser_open_visible() -> None:
+def _browser_open_visible():
     """Open the shared Outlook browser profile for manual Microsoft sign-in."""
     import subprocess
 
     BROWSER_DATA_DIR.mkdir(parents=True, exist_ok=True)
+    try:
+        SHARE_DIR.chmod(0o700)
+        BROWSER_DATA_DIR.chmod(0o700)
+    except Exception:
+        pass
     args = [
         _find_chromium(),
         "--new-window",
@@ -431,9 +563,19 @@ def _browser_open_visible() -> None:
         OWA_URL,
     ]
     if sys.platform.startswith("win"):
-        subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=subprocess.DETACHED_PROCESS)
-    else:
-        subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+        return subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=subprocess.DETACHED_PROCESS)
+    return subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+
+
+def _prime_token_from_refresh_cache() -> dict | None:
+    refresh = _load_cached_refresh_token()
+    if not refresh:
+        return None
+    tok = _exchange_refresh_token_for_outlook(*refresh)
+    if tok and _token_is_fresh(tok) and _token_matches_target(tok, "outlook.office.com"):
+        _save_token(tok)
+        return tok
+    return None
 
 
 async def _fetch_token_from_browser() -> dict:
@@ -603,6 +745,15 @@ def get_token() -> str:
         cached = _load_cached_token()
         if cached:
             return cached["secret"]
+        if _load_cached_refresh_token():
+            try:
+                tok = _prime_token_from_refresh_cache()
+                if tok:
+                    return tok["secret"]
+            except RuntimeError:
+                raise
+            except Exception:
+                pass
         print("Refreshing Outlook token...", file=sys.stderr)
         browser_fd = _acquire_browser_lock()
         try:
@@ -1182,10 +1333,31 @@ def cmd_profile(args):
 
 
 def cmd_login(args):
-    _browser_open_visible()
+    proc = _browser_open_visible()
     print("Sign in to Outlook/Microsoft in the opened Chromium window.")
     print("If prompted, check 'Mantener mi sesion iniciada' / 'Stay signed in'.")
-    print("Wait for Outlook to load, then close that browser before using headless outlook/onedrive commands.")
+    print("Wait for Outlook to load, then close that browser.")
+    print("After it closes, this command will save a token for future automatic refreshes.")
+    proc.wait()
+
+    try:
+        tok = _prime_token_from_refresh_cache()
+    except Exception as exc:
+        raise RuntimeError(
+            "Sign-in browser closed, but the saved Microsoft session could not be converted "
+            f"into an Outlook refreshable token: {exc}"
+        ) from exc
+    if tok:
+        expires = int(tok.get("expiresOn", 0))
+        remaining = max(0, expires - int(time.time()))
+        print(f"Outlook CLI login saved. Token expires in {remaining // 60}m {remaining % 60}s and can refresh automatically.")
+        return None
+
+    raise RuntimeError(
+        "Sign-in browser closed, but no Microsoft refresh token was found in the Outlook profile. "
+        "Open `outlook login` again, make sure Outlook fully loads, choose Stay signed in if prompted, "
+        "then close the browser window."
+    )
     return None
 
 
