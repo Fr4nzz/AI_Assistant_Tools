@@ -429,7 +429,68 @@ def _load_cached_refresh_token() -> tuple[str, str] | None:
     return client_id, secret
 
 
+# Persistent Microsoft SSO cookies that make headless renewal possible.
+# ESTSAUTHPERSISTENT is written only when the user completes "Stay signed in"
+# (KMSI) and survives browser restarts; ESTSAUTH is the session variant.
+DURABLE_SSO_COOKIES = ("ESTSAUTHPERSISTENT", "ESTSAUTH")
+
+
+def _sso_cookie_state() -> dict[str, bool]:
+    """Report which durable Microsoft SSO cookies exist. Reads names only, never values."""
+    state = {name: False for name in DURABLE_SSO_COOKIES}
+    db = BROWSER_DATA_DIR / "Default" / "Cookies"
+    if not db.exists():
+        return state
+    try:
+        import sqlite3
+
+        con = sqlite3.connect(f"file:{db}?immutable=1", uri=True)
+        try:
+            rows = con.execute(
+                "SELECT name FROM cookies WHERE host_key LIKE '%login.microsoftonline.com'"
+            ).fetchall()
+        finally:
+            con.close()
+        present = {r[0] for r in rows}
+        for name in DURABLE_SSO_COOKIES:
+            state[name] = name in present
+    except Exception:
+        pass
+    return state
+
+
+def _has_durable_sso() -> bool:
+    return any(_sso_cookie_state().values())
+
+
+def _login_recovery_hint() -> str:
+    """Actionable guidance based on what durable auth state actually exists."""
+    if _has_durable_sso():
+        return (
+            "A durable Microsoft SSO cookie is present but silent renewal still failed. "
+            "Run `outlook login` again to refresh the session."
+        )
+    hint = (
+        "No durable Microsoft SSO cookie (ESTSAUTHPERSISTENT/ESTSAUTH) is stored, so "
+        "headless renewal cannot work. Run `outlook login`, complete the Microsoft "
+        "sign-in, and choose 'Stay signed in' / 'Mantener mi sesion iniciada' when "
+        "prompted so the persistent cookie is saved, then close the browser."
+    )
+    if not _infer_account_password():
+        hint += (
+            f" Alternatively set MICROSOFT_ACCOUNT_EMAIL and MICROSOFT_ACCOUNT_PASSWORD in "
+            f"{CONFIG_FILE} to allow fully headless credential login."
+        )
+    return hint
+
+
 def _exchange_refresh_token_for_outlook(client_id: str, refresh_token: str) -> dict | None:
+    """Redeem a Microsoft SPA refresh token for an Outlook REST access token.
+
+    Microsoft SPA refresh tokens must be redeemed as a cross-origin browser
+    request. Supplying the Outlook origin keeps this headless but matches the
+    browser flow closely enough for the token endpoint to allow it.
+    """
     payload = urllib.parse.urlencode({
         "client_id": client_id,
         "grant_type": "refresh_token",
@@ -688,7 +749,7 @@ async def _fetch_token_from_browser() -> dict:
         )
         page = browser.pages[0] if browser.pages else await browser.new_page()
 
-        await page.goto(OWA_URL, timeout=10000)
+        await page.goto(OWA_URL, timeout=30000)
         try:
             await page.wait_for_load_state("domcontentloaded", timeout=15000)
         except Exception:
@@ -698,7 +759,8 @@ async def _fetch_token_from_browser() -> dict:
         if "login.microsoftonline.com" in page.url:
             print("Session expired. Logging in via Microsoft SSO...", file=sys.stderr)
             await click_first_visible(page, [r"estud\.usfq\.edu\.ec", r"franz\.chandi", r"use another account", r"usar otra cuenta"], timeout=1500)
-            for _ in range(2):
+            deadline = time.time() + max(10, TOKEN_REFRESH_TIMEOUT - 5)
+            while time.time() < deadline and "login.microsoftonline.com" in page.url:
                 clicked = False
                 clicked |= await fill_email_if_needed(page)
                 clicked |= await submit_password_if_available(page)
@@ -706,14 +768,16 @@ async def _fetch_token_from_browser() -> dict:
                 clicked |= await submit_if_visible(page, timeout=800)
                 clicked |= await click_first_visible(page, [r"yes", r"s[ií]", r"mantener.*sesi[oó]n", r"stay signed in"], timeout=1500)
                 if not clicked:
-                    break
-                await asyncio.sleep(1)
+                    await asyncio.sleep(1)
+                    continue
+                await asyncio.sleep(0.5)
             try:
-                await page.wait_for_url("**outlook.cloud.microsoft**", timeout=5000)
+                await page.wait_for_url("**outlook.cloud.microsoft**", timeout=10000)
             except Exception:
                 pass
 
-        for _ in range(10):
+        deadline = time.time() + TOKEN_REFRESH_TIMEOUT
+        while time.time() < deadline:
             tok = await extract_outlook_token(page)
             if tok and tok.get("secret"):
                 return tok
@@ -725,7 +789,7 @@ async def _fetch_token_from_browser() -> dict:
             await asyncio.sleep(1)
 
         raise RuntimeError(
-            "Could not extract Outlook token from MSAL cache after 10s; "
+            f"Could not extract Outlook token from MSAL cache after {TOKEN_REFRESH_TIMEOUT}s; "
             f"last page was {page.url}. Run `outlook login` in a visible "
             "browser, choose Stay signed in if prompted, close that browser, "
             "then retry the read-only command."
@@ -761,11 +825,11 @@ def get_token() -> str:
                 tok = asyncio.run(asyncio.wait_for(_fetch_token_from_browser(), timeout=TOKEN_REFRESH_TIMEOUT))
             except asyncio.TimeoutError as exc:
                 raise RuntimeError(
-                    "Outlook token refresh timed out after "
-                    f"{TOKEN_REFRESH_TIMEOUT}s. Run `outlook login` in a visible "
-                    "browser, choose Stay signed in if prompted, close that "
-                    "browser, then retry the read-only command."
+                    f"Outlook token refresh timed out after {TOKEN_REFRESH_TIMEOUT}s. "
+                    + _login_recovery_hint()
                 ) from exc
+            except RuntimeError as exc:
+                raise RuntimeError(f"{exc} {_login_recovery_hint()}") from exc
             _save_token(tok)
             return tok["secret"]
         finally:
@@ -1347,18 +1411,38 @@ def cmd_login(args):
             "Sign-in browser closed, but the saved Microsoft session could not be converted "
             f"into an Outlook refreshable token: {exc}"
         ) from exc
+    durable = _has_durable_sso()
     if tok:
         expires = int(tok.get("expiresOn", 0))
         remaining = max(0, expires - int(time.time()))
-        print(f"Outlook CLI login saved. Token expires in {remaining // 60}m {remaining % 60}s and can refresh automatically.")
+        print(f"Outlook CLI login saved. Token expires in {remaining // 60}m {remaining % 60}s.")
+        if durable:
+            print("A persistent Microsoft SSO cookie was captured; future reads can renew headlessly.")
+        else:
+            print(
+                "WARNING: no persistent SSO cookie (ESTSAUTHPERSISTENT/ESTSAUTH) was captured. "
+                "This token works now, but automatic headless renewal will stop once the short-lived "
+                "MSAL refresh token expires (usually within a day). Run `outlook login` again and be "
+                "sure to choose 'Stay signed in' / 'Mantener mi sesion iniciada' to fix this."
+            )
+            if not _infer_account_password():
+                print(
+                    f"(Or set MICROSOFT_ACCOUNT_EMAIL and MICROSOFT_ACCOUNT_PASSWORD in {CONFIG_FILE} "
+                    "for fully headless credential login as a fallback.)"
+                )
+        return None
+
+    if durable:
+        print(
+            "Outlook CLI login saved. A persistent Microsoft SSO cookie was captured, so future reads "
+            "can renew headlessly (no MSAL token was cached yet; the first read will mint one)."
+        )
         return None
 
     raise RuntimeError(
-        "Sign-in browser closed, but no Microsoft refresh token was found in the Outlook profile. "
-        "Open `outlook login` again, make sure Outlook fully loads, choose Stay signed in if prompted, "
-        "then close the browser window."
+        "Sign-in browser closed, but neither a Microsoft refresh token nor a persistent SSO cookie "
+        "was found in the Outlook profile. " + _login_recovery_hint()
     )
-    return None
 
 
 # ---------------------------------------------------------------------------
