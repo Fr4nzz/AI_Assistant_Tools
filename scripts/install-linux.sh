@@ -13,7 +13,7 @@ REPO_RAW_BASE="${REPO_RAW_BASE:-https://raw.githubusercontent.com/Fr4nzz/AI_Assi
 
 usage() {
   cat <<'EOF'
-Usage: scripts/install-linux.sh [all|gogcli|outlook|onedrive|d2l|whatsapp|humanizer|paper-fetch|academic-research|notebooklm|ytfetcher|tubescrape|hyperframes|superpowers]
+Usage: scripts/install-linux.sh [all|gogcli|outlook|onedrive|d2l|whatsapp|humanizer|personal-writing-style|paper-fetch|academic-research|notebooklm|ytfetcher|tubescrape|hyperframes|superpowers]
 
 Environment overrides:
   INSTALL_ROOT   Default: $HOME/.ai-assistant-tools
@@ -27,7 +27,7 @@ EOF
 }
 
 case "$TOOL" in
-  all|gogcli|outlook|onedrive|d2l|whatsapp|humanizer|paper-fetch|academic-research|notebooklm|ytfetcher|tubescrape|hyperframes|superpowers) ;;
+  all|gogcli|outlook|onedrive|d2l|whatsapp|humanizer|personal-writing-style|paper-fetch|academic-research|notebooklm|ytfetcher|tubescrape|hyperframes|superpowers) ;;
   -h|--help) usage; exit 0 ;;
   *) usage >&2; exit 2 ;;
 esac
@@ -280,6 +280,17 @@ install_humanizer() {
   echo "Installed humanizer Codex skill."
 }
 
+install_personal_writing_style() {
+  install_skill "personal-writing-style" "personal-writing-style"
+  install_hermes_skill "personal-writing-style" "personal-writing-style"
+  local ref
+  for ref in anti-slop-audit.md evidence-ledger.md review-workflow.md scientific-writing.md voice-evidence.md; do
+    install_skill_reference "personal-writing-style" "personal-writing-style" "$ref"
+    install_hermes_skill_reference "personal-writing-style" "personal-writing-style" "$ref"
+  done
+  echo "Installed personal-writing-style Codex skill."
+}
+
 install_academic_research() {
   install_skill "academic-research" "academic-research"
   install_skill_reference "academic-research" "academic-research" "humanizer.md"
@@ -457,7 +468,7 @@ EOF
 
 selected_tools() {
   if [ "$TOOL" = "all" ]; then
-    printf '%s\n' gogcli outlook onedrive d2l whatsapp humanizer paper-fetch academic-research notebooklm ytfetcher tubescrape hyperframes superpowers
+    printf '%s\n' gogcli outlook onedrive d2l whatsapp humanizer personal-writing-style paper-fetch academic-research notebooklm ytfetcher tubescrape hyperframes superpowers
   else
     printf '%s\n' "$TOOL"
   fi
@@ -469,6 +480,7 @@ while IFS= read -r item; do
     whatsapp) install_whatsapp ;;
     outlook|onedrive|d2l) install_python_cli "$item" ;;
     humanizer) install_humanizer ;;
+    personal-writing-style) install_personal_writing_style ;;
     paper-fetch) install_paper_fetch; ensure_global_agents_note ;;
     academic-research) install_academic_research ;;
     notebooklm) install_notebooklm ;;

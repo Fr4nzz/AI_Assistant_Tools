@@ -17,7 +17,7 @@ Primero lee el README del repo. Luego dime que herramientas puedo instalar, enum
 Expected agent flow:
 
 1. Read this README and the relevant `tools/<name>/README.md` files.
-2. Ask which tools to install: `gogcli`, `outlook`, `onedrive`, `d2l`, `whatsapp`, `humanizer`, `paper-fetch`, `academic-research`, `notebooklm`, `ytfetcher`, `tubescrape`, `hyperframes`, `superpowers`, or `all`.
+2. Ask which tools to install: `gogcli`, `outlook`, `onedrive`, `d2l`, `whatsapp`, `humanizer`, `personal-writing-style`, `paper-fetch`, `academic-research`, `notebooklm`, `ytfetcher`, `tubescrape`, `hyperframes`, `superpowers`, or `all`.
 3. Detect the OS and use the Windows or Linux install path below.
 4. On Windows, check prerequisites before running the installer:
    `python --version`, `py --version`, and whether `~\.local\bin` is on the
@@ -58,6 +58,7 @@ Expected agent flow:
 | `d2l` | D2L / Brightspace | Course, assignment, deadline, grade, announcement, and LMS file context | Uses browser-backed institutional login because simple API-token setup was not reliable for this environment. |
 | `whatsapp` | WhatsApp | WhatsApp chats, search, groups, media discovery/download, explicit sending | Linux/CachyOS uses `openclaw/wacli` from release binaries. Windows keeps the tested Whasapo + `wha` wrapper path for now, although `wacli` also publishes a Windows binary and can be evaluated later as a replacement. |
 | `humanizer` | Humanizer skill | Natural-language rewrite and prose polishing for drafts, docs, emails, PR descriptions, and similar text | Vendors the MIT-licensed Hermes Agent humanizer skill so Codex can apply a focused style pass without any external account setup. Also works natively in Hermes. |
+| `personal-writing-style` | Personal writing style | Writing and revision in a correction-based personal voice across manuscripts, emails, documentation, and agent responses | Installs the personal style core with scientific-writing guidance, voice evidence, anti-slop review, and an approval workflow. It can coexist with the generic humanizer, while its explicit personal preferences take priority. Compatible with Codex and Hermes. |
 | `paper-fetch` | Paper Search / Paper Fetch | Download and read known academic paper PDFs by DOI or source-specific ID | Installs `paper-search` from the `Fr4nzz/paper-search-mcp` fork. Use normal search/web tools for discovery first; DOI downloads use source-native paths, Unpaywall, open repositories, and optional discovered academic mirrors. Compatible with Codex and Hermes. |
 | `academic-research` | Academic research skill | Literature discovery, multi-paper reading, synthesis, appraisal, Zotero/citation workflows, and scientific writing | Merges the previous literature-search, literature-review, citation-zotero, scientific-writing, and literature-appraisal skills into one coherent workflow. It uses native search, Parallel when configured, and paper-search as complementary discovery routes, then uses `paper-fetch` for known DOI metadata/PDF retrieval. Compatible with Codex and Hermes. |
 | `notebooklm` | Google NotebookLM | NotebookLM notebooks, sources, grounded Q&A, and artifact generation/downloads through the `notebooklm` CLI | Installs `notebooklm-py[browser]` plus an agent skill. The skill tells agents to update only if commands that used to work stop working and auth/profile/network checks do not explain the failure. |
@@ -95,6 +96,7 @@ Install only one tool:
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool gogcli
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool whatsapp
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool humanizer
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool personal-writing-style
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool paper-fetch
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool academic-research
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install.ps1))) -Tool notebooklm
@@ -187,6 +189,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/ma
 bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) gogcli
 bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) whatsapp
 bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) humanizer
+bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) personal-writing-style
 bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) paper-fetch
 bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) academic-research
 bash <(curl -fsSL https://raw.githubusercontent.com/Fr4nzz/AI_Assistant_Tools/main/scripts/install-linux.sh) notebooklm
@@ -357,6 +360,9 @@ tools/
     skill/
     README.md
   humanizer/
+    skill/
+    README.md
+  personal-writing-style/
     skill/
     README.md
   paper-fetch/

@@ -1,5 +1,5 @@
 param(
-  [ValidateSet('all', 'gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer', 'paper-fetch', 'academic-research', 'notebooklm', 'ytfetcher', 'tubescrape', 'hyperframes', 'superpowers')]
+  [ValidateSet('all', 'gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer', 'personal-writing-style', 'paper-fetch', 'academic-research', 'notebooklm', 'ytfetcher', 'tubescrape', 'hyperframes', 'superpowers')]
   [string] $Tool = 'all',
 
   [string] $InstallRoot = (Join-Path $HOME '.ai-assistant-tools'),
@@ -264,6 +264,22 @@ function Install-Humanizer {
   Write-Host 'Installed humanizer Codex skill.'
 }
 
+function Install-PersonalWritingStyle {
+  Install-Skill 'personal-writing-style' 'personal-writing-style'
+  Install-HermesSkill 'personal-writing-style' 'personal-writing-style'
+  @(
+    'anti-slop-audit.md',
+    'evidence-ledger.md',
+    'review-workflow.md',
+    'scientific-writing.md',
+    'voice-evidence.md'
+  ) | ForEach-Object {
+    Install-SkillReference 'personal-writing-style' 'personal-writing-style' $_
+    Install-HermesSkillReference 'personal-writing-style' 'personal-writing-style' $_
+  }
+  Write-Host 'Installed personal-writing-style Codex skill.'
+}
+
 function Install-AcademicResearch {
   Install-Skill 'academic-research' 'academic-research'
   Install-SkillReference 'academic-research' 'academic-research' 'humanizer.md'
@@ -453,7 +469,7 @@ function Install-TubeScrape {
 }
 
 $selected = if ($Tool -eq 'all') {
-  @('gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer', 'paper-fetch', 'academic-research', 'notebooklm', 'ytfetcher', 'tubescrape', 'hyperframes', 'superpowers')
+  @('gogcli', 'outlook', 'onedrive', 'd2l', 'whatsapp', 'humanizer', 'personal-writing-style', 'paper-fetch', 'academic-research', 'notebooklm', 'ytfetcher', 'tubescrape', 'hyperframes', 'superpowers')
 } else {
   @($Tool)
 }
@@ -466,6 +482,7 @@ foreach ($item in $selected) {
     'gogcli' { Install-GogCli }
     'whatsapp' { Install-WhatsApp }
     'humanizer' { Install-Humanizer }
+    'personal-writing-style' { Install-PersonalWritingStyle }
     'paper-fetch' { Install-PaperFetch; Ensure-GlobalAgentsNote }
     'academic-research' { Install-AcademicResearch }
     'notebooklm' { Install-NotebookLM }

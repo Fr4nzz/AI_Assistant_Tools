@@ -1,0 +1,4 @@
+interface:
+  display_name: "Personal Writing Style"
+  short_description: "Write and edit in my preferred voice"
+  default_prompt: "Use $personal-writing-style to revise this text in my voice while preserving its meaning."
