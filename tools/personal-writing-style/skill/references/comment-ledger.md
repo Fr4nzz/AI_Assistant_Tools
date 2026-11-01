@@ -42,7 +42,7 @@ The comments are short questions more often than orders: "what do you mean by �
 | R18. Give the reason for a design step when the reader would wonder why. | A |
 | R19. Leave out tangents this reader does not need, even true ones. | A |
 | R20. Claim only plans, numbers and actions the author has endorsed. Plans the author has made are welcome ("what is still missing"). | A |
-| R21. Do not defer material to another document ("left for the thesis"). Say why it is not reported here. | B |
+| R21. Do not defer material to another document ("left for a later report"). Say why it is not reported here. | B |
 | R22. Cite every factual claim, cite once at the end of the sentence, and use the plain citation form. | A |
 | R23. For a summary of findings, bullets rather than a table. Subfigure labels a) and b). When the user dislikes a heading style, offer options. | B |
 | R24. Show with a figure what the text struggles to explain, and make each figure carry as much as it can. | A |
@@ -87,9 +87,9 @@ Limit: R3 removes defensive hedges. It keeps a caveat that changes how a reader 
 
 | Comment | Before | After |
 |---|---|---|
-| "don't say the reserve lacks this, it makes the reserve look bad" | The reserve keeps no visitor records of its own, so visitor numbers come from the regional park office. | Visitor numbers come from the regional park office. |
-| "this makes us look like we don't know our own lab procedure, assume nothing changed" (lab setting) | … and the reagent batch used last year was not recorded, so a batch mix-up remains a possible cause of the lower yield. | Deleted. A neutral sentence about checking the batch stayed (pushback), then went after more comments. |
-| "this sounds like we are blaming the technicians, could it be something else, like room temperature?" (lab setting) | (the same batch sentence) | Replaced by the temperature result: the lower yield remains after adjusting for room temperature. |
+| "don't say the library lacks this, it makes the library look bad" (archive project) | The library has no scanner of its own, so the letters were scanned at the city archive. | The letters were scanned at the city archive. |
+| "this blames our assistant, the reader doesn't need it" | … the interviews started late because the assistant missed the bus. | Deleted. |
+| "this makes our partner look bad, just say when the survey ran" | … the survey ended early because the partner organisation did not renew the permit. | The survey ran from April to August. |
 
 ### R5. No hindsight in expectations
 
@@ -104,9 +104,9 @@ Limit: R3 removes defensive hedges. It keeps a caveat that changes how a reader 
 | Comment | Before | After |
 |---|---|---|
 | "wouldn't it sound better to state expectations in the present, like 'we expect'? (passive voice is undesired though)" | A regional call detector was expected to perform better than the general one … | We expect a regional call detector to perform better than the general one … (Spanish "Se espera que …", the writer's mirror, C) |
-| "it sounds like we are talking about the report in the third person, is that ok? It sounds weird" | Este informe analiza ese problema … Propone un método automático … | En este informe se analiza ese problema … Se propone un método automático … |
+| "it sounds like we are talking about the report in the third person, is that ok? It sounds weird" | Esta guía describe los pasos de instalación … Recomienda una copia de seguridad … | En esta guía se describen los pasos de instalación … Se recomienda una copia de seguridad … |
 
-The English version kept "This thesis developed …" without comment, so R7 is evidence for Spanish only.
+R7 is evidence for Spanish only.
 
 ### R8. Natural small words
 
@@ -143,7 +143,7 @@ The English version kept "This thesis developed …" without comment, so R7 is e
 
 | Comment | Before | After |
 |---|---|---|
-| "you just say 'near the jetty', but the reader needs to remember that this is the jetty with the boat traffic mentioned earlier" | … that point is near the jetty … | The result names the busy boat jetty again. |
+| "you just say 'the form', but the reader needs to remember that this is the consent form that needs the board's approval" (survey of volunteers) | … once the form is signed … | The sentence names the approved consent form again. |
 
 Compare the step-3 example under R1: the user wants the detail repeated, not a pointer such as "the survey of step 3".
 
@@ -152,7 +152,7 @@ Compare the step-3 example under R1: the user wants the detail repeated, not a p
 | Comment | Before | After |
 |---|---|---|
 | "for this report we don't need to define a point count" | A point count is a fixed spot where an observer records every bird for a set time. | Definition deleted. |
-| "this treats my readers as if they didn't know the field, my committee knows what overdispersion is" | … because the counts are overdispersed, that is, their variance is larger than their mean … | "that is, their variance is larger than their mean" deleted. |
+| "this treats my readers as if they didn't know the field, my reviewers know what overdispersion is" | … because the counts are overdispersed, that is, their variance is larger than their mean … | "that is, their variance is larger than their mean" deleted. |
 | "this definition, on the other hand, sounds appropriate" | … 95 % confidence intervals, the range of values compatible with the data. | Kept. |
 
 ### R13. One obvious meaning
@@ -160,10 +160,10 @@ Compare the step-3 example under R1: the user wants the detail repeated, not a p
 | Comment | Before | After |
 |---|---|---|
 | "what do you mean by 'comparable survey series'? I don't understand" | … the region lacks comparable survey series | … the region has almost no long-term bird survey records |
-| "what do you mean by 'different recording times'?" | … compares hours with different recording times … | … compares recordings made after the same time since the recorder started: the first hour after dawn with the first hour after dusk. |
-| "by 'the cause' you mean the lower yield, not the supplier change, right?" (lab setting) | The cause remains unexplained … | The cause of the lower yield remains unexplained … |
+| "what do you mean by 'the heavy pages'?" (software setting) | … the cache helps most on the heavy pages … | … the cache helps most on pages with more than 50 images … |
+| "by 'the error' you mean the failed upload, not the warning, right?" (software setting) | The error remains unexplained … | The cause of the failed upload remains unexplained … |
 | "'resulting method'? What comes before doesn't produce a method" | Compare survey methods and detectors …, and apply the resulting method to describe … | Develop an automated method …, compare survey methods and detectors within it, and use it to describe … |
-| "when you say 'about half of the calls of 3 seconds or more' it sounds weird" | … the recorder has about half of the calls of 3 seconds or more that it had at dawn. | … the number of calls of 3 seconds or more on the recorder falls to about half of the dawn count. |
+| "'roughly doubles or more' sounds weird, which one is it?" (software setting) | … the new version roughly doubles or more the speed of the export. | … the new version exports at least twice as fast. |
 | "never deletes? But I saw it remove files" (software setting) | … and the tool never deletes files. | The tool removes only the temporary files it created, and never deletes the user's files. |
 
 ### R14. Qualifiers that imply a contrast
@@ -200,7 +200,7 @@ The last comment does not ban advanced methods. The author must be able to follo
 
 | Comment | Before | After |
 |---|---|---|
-| "this is when a second observer joined so both lakes could be counted in parallel, we should say so" | Since spring both lakes are counted on the same morning. | In spring a second observer joined, and since then both lakes are counted on the same morning. |
+| "we check the recorders at noon because the batteries run down in the heat, maybe say why" | … and the recorders are checked at noon. | The recorders are checked at noon, because their batteries run down faster in the heat. |
 | "by 'reset' we mean clearing the memory cards, maybe say why we do this" | … and the recorders are reset each week. | Each week the memory cards are swapped, so a recorder never stops because its card is full. |
 | "then we should say why we added this second site" | (no reason given) | The second site is there to check that the patterns recur, not to compare water-level regimes. |
 | "why are the shaded points not part of the comparison?" | (no reason given) | Caption: strong wind on those mornings made the calls inaudible. |
@@ -211,12 +211,12 @@ The last comment does not ban advanced methods. The author must be able to follo
 |---|---|---|
 | "for this report we don't need this confounding factor" | … near a feeding station run by a neighbour. | Moved, then removed after a second comment. |
 | "I think we can omit this and the acknowledgements" | Next steps, Acknowledgements | Both sections removed, one closing line kept. |
-| "we upgraded the build machine to make it faster, which if anything would speed up the tests, so I don't know if we should mention this" (software setting) | The test suite showed no comparable slowdown, but the build machine was also replaced in winter. | Deleted from the slowdown paragraph. |
+| "the history of the project name isn't relevant here" (software setting) | … the tool, first called by another name, … | "first called by another name" deleted. |
 | "I wouldn't give a sample size, I wasn't aware of it, just say that a review by specialists is planned" | … a sample of 200 recordings is already prepared … | The planned review by specialists and students, with no sample size. |
 | "an improved version of the detector? Do we have ideas for that? If so, which ones? I don't think we should say this" | The next steps are the specialist review and an improved version of the detector … | The promise deleted. |
 | "don't say this, I haven't asked anyone yet" | Whether the recorder positions changed between seasons is being checked with the field team. | Deleted. |
 | "we should say this is planned" | … no specialist audit exists yet … | The audit is described as planned. |
-| "I wouldn't say it is left for the thesis, this document is becoming the thesis" | … so it is left for the thesis. | The comparison of community composition is not reported here, because it depends on identifications that still have to be validated. |
+| "I wouldn't say it is left for a later report, this document will grow into the final report" | … so it is left for a later report. | The comparison of community composition is not reported here, because it depends on identifications that still have to be validated. |
 
 ### R25. Words that add nothing
 
@@ -247,28 +247,26 @@ Other comments made the same point about a shorter citation form, about "we are 
 
 ## Pushback record
 
-The user invites pushback, saying that a writer may push back when a suggestion is actually a mistake. These cases show which pushback held. The incidents are invented and keep only the lesson of the original.
+The user invites pushback when a suggestion is actually a mistake. The lessons below come from how pushback fared in practice.
 
-| Case | What happened | Lesson |
-|---|---|---|
-| A units note | The user asked to remove a units note from a table header. The writer moved the units into every cell, which doubled the width of the table. The user then asked for a single units line under the table. | A comment fixes one problem. Check that the fix does not create another. |
-| "Almost half" | The user suggested "almost half" for a ratio just above 0.5. The writer wrote "just over half" instead. No further comment. | Correct the user's wording when the number disagrees with it. |
-| A package name | The user flagged the odd capitalisation of a software package name more than once. The writer kept it each time: it is the package's official spelling. | Factual pushback with evidence holds, even when the comment repeats. |
-| A limitation | The writer kept a shortened limitation. The user asked again, and it was deleted. | When the user repeats a style or scope comment, comply. |
-| A neutral hypothesis | The writer kept a neutral sentence about checking a possible procedure change. The user rejected it in the next round. | Pushback on scope or tone is weak. Do not keep a sentence the user has asked to drop for tone. |
-| A ratio below 1 | The user first allowed a ratio below 1, then asked for it to be flipped. | The later comment wins. |
-| An unfamiliar method | The user asked for simpler statistics instead of an unfamiliar method. Dropping the method would have weakened the result, so the writer kept it, named it and explained it to the user in the reply. | Read the reason behind a comment (the author must be able to follow the method), not only its words. |
-| A critic and a sample size | A critic objected to a sample size in the text, the writer kept it because it was documented, and the user then removed it. | Documented is not the same as endorsed by the author. |
-| A critic and a confound | A critic asked to restore a confounding factor the user had removed. The writer declined. | The user's comments outrank critic suggestions on scope. |
+- A comment fixes one problem. Check that the fix does not create another, for example a much longer sentence.
+- Correct the user's suggested wording when the number disagrees with it.
+- Factual pushback with evidence holds, even when the comment repeats.
+- When the user repeats a style or scope comment, comply.
+- Pushback on scope or tone is weak. Do not keep a sentence the user has asked to drop for tone.
+- When two comments conflict, the later one wins.
+- Read the reason behind a comment, not only its words. A request for simpler statistics means the author must be able to follow the method, not that the method must go.
+- Documented is not the same as endorsed by the author. A critic's support does not keep a number the author never chose.
+- The user's comments outrank critic suggestions on scope.
 
 ## Content and analysis comments
 
 These are not style rules. They show what the user asks about, which the comment-emulation mode in [critic-loop.md](critic-loop.md) needs. The examples are invented.
 
 - **"How do you know?"** Every number needs a traceable source: how a distance was measured, how large its error is, what share of detections are noise, whether test data were in a model's training data.
-- **Missing breakdowns.** A percentage for the subgroup that matters: identifications for the rarest species, counts by distance class, medians beside ratios, whether confidence rises with longer counts.
-- **Fair comparisons.** Rescore the baseline on the same species list, separate the gain from a list update from the gain from the method, ask whether competing tools are public and can be run.
-- **Untested explanations.** Weather with a time lag, one survey point drawing animals away from another, an equipment change shown with examples and its settings.
+- **Missing breakdowns.** A result for the subgroup that matters, and medians beside ratios.
+- **Fair comparisons.** Test the old and new versions on the same data, and ask whether competing tools are public and can be run.
+- **Untested explanations.** A plausible alternative cause, and the check that would test it.
 - **Field facts the writer cannot know.** The user corrected sampling frequency, distances and site descriptions. A writer should flag such facts as uncertain rather than invent them.
-- **Missing pieces of a method.** Name the models, say how thresholds were set and how they will be validated, give the model formula, package and appendix section, add a methods box in a second version.
+- **Missing pieces of a method.** Name the main tools and say how any threshold was chosen.
 - **Questions for the user alone.** Answer in the reply, do not add to the document.

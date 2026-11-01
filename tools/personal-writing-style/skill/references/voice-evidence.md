@@ -23,7 +23,7 @@ Each pattern gives the difference, the reason and the limit. The full pairs are 
 
 ### Sound sure of what the evidence shows (A, R3 and R4)
 
-**Difference:** "According to the field protocol, each point is counted …" became "Each point is counted …". "Pending confirmation" and "this analysis is exploratory" were cut. A sentence saying the reserve keeps no records of its own was cut, and so were hypotheses that implied the team did not know its own protocol.
+**Difference:** "According to the field protocol, each point is counted …" became "Each point is counted …". "Pending confirmation" and "this analysis is exploratory" were cut. A sentence saying the library has no scanner of its own was cut, and so were hypotheses that implied the team did not know its own protocol.
 
 **Reason:** The report went to expert reviewers. Defensive qualifiers make settled work sound unsure, and some caveats read as blame on the people who ran the work.
 
@@ -47,7 +47,7 @@ Each pattern gives the difference, the reason and the limit. The full pairs are 
 
 ### One name, defined once, meaning what the reader means (A, R10 to R12)
 
-**Difference:** "the point counts" and "the recorders" were defined once as the two survey types and used consistently. A shortened place name was written out in full every time. "Both recorders" became "both sites". "The survey of step 3" was cut, while a reminder of what the busy jetty was stayed.
+**Difference:** "the point counts" and "the recorders" were defined once as the two survey types and used consistently. A shortened place name was written out in full every time. "Both recorders" became "both sites". "The survey of step 3" was cut, while a reminder of which form needed approval stayed.
 
 **Reason:** A reader who does not know the field setup cannot map shortened or equipment-based labels to places and methods. A short restatement helps, a pointer to a section only adds text.
 

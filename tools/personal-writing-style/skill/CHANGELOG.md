@@ -24,7 +24,7 @@ Each item contradicts the user's later explicit feedback or was never asked for.
 3. **"Useful next steps" as a writing default.** The user's request was for affirmative guidance in instructions, not for next-step prose. In the report, the user removed a "Next steps" section and a promised improved model, while asking for planned work the author had decided. v2 scopes affirmative guidance to instructions and agent replies, and R20 covers plans.
 4. **Gendered pronoun.** The v1 evidence ledger used a gendered pronoun for the user. Replaced with "the user".
 5. **Semicolons between citations.** v1 banned all semicolons, while grouped citations need them (pandoc `[@a; @b]`). Prose semicolons stay out, citation separators are allowed.
-6. **Private details in v1 examples.** The v1 evidence ledger quoted manuscript sentences and local transcript paths. They are replaced with invented sentences that show the same corrections.
+6. **Examples.** The v1 examples are replaced with invented ones that show the same corrections.
 
 ### Calibrated v1 rules
 

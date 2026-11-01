@@ -12,13 +12,13 @@ Hedge where the evidence is uncertain and nowhere else. A caveat that changes ho
 
 ## Know the reader
 
-Use the field's ordinary nouns. Keep established ecological terms such as "phenology". Explain a machine-learning, statistical or computational term through its role in the study when an ecologist may not know it. Leave out definitions the reader knows: a thesis committee knows what overdispersion is (R12).
+Use the field's ordinary nouns. Keep established ecological terms such as "phenology". Explain a machine-learning, statistical or computational term through its role in the study when an ecologist may not know it. Leave out definitions the reader knows: expert reviewers know what overdispersion is (R12).
 
 Name things by what the reader can picture. When a study has two kinds of sampling, introduce them once, with one name each, and keep those names (R10). Name the site when the site is meant.
 
 Separate stable scientific names from internal development labels. In the text, use the publication name or a functional description. Keep experiment names in provenance records and reproducibility mappings.
 
-Name biological quantities precisely. Abundance, number of families and community composition are distinct outcomes.
+Name quantities precisely. A total count, the number of species and which species occur are distinct outcomes.
 
 ## Report results so they read at once
 
@@ -35,7 +35,7 @@ Write expectations in the present ("We expect", Spanish "Se espera que"). State 
 
 ## Methods
 
-Write Methods so another researcher can understand and reproduce the work. Name the main tools (the base model, the segmentation model, the statistics package) and leave helper steps to an appendix when they make a sentence hard to digest (R25). Give the reason for each non-obvious design step: why a second site exists, why memory cards are swapped each week, why some days were excluded (R18). Where the readers include a committee, the model formula, package and appendix section of each main model are welcome, and a methods box can live in a second version of the document.
+Write Methods so another researcher can understand and reproduce the work. Name the main tools (the main software, the main model, the statistics package) and leave helper steps to an appendix when they make a sentence hard to digest (R25). Give the reason for each non-obvious design step: why a second site exists, why memory cards are swapped each week, why some days were excluded (R18). Where expert readers will check the analysis, say where the full model specification can be found.
 
 Describe the final procedure rather than the experiments that produced it. Keep unfinished work grammatically planned, and claim only plans the author has made (R20).
 

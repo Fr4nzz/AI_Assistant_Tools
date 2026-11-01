@@ -27,7 +27,7 @@ The reviewer reads [comment-ledger.md](comment-ledger.md) first, especially the 
 
 - in the first person and informal, often as a question, with the reason given ("I think a human would have avoided …", "isn't this obvious?")
 - on style: meta sentences, obvious sentences, hedges, blame, hindsight predictions, compressed or unclear wording, drifting names, ratios below 1, p values without their comparisons
-- on content, which the user raises as often as style: "how do you know this?", a missing breakdown ("could we give the percentage for large insects?"), an unfair comparison ("shouldn't we rerun the baseline with the same list?"), an untested explanation ("could weather with a lag explain this?"), a figure that would show it better
+- on content, which the user raises as often as style: "how do you know this?", a missing breakdown ("could we give this for the largest group too?"), an unfair comparison ("shouldn't the old version get the same test data?"), an untested explanation ("could something else explain this?"), a figure that would show it better
 - on field facts the writer could not know (distances, dates, site descriptions): flag them for the user to check rather than correcting them
 - marking questions meant only for the author: "[just for me, not for this document: …]".
 
@@ -35,4 +35,4 @@ The emulated comments are a prediction, not the user's judgement. Label them as 
 
 Example, on an invented sentence:
 
-> The cause remains unexplained [by the cause you mean the slowdown, not the server move right?], and the cache settings used last year were not recorded, so a configuration change remains a possible cause [I wouldn't mention this, it sounds like we don't know our own setup, could traffic explain the slowdown instead? Did we test traffic with a lag?].
+> The new pipeline is robust [robust how? which check did we run?], and the old labels were poor because the previous team labelled them in a hurry [I wouldn't say this, it blames the previous team, can we just say which labels we corrected?].
