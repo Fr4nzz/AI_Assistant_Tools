@@ -2,9 +2,9 @@
 
 ## v2
 
-Built from the user's 160 bracketed comments on five of the nine versions of a progress report, checked against the chat that created v1.
+Built from the user's bracketed comments on several versions of a report, checked against the chat that created v1.
 
-The report and the manuscript chats describe unpublished work. In this public copy every example sentence is invented and every comment is paraphrased. The rules, their evidence strength and the number of comments behind each rule are the same as in the private version.
+The report and the manuscript chats describe unpublished work. In this public copy every example sentence is invented and every comment is paraphrased. The rules and their evidence strength are the same as in the private version.
 
 ### Added
 
@@ -33,7 +33,7 @@ These v1 rules were sound but too thin, and the report comments add the missing 
 1. **Development history.** v1 allowed history in progress reports. The report comments cut meta, deferral and obvious sentences rather than history as such. v2 adds R1, R2 and R21 and keeps history for changelogs, release notes, experiment records and responses to reviewers.
 2. **Brevity.** v1's "prefer the shortest wording … but let accuracy set the limit" stays as R25. The comments add a counterweight, R8: keep the small words a person would keep, only where the sentence otherwise sounds compressed.
 3. **Definitions.** v1 already limited explanation to terms unfamiliar to the reader. It had no example of over-defining for a committee. R12 adds one.
-4. **Reminders.** v1 said to omit reminders to earlier sections when the connection is clear. v2 adds the other case: restate an earlier detail in a few words when the reader needs it (R11), and avoid bare pointers such as "the tool of step 3" (R1).
+4. **Reminders.** v1 said to omit reminders to earlier sections when the connection is clear. v2 adds the other case: restate an earlier detail in a few words when the reader needs it (R11), and avoid bare pointers such as "the survey of step 3" (R1).
 5. **Review workflow.** v1 described only paragraph-by-paragraph review. v2 adds the whole-document bracketed-comment workflow.
 
 ### Kept

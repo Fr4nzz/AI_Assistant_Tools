@@ -8,13 +8,13 @@ The question behind every item is the user's own: would a person have written th
 
 These came up repeatedly in the user's comments on agent-written reports. Check them first.
 
-- **Sentences about the text (R1).** "Each objective is listed with its expectation, and section 5 answers each one." "The main contrasts were set out in the study plan." "The tool of step 3." "Photos from the public archive." Delete them, or keep only the heading.
+- **Sentences about the text (R1).** "Each objective is listed with its expectation, and section 5 answers each one." "The main contrasts were set out in the study plan." "The survey of step 3." "Photos from the public archive." Delete them, or keep only the heading.
 - **The obvious (R2).** "There are records for every month." A limitation every reader already sees, or a caveat repeated after the reader already knows it. Delete. Keep a qualification that tells the reader a result's status (names not yet validated, an analysis that is exploratory) the first time it matters, and flag rather than delete the author's hypotheses or results.
 - **Defensive hedging (R3).** "According to the protocol", "pending confirmation", "exploratory" attached to a planned main result, "not from the study site". State the fact, or give the reason in positive form ("since no expert-labelled photos exist yet, …").
 - **Blame and self-damage (R4).** Remarks that the site lacks something, hypotheses that imply the team did not know its own protocol. Remove them, or replace them with what the evidence shows.
 - **Hindsight predictions (R5).** A prediction with a number that matches the result, or "as expected" after a result whose size nobody predicted. An agent that has read the results tends to write these. Keep the expectation the author actually held.
-- **Telegraphic compression (R8).** "Disturbs the flowers least", "so in future", "higher" where "at a higher altitude" reads naturally. Restore those small words, and keep cutting repetition that adds nothing (R25).
-- **Drifting names (R10).** A place name shortened ("the Upper"), equipment named where the place is meant ("both transects"), or a label used before it is defined.
+- **Telegraphic compression (R8).** "Disturbs the birds least", "so in future", "higher" where "at a higher altitude" reads naturally. Restore those small words, and keep cutting repetition that adds nothing (R25).
+- **Drifting names (R10).** A place name shortened ("the North"), equipment named where the place is meant ("both recorders"), or a label used before it is defined.
 - **Unexplained shorthand (R13).** "Comparable survey series", "different field times", "the cause". Name the specific thing.
 - **Qualifiers that invent a contrast (R14).** "On several continents", "long-term evidence". Ask what the qualifier implies about the cases it leaves out.
 - **Unreadable numbers (R16, R17).** Ratios below 1, "the intervals include 1", a pair of p values without their comparisons, "almost half" for 0.53.

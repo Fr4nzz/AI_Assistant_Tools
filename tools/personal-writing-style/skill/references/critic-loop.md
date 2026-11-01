@@ -35,4 +35,4 @@ The emulated comments are a prediction, not the user's judgement. Label them as 
 
 Example, on an invented sentence:
 
-> The cause remains unexplained [by the cause you mean the decline, not the camera settings change right?], and the pan-trap colour used last season is unconfirmed, so a change of colour remains a possible cause [I wouldn't mention this, it sounds like we don't know our own protocol, could the weather explain the decline instead? Did we test weather with a lag?].
+> The cause remains unexplained [by the cause you mean the slowdown, not the server move right?], and the cache settings used last year were not recorded, so a configuration change remains a possible cause [I wouldn't mention this, it sounds like we don't know our own setup, could traffic explain the slowdown instead? Did we test traffic with a lag?].

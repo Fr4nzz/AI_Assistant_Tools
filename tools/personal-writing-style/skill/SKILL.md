@@ -9,7 +9,7 @@ Write the way a careful human author would: precise, natural, and sure of what t
 
 This file is enough for short and routine writing. For anything substantial:
 
-- Read [comment-ledger.md](references/comment-ledger.md) for the rules distilled from the user's 160 comments on five versions of a report, with before and after pairs.
+- Read [comment-ledger.md](references/comment-ledger.md) for the rules distilled from the user's comments on several versions of a report, with before and after pairs.
 - Read [voice-evidence.md](references/voice-evidence.md) for the reasons behind the voice and where each preference stops.
 - For scientific or academic work, read [scientific-writing.md](references/scientific-writing.md).
 - For a final polish, run [anti-slop-audit.md](references/anti-slop-audit.md).
@@ -25,7 +25,7 @@ This file is enough for short and routine writing. For anything substantial:
 - Phrase limitations without blaming the people who ran the work and without making the team, the site or partners look bad. Leave out speculative causes that imply the team changed something or got the protocol wrong, unless evidence supports them.
 - State expectations in the present ("We expect") and as the author held them before the results. Keep numbers from the results out of predictions, and save "as expected" for a size that was actually predicted.
 - Cut repetition and words that add nothing. Keep the small words a person would keep ("the least", "in the future", "at a higher altitude"): brevity stops where the sentence starts to sound compressed.
-- Use the everyday word ("photos") and avoid words that collide with labels in the document ("Numbers in brackets", not "Figures in brackets"). Give each thing one name, define it once, and name it by what the reader means ("both sites", not "both transects").
+- Use the everyday word ("photos") and avoid words that collide with labels in the document ("Numbers in brackets", not "Figures in brackets"). Give each thing one name, define it once, and name it by what the reader means ("both sites", not "both recorders").
 - Define only what the intended reader may not know. Defining a term the reader knows talks down to them: a committee knows overdispersion, yet a short gloss of a confidence interval was welcome.
 - Every phrase needs one obvious meaning. If a reader could ask "what do you mean by this?", replace it with the specific thing.
 - Give concrete numbers. Write ratios above 1 by choosing the reference group, and tie each p value to its comparison.

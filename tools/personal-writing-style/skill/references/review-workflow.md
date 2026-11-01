@@ -22,4 +22,4 @@ For a manuscript the user wants to approve closely, work in small units. Show th
 
 ## Recording preferences
 
-An accepted edit without comment is weak evidence. Record an enduring preference when the user states it, explains it or repeats it, and add it to [comment-ledger.md](comment-ledger.md) with its strength and the number of comments behind it. When later feedback conflicts with older guidance, follow the later instruction and mark the older one as superseded.
+An accepted edit without comment is weak evidence. Record an enduring preference when the user states it, explains it or repeats it, and add it to [comment-ledger.md](comment-ledger.md) with its strength. When later feedback conflicts with older guidance, follow the later instruction and mark the older one as superseded.
