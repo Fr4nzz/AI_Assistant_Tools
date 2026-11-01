@@ -1,106 +1,137 @@
 # Voice grounded in corrections
 
-Use this evidence as calibration, not as a phrase bank. The user's direct comments outrank these summaries. A repeated explicit correction is stronger than a single correction. An unremarked acceptance is weak evidence. Read [evidence-ledger.md](evidence-ledger.md) only when the exact sentence history or source location matters.
+Use this evidence as calibration, not as a phrase bank. The user's direct comments outrank these summaries. Two bodies of evidence exist:
+
+- **Manuscript and thesis proposal chats.** A few correction sequences, kept with full sentences in [evidence-ledger.md](evidence-ledger.md).
+- **A progress report.** 160 bracketed comments on five of nine versions, distilled in [comment-ledger.md](comment-ledger.md) as rules R1–R25 with before and after pairs.
+
+The examples in this public copy are invented and make the same point as the originals. Strength marks: **A** explicit and repeated, **B** explicit once, **C** inferred.
 
 ## The governing preference
 
-The user edits by asking what a phrase means and whether each word helps express that meaning. The preferred prose is precise without sounding polished for its own sake. It retains scientific distinctions, useful repetition, and necessary caveats. It cuts connective padding, self-praise, compressed jargon, and explanations that outgrow their purpose.
+The user reads a draft by asking two questions of each phrase: what does it mean, and would a person have written it? The preferred prose is precise without sounding polished for its own sake, and confident without overstating. It keeps scientific distinctions, useful repetition and the caveats that change a conclusion. It cuts connective padding, sentences about the text, defensive hedging, self-praise, insider shorthand and explanations that outgrow their purpose.
+
+Two pressures pull against each other, and both are real. The user cuts words that add nothing ("directly", "in terms of", "records sound by itself"), and the user restores small words that a person would keep ("the least", "in the future", "at a higher altitude"). The deciding question is whether the reader loses anything or whether the sentence starts to sound machine-compressed.
 
 ## Calibrate from current writing
 
-When the user provides a recent writing sample, treat it as the best guide to the voice needed for that task. Notice sentence length, word choice, paragraph openings, punctuation, transitions, use of first person, and how directly the sample moves between ideas. Reproduce the pattern rather than copying memorable phrases.
+When the user provides a recent writing sample, treat it as the best guide to the voice for that task. Notice sentence length, word choice, paragraph openings, transitions and use of the first person. Reproduce the pattern rather than memorable phrases. Direct feedback on the current task outranks habits inferred from an older sample.
 
-The sample provides evidence, not a template. Preserve differences required by the new genre, reader, or subject. Direct feedback given with the current task outranks habits inferred from an older sample.
+## Patterns from the progress report
 
-## Directly supported patterns
+Each pattern gives the difference, the reason and the limit. The full pairs are in the comment ledger.
 
-### Cut wording that adds no relationship
+### Sound sure of what the evidence shows (A, R3 and R4)
 
-**Difference:** “Compared directly in terms of” became “compared for”. “Compared” already expresses the comparison, and the measured outcomes can follow “for” directly.
+**Difference:** "According to the field protocol, each transect is walked …" became "Each transect is walked …". "Pending confirmation" and "this analysis is exploratory" were cut. A sentence saying the site lacks its own weather station was cut, and so were hypotheses that implied the team did not know its own protocol.
 
-**Reason:** The shorter wording preserves the same actors, outcomes, method, and interpretation.
+**Reason:** The report went to a funding panel and a thesis committee. Defensive qualifiers make settled work sound unsure, and some caveats read as blame on the people who ran the survey.
 
-**Limit:** Keep an adverb or linking phrase when it changes the method, direction, scope, or interpretation.
+**Limit:** Keep a caveat that changes how a reader should use a number: few survey days behind a test, a multiple-test correction, an unvalidated name. Report an unexplained result as unexplained. The point is tone and scope, not hiding evidence.
 
-Evidence: [correction pair 1](evidence-ledger.md#pair-1-cut-connective-padding-in-stages).
+### Expectations written before the results (A, R5 and R6)
 
-### Preserve a distinction while making its name clearer
+**Difference:** "about three times as many per square metre" was removed from a prediction, and "as expected" after a gain of 9 percentage points was cut. Expectations moved from "was expected" to "We expect".
 
-**Difference:** “Family-level richness” became “number of families”, while “community composition” remained a separate outcome. The first counts represented families. The second describes which families occur and may include their relative abundances.
+**Reason:** The author expected an increase but never predicted its size. A prediction that matches the measurement makes readers suspect it was written afterwards, which is what an AI does when it has read the results first.
 
-**Reason:** The plainer label improves first-reading comprehension without merging two measurements or weakening the design.
+**Limit:** A prediction that was made in advance, with a size, can say so.
 
-**Limit:** Retain the formal term when it is needed to identify the analysis or metric precisely.
+### Natural words over compressed ones (A, R8 and R9)
 
-Evidence: [correction pair 1](evidence-ledger.md#pair-1-cut-connective-padding-in-stages).
+**Difference:** "disturbs the flowers least" became "disturbs the flowers the least", "higher" became "at a higher altitude", "photographs" became "photos", "attraction" became "competition from the neighbouring garden's flowers".
 
-### Prefer precise repetition to an awkward substitute
+**Reason:** These are the words a person uses. The user called the small words "spices of my writing style" and said "I prefer being a bit more explicit sometimes".
 
-**Difference:** A clause containing “taxonomic ranks”, “taxonomic classifier”, and “taxa” was revised to “identifies them from order to species using a hierarchy-consistent taxonomic classifier trained on Neotropical insect taxa”. This removed the first unnecessary use of the word family while retaining the two informative uses.
+**Limit:** The user added "just for these cases". Do not pad other sentences. Cut a repetition that adds nothing, such as saying that an automatic recorder records "by itself".
 
-**Reason:** “Taxonomic classifier” names the method. “Taxa” names the selected training units, and “insect” states their biological scope. Replacing “insect taxa” with a longer description avoided repetition but lost precision and sounded less natural.
+### One name, defined once, meaning what the reader means (A, R10 to R12)
 
-**Limit:** Repeat a scientific term when it carries information or prevents ambiguity. Reduce nearby related forms when one can disappear without losing meaning.
+**Difference:** "the transects" and "the cameras" were defined once as the two survey types and used consistently. A shortened place name was written out in full every time. "Both transects" became "both sites". "The tool of step 3" was cut, while a reminder of what the row of beehives was stayed.
 
-Evidence: [correction pair 2](evidence-ledger.md#pair-2-keep-the-familiar-scientific-noun).
+**Reason:** A reader who does not know the field setup cannot map shortened or equipment-based labels to places and methods. A short restatement helps, a pointer to a section only adds text.
 
-### Replace insider shorthand with the reader's term
+**Limit:** Define a term only if the intended reader may not know it. Defining overdispersion for a committee treats the audience as if it did not know the field, while a one-line meaning of a confidence interval "sounds appropriate".
 
-**Difference:** “Taxonomic head” became “taxonomic classification model” in a deliverables list.
+### Numbers a reader can read at once (A, R15 to R17)
 
-**Reason:** “Head” describes an internal architectural component for machine-learning readers. “Classification model” tells ecology readers what scientific tool will be delivered and parallels “segmentation model”.
+**Difference:** "0.70 times" became "1.43 times" with the groups swapped. "The intervals include 1" became "not significant (p = 0.21 for the upper against the lower meadow on morning walks, and p = 0.34 for the same comparison on afternoon walks)". Medians were added beside ratios, and "after correcting for the number of tests" became the named correction.
 
-**Limit:** Use “classification head” when the architecture itself matters and the readers know the term.
+**Reason:** Ratios above 1 are easier to read, named tests are honest, and a p value without its comparison makes the reader guess.
 
-Evidence: [correction pair 4](evidence-ledger.md#pair-4-replace-compressed-shorthand-with-the-readers-term).
+**Limit:** The user asked to drop an unfamiliar correction method, but the correction stayed. The user then asked which correction it was, asked for its name, and asked for it to be explained in the chat. Name the method, and give the author the explanation in the reply, not in the document.
 
-### Match technical detail to the job of the section
+## Patterns from the manuscript chats
 
-**Difference:** A proposal paragraph first expanded the random-effect rationale into site-night grouping, four sampling times, shared deployment, and nightly conditions. The accepted paragraph stated that sampling night is a random effect and left the fuller grouping explanation for a more suitable location.
+### Cut wording that adds no relationship (A)
 
-**Reason:** The expanded explanation was technically relevant but interrupted a paragraph whose immediate job was to state the model structure. The issue was placement and depth, not the value of technical explanation.
+**Difference:** "compared directly in terms of" became "compared for".
 
-**Limit:** Preserve explanations required for accuracy, interpretation, evaluation, or reproducibility. Put full grouping structure and justification in Methods when they affect the analysis. Move necessary detail instead of deleting it.
+**Reason:** "Compared" already states the comparison, and the outcomes can follow "for" directly.
 
-Evidence: [correction pair 3](evidence-ledger.md#pair-3-stop-when-the-explanation-becomes-the-distraction).
+**Limit:** Keep an adverb or linking phrase when it changes the method, direction, scope or interpretation.
 
-### Make claims earn their adjectives
+### Preserve a distinction while naming it plainly (B)
 
-**Difference:** The user removed “detailed” as praise for a table.
+**Difference:** "Family-level richness" became "number of families", while "community composition" stayed a separate outcome.
 
-**Reason:** The adjective evaluates the table without telling the reader what it contains. Naming the relevant fields, comparisons, or evidence is more informative when those details matter.
+**Reason:** The plainer label reads faster without merging two measurements.
 
-**Limit:** Keep an evaluative adjective when it has a defined technical meaning or when the claim is supported and relevant. The preference concerns unsupported praise, not the word itself.
+**Limit:** Keep the formal term when it identifies a metric precisely.
 
-Evidence: [v4 source note 1](evidence-ledger.md#v4-source-notes).
+### Precise repetition over an awkward substitute (B)
 
-### Separate manuscript content from development history
+**Difference:** A clause with "taxonomic ranks", "taxonomic classifier" and "taxa" became "identifies them from family to species using a taxonomic classifier trained on plant taxa recorded in local seedling plots".
 
-**Difference:** Informal experiment labels such as YOLO v3, v5, and v5.1 became the publication name “YOLO26-seg” or the stable description “the current segmentation model”. The phrase “After the July 3 manuscript pass” was removed from manuscript prose.
+**Reason:** The first repetition added nothing. "Taxa" names the selected units and "plant" states their scope, so both stayed.
 
-**Reason:** Internal labels and draft dates record how the work developed. Manuscript readers need the identifiable final model and the current scientific method.
+**Limit:** Reduce nearby related forms when one can go without loss. Keep the noun that carries information.
 
-**Limit:** Preserve internal labels in experiment records, audits, and provenance mappings. Preserve change history in responses to reviewers, release notes, and progress reports.
+### The reader's term over insider shorthand (B)
 
-Evidence: [correction pair 5](evidence-ledger.md#pair-5-separate-internal-model-labels-from-manuscript-names).
+**Difference:** "Taxonomic head" became "taxonomic classification model" in a deliverables list.
 
-### Keep established terms for the intended discipline
+**Reason:** "Head" is an architecture term. An ecology reader needs to know what tool is delivered.
 
-**Difference:** The user retained “phenology” instead of expanding it into examples of emergence, reproduction, and seasonal activity for ecology readers.
+**Limit:** Use "classification head" where the architecture matters and the readers know the term.
 
-**Reason:** “Phenology” is established ecological vocabulary and is shorter and more precise than the proposed paraphrase. Cross-disciplinary machine-learning or statistical terms may still need a brief explanation of their role in the study.
+### Detail where it does its job (B)
 
-**Limit:** Calibrate to the intended readers. Keep established ecological terms for ecologists. Explain a cross-disciplinary term when it obstructs the biological argument.
+**Difference:** A proposal paragraph that expanded a random-effect rationale into walk times, the plot visit and the weather was cut back to "survey day is a random effect".
 
-This differs from the internal-model-name correction. “Phenology” is a stable disciplinary term. YOLO v3, v5, and v5.1 were informal experiment labels rather than publication names.
+**Reason:** The paragraph's job was to state the model. The rationale belongs in Methods.
 
-Evidence: [v4 source note 3](evidence-ledger.md#v4-source-notes) and ecology transcript line 10528 at `2026-07-22T04:17:59.530Z`.
+**Limit:** Move necessary detail rather than delete it. Accuracy, interpretation and reproducibility set the floor.
+
+### Claims earn their adjectives (B)
+
+**Difference:** The user removed "detailed" as praise for a table.
+
+**Reason:** The adjective grades the table without saying what it contains.
+
+**Limit:** Keep an evaluative word with a defined technical meaning or a supported claim.
+
+### The finished work, not its history (A)
+
+**Difference:** Internal version labels for successive training attempts became the publication name or "the current segmentation model". A dated phrase about an earlier manuscript pass was removed. In the progress report, "Because no hand-drawn outlines existed" became a plain statement of how the outlines were made.
+
+**Reason:** Readers need the final method, not the drafting or experiment sequence.
+
+**Limit:** Keep internal labels in experiment records, audit trails and changelogs, and keep change history in responses to reviewers and release notes.
+
+### Established terms for the discipline (B)
+
+**Difference:** The user kept "phenology" rather than a paraphrase.
+
+**Reason:** It is the shorter and more precise ecological term.
+
+**Limit:** Explain a term from another discipline when it would block an ecology reader.
 
 ## Evidence classes
 
-- **Invariant:** The user has stated the preference directly and intends it to apply broadly. Avoid em dashes and semicolons. Preserve facts and provenance.
-- **Default:** Repeated corrections support the choice in most prose. Prefer concrete wording, stable terminology, present-state description, and useful compression.
-- **Watch item:** Inspect the effect in context. Examples include staged contrasts, self-praise, slogan-like compounds, and excessive explanation.
-- **Context choice:** Let the genre decide. Examples include passive voice, lists, spelling convention, technical detail, and first person.
+- **Invariant:** stated directly and meant broadly. Avoid em dashes and prose semicolons. Preserve facts and their strength.
+- **Default (A):** repeated explicit comments. Most of R1–R25 and the padding and history rules from the manuscript chats.
+- **Single comment (B):** apply where the same reason holds.
+- **Inferred (C):** reading questions as requests, first person plural in English reports. Check against the user's next comments.
 
-Keep watch items contextual when the evidence is only one accepted edit. Later explicit feedback supersedes earlier inference.
+Later explicit feedback supersedes earlier inference.
